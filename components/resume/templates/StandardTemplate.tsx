@@ -70,9 +70,14 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
           data-resume-item-index={index}
           className={cn(
             "group/item relative p-1 -mx-1 rounded transition-colors break-inside-avoid",
-            focusedItemId === item.id ? "bg-blue-50/30 ring-1 ring-blue-100 z-30" : "hover:bg-gray-50/50 z-20"
+            focusedItemId === item.id ? "z-30" : "hover:bg-gray-50/50 z-20"
           )}
+          style={focusedItemId === item.id ? { 
+            boxShadow: `0 0 0 2px ${accentColor}`,
+            backgroundColor: `${accentColor}10` // 10 is ~6% opacity
+          } : {}}
           onFocus={() => setFocusedItemId(item.id)}
+          onClick={() => setFocusedItemId(item.id)}
         >
         {focusedItemId === item.id && !isTextSelected && (
           <FloatingToolbar 

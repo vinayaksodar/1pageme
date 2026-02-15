@@ -58,9 +58,14 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
           data-resume-item-index={index}
           className={cn(
             "group/item relative p-1 -mx-1 rounded transition-colors break-inside-avoid",
-            focusedItemId === item.id ? "bg-blue-50/10 ring-1 ring-blue-100/20 z-30" : "hover:bg-gray-50/50 z-20"
+            focusedItemId === item.id ? "z-30" : "hover:bg-gray-50/50 z-20"
           )}
+          style={focusedItemId === item.id ? { 
+            boxShadow: `0 0 0 2px ${accentColor}`,
+            backgroundColor: `${accentColor}10`
+          } : {}}
           onFocus={() => setFocusedItemId(item.id)}
+          onClick={() => setFocusedItemId(item.id)}
         >
         {focusedItemId === item.id && !isTextSelected && (
                     <FloatingToolbar 
@@ -165,7 +170,12 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
             className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-4"
             data-resume-section-header={section.id}
           >
-             <span style={{ color: accentColor }}>{section.title}</span>
+             <ContentEditable
+               tagName="span"
+               value={section.title}
+               onChange={(val) => actions.updateSectionTitle(section.id, val)}
+               style={{ color: accentColor }}
+             />
              <div className="h-[1px] flex-1 bg-gray-100" />
           </h3>
         )}
@@ -200,9 +210,21 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
             />
           </div>
           <div className="text-right text-[10px] font-bold uppercase tracking-widest space-y-2 text-gray-400">
-             <div>{content.personalInfo.address}</div>
-             <div>{content.personalInfo.email}</div>
-             <div>{content.personalInfo.phone}</div>
+             <ContentEditable 
+               value={content.personalInfo.address} 
+               onChange={v => actions.updatePersonalInfo('address', v)} 
+               placeholder="Address"
+             />
+             <ContentEditable 
+               value={content.personalInfo.email} 
+               onChange={v => actions.updatePersonalInfo('email', v)} 
+               placeholder="Email"
+             />
+             <ContentEditable 
+               value={content.personalInfo.phone} 
+               onChange={v => actions.updatePersonalInfo('phone', v)} 
+               placeholder="Phone"
+             />
           </div>
         </header>
       )}
