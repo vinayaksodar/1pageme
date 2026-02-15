@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import ContentEditable from '@/components/ui/ContentEditable';
 import FloatingToolbar from '../FloatingToolbar';
 import { PageLayout } from '@/hooks/useResumePagination';
+import { Camera } from 'lucide-react';
 
 interface TemplateProps {
   resume: ResumeData;
@@ -15,6 +16,7 @@ interface TemplateProps {
   pageLayout?: PageLayout; // Optional: If provided, renders only content for this page
   actions: {
     updatePersonalInfo: (field: string, value: string) => void;
+    updatePersonalInfoVisibility: (visibility: any) => void;
     updateSectionTitle: (sectionId: string, title: string) => void;
     updateSectionItem: (sectionId: string, itemId: string, field: keyof SectionItem, value: any) => void;
     addSectionItem: (sectionId: string) => void;
@@ -23,11 +25,60 @@ interface TemplateProps {
   };
 }
 
+const EditableImage = ({ src, onChange, className }: { src?: string, onChange: (val: string) => void, className?: string }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div 
+      className={cn("group relative cursor-pointer overflow-hidden bg-gray-100 print:bg-transparent", className)}
+      onClick={() => fileInputRef.current?.click()}
+    >
+      {src ? (
+        <img src={src} alt="Profile" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-400">
+           <Camera size={24} />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white no-print">
+         <Camera size={20} />
+      </div>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
+    </div>
+  );
+};
+
 export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLayout, actions }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
   const { isTextSelected } = useResumeStore();
   const layout = layouts[activeTemplateId];
   const { accentColor } = layout.globalStyles;
+
+  // Defensive check for visibility (for existing resumes)
+  const visibility = content.personalInfo.visibility || {
+    showJobTitle: true,
+    showEmail: true,
+    showPhone: true,
+    showAddress: true,
+    showPhoto: true,
+  };
 
   const renderItem = (section: Section, item: SectionItem, index: number, total: number) => {
     // If pageLayout is provided, check if this item belongs to the page
@@ -70,7 +121,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
           data-resume-item-index={index}
           className={cn(
             "group/item relative p-1 -mx-1 rounded transition-colors break-inside-avoid",
-            focusedItemId === item.id ? "z-30" : "hover:bg-gray-50/50 z-20"
+            focusedItemId === item.id ? "z-30 print:!shadow-none print:!bg-transparent" : "hover:bg-gray-50/50 z-20"
           )}
           style={focusedItemId === item.id ? { 
             boxShadow: `0 0 0 2px ${accentColor}`,
@@ -217,26 +268,67 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
     <div className="flex flex-col h-full">
       {/* Header - Only render on Page 0 or if measuring (no pageLayout) */}
       {(!pageLayout || pageLayout.pageIndex === 0) && (
-        <header className="mb-10 border-b pb-8 border-gray-100">
-          <ContentEditable
-            tagName="h1"
-            value={content.personalInfo.fullName}
-            onChange={(val) => actions.updatePersonalInfo('fullName', val)}
-            className="text-5xl font-black uppercase tracking-tighter mb-2"
-            style={{ color: accentColor }}
-          />
-          <ContentEditable
-            tagName="h2"
-            value={content.personalInfo.jobTitle || ''}
-            onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
-            className="text-2xl font-medium text-gray-500"
-          />
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400 mt-6 font-medium">
-            <span>📍 <ContentEditable tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
-            <span>📧 <ContentEditable tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
-            <span>📞 <ContentEditable tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
-          </div>
-        </header>
+        <div 
+          className={cn(
+            "group/header relative mb-10 border-b pb-8 border-gray-100 flex justify-between items-start gap-6 px-1 -mx-1 rounded transition-colors",
+            focusedItemId === 'header' ? "z-30 print:!shadow-none print:!bg-transparent" : "hover:bg-gray-50/50 z-20"
+          )}
+          style={focusedItemId === 'header' ? { 
+            boxShadow: `0 0 0 2px ${accentColor}`,
+            backgroundColor: `${accentColor}10`
+          } : {}}
+          onFocus={() => setFocusedItemId('header')}
+          onClick={() => setFocusedItemId('header')}
+        >
+          {focusedItemId === 'header' && !isTextSelected && (
+            <FloatingToolbar 
+              sectionId="header"
+              itemId="header"
+              sectionType="header"
+              settings={visibility}
+              onAdd={() => {}}
+              onDelete={() => {}}
+            />
+          )}
+          <header className="flex-1 mt-0">
+            <ContentEditable
+              tagName="h1"
+              value={content.personalInfo.fullName}
+              onChange={(val) => actions.updatePersonalInfo('fullName', val)}
+              className="text-5xl font-black uppercase tracking-tighter mb-2"
+              style={{ color: accentColor }}
+            />
+            {visibility.showJobTitle && (
+              <ContentEditable
+                tagName="h2"
+                value={content.personalInfo.jobTitle || ''}
+                onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
+                className="text-2xl font-medium text-gray-500"
+              />
+            )}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400 mt-6 font-medium">
+              {visibility.showAddress && (
+                <span>📍 <ContentEditable tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
+              )}
+              {visibility.showEmail && (
+                <span>📧 <ContentEditable tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
+              )}
+              {visibility.showPhone && (
+                <span>📞 <ContentEditable tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
+              )}
+            </div>
+          </header>
+          {visibility.showPhoto && (
+            <EditableImage 
+              src={content.personalInfo.profileImage}
+              onChange={(val) => actions.updatePersonalInfo('profileImage', val)}
+              className={cn(
+                "w-32 h-32 border-4 border-gray-50 shadow-sm",
+                content.personalInfo.profileImageShape === 'squircle' ? "rounded-3xl" : "rounded-full"
+              )}
+            />
+          )}
+        </div>
       )}
 
       {/* Columns Logic */}

@@ -10,18 +10,31 @@ export interface PageLayout {
   continued: Set<string>;
 }
 
+/**
+ * Convert millimeters to pixels using the browser's measurement when available.
+ * Creates a 1mm element and uses its computed size. Falls back to 96 DPI conversion.
+ */
 function mmToPx(mm: number) {
-  if (typeof document === "undefined") return mm * 3.78; // Fallback approx
+  if (typeof document === "undefined") {
+    // fallback: 96 DPI -> 96 px per inch, 25.4 mm per inch
+    return (mm * 96) / 25.4;
+  }
+
+  // Create an element sized to 1mm and measure, then multiply.
   const el = document.createElement("div");
-  el.style.width = `${mm}mm`;
+  el.style.width = "1mm";
   el.style.height = "1mm";
   el.style.position = "absolute";
   el.style.visibility = "hidden";
   el.style.top = "-9999px";
   document.body.appendChild(el);
-  const px = el.getBoundingClientRect().width;
+
+  const rect = el.getBoundingClientRect();
+  // Use height as the 1mm measurement (consistent regardless of writing direction)
+  const pxPerMm = rect.height || 96 / 25.4;
   document.body.removeChild(el);
-  return px || (mm * 96) / 25.4; // 96 DPI fallback
+
+  return mm * pxPerMm;
 }
 
 export const useResumePagination = (
@@ -50,31 +63,10 @@ export const useResumePagination = (
       container.querySelectorAll("[data-resume-section-header]"),
     ) as HTMLElement[];
 
-    console.log(
-      `useResumePagination: Found ${items.length} items and ${headers.length} headers in ${containerId}`,
-    );
-    console.log(
-      `useResumePagination: Container offsetHeight: ${container.offsetHeight}`,
-    );
-
-    if (
-      items.length === 0 &&
-      resume.content.sections.some((s) => s.items.length > 0)
-    ) {
-      console.warn(
-        "useResumePagination: No items found in DOM even though resume has data!",
-      );
-      console.log(
-        "Container innerHTML snippet:",
-        container.innerHTML.substring(0, 500),
-      );
-    }
-
     // Convert page mm -> px at runtime
     const getDims = (el: HTMLElement) => {
       const rect = el.getBoundingClientRect();
       const style = window.getComputedStyle(el);
-      // Use ceil to be conservative about space
       return {
         height: Math.ceil(rect.height),
         marginTop: Math.ceil(parseFloat(style.marginTop || "0") || 0),
@@ -82,7 +74,9 @@ export const useResumePagination = (
       };
     };
 
-    const contentHeight = mmToPx(PAGE_MM_HEIGHT) - pageMargin * 2 - 10; // 10px safety buffer
+    const pageHeightPx = mmToPx(PAGE_MM_HEIGHT);
+    // contentHeight is the height available INSIDE the top and bottom margins
+    const contentHeight = pageHeightPx - (pageMargin * 2) - 20; // 20px safety buffer
 
     const itemMeasurements = new Map<
       string,
@@ -102,19 +96,35 @@ export const useResumePagination = (
       if (id) headerMeasurements.set(id, getDims(el));
     });
 
-    let continuedHeaderHeight = 30;
-    const sampleHeader = headers[0];
-    if (sampleHeader) {
-      continuedHeaderHeight = sampleHeader.getBoundingClientRect().height;
+    // Dynamically measure section spacing
+    let sectionSpacing = 32;
+    const firstSectionEl = container.querySelector(".group\\/section") as HTMLElement | null;
+    if (firstSectionEl) {
+      const style = window.getComputedStyle(firstSectionEl);
+      sectionSpacing = parseFloat(style.marginBottom) || 32;
     }
 
-    const mainHeaderEl = container.querySelector(
-      "header",
-    ) as HTMLElement | null;
-    let initialY = 0;
+    // Measure continued header height
+    let continuedHeaderHeight = 32;
+    const sampleHeader = headers[0];
+    if (sampleHeader) {
+      const d = getDims(sampleHeader);
+      continuedHeaderHeight = d.height + d.marginTop + d.marginBottom;
+    }
+
+    // Measure main header height
+    const mainHeaderEl = container.querySelector("header") as HTMLElement | null;
+    let mainHeaderTotal = 0;
     if (mainHeaderEl) {
       const d = getDims(mainHeaderEl);
-      initialY = d.height + d.marginTop + d.marginBottom;
+      const headerWrapper = container.querySelector(".group\\/header") as HTMLElement | null;
+      if (headerWrapper) {
+        const wd = getDims(headerWrapper);
+        // Treat top margin as 0
+        mainHeaderTotal = wd.height + wd.marginBottom;
+      } else {
+        mainHeaderTotal = d.height + d.marginBottom;
+      }
     }
 
     const newPages: PageLayout[] = [];
@@ -135,7 +145,12 @@ export const useResumePagination = (
 
     const processColumn = (sections: typeof layout.sections) => {
       let currentPageIndex = 0;
-      let currentY = initialY;
+      let currentY = 0; // Relative to top margin boundary
+
+      // Add main header height to the first page only
+      if (mainHeaderTotal > 0) {
+        currentY += mainHeaderTotal;
+      }
 
       sections.forEach((config) => {
         const section = resume.content.sections.find((s) => s.id === config.id);
@@ -146,33 +161,27 @@ export const useResumePagination = (
           marginTop: 0,
           marginBottom: 0,
         };
-        const headerTotal =
-          headerDims.height + headerDims.marginTop + headerDims.marginBottom;
+        const headerTotal = headerDims.height + headerDims.marginTop + headerDims.marginBottom;
 
-        const SECTION_SPACING = 32;
         let spacing = 0;
-        if (currentY !== initialY && currentY !== 0) {
-          spacing = SECTION_SPACING;
+        // If we are not at the very top of a page
+        if (currentY > 0) {
+          // If we are on page 0 and just finished the main header, or on any page and finished a section
+          if (currentY > mainHeaderTotal || (currentPageIndex > 0 && currentY > 0)) {
+            spacing = sectionSpacing;
+          }
         }
 
         // Peek first item to avoid orphan headers
         const firstItem = section.items[0];
         let firstItemTotal = 0;
         if (firstItem) {
-          const dims = itemMeasurements.get(firstItem.id) ?? {
-            height: 0,
-            marginTop: 0,
-            marginBottom: 0,
-          };
+          const dims = itemMeasurements.get(firstItem.id) ?? { height: 0, marginTop: 0, marginBottom: 0 };
           firstItemTotal = dims.height + dims.marginTop + dims.marginBottom;
         }
 
-        // If header + first item (with spacing) doesn't fit, move to next page
-        // But only if we're not already at the top of a page
-        if (
-          currentY > 0 &&
-          currentY + spacing + headerTotal + firstItemTotal > contentHeight
-        ) {
+        // If header + first item doesn't fit, move to next page
+        if (currentY > 0 && currentY + spacing + headerTotal + firstItemTotal > contentHeight) {
           currentPageIndex++;
           currentY = 0;
           spacing = 0;
@@ -183,20 +192,12 @@ export const useResumePagination = (
         currentY += headerTotal;
 
         section.items.forEach((item, index) => {
-          const dims = itemMeasurements.get(item.id) ?? {
-            height: 0,
-            marginTop: 0,
-            marginBottom: 0,
-          };
+          const dims = itemMeasurements.get(item.id) ?? { height: 0, marginTop: 0, marginBottom: 0 };
           const itemTotal = dims.height + dims.marginTop + dims.marginBottom;
 
           if (currentY + itemTotal > contentHeight) {
-            // Don't break if it's the first item and we JUST started this section on this page
-            // (e.g., if the item itself is huge, breaking won't help)
             const isFirstItem = index === 0;
-            const headerOnThisPage =
-              getPage(currentPageIndex).headers.has(section.id) &&
-              !getPage(currentPageIndex).continued.has(section.id);
+            const headerOnThisPage = getPage(currentPageIndex).headers.has(section.id) && !getPage(currentPageIndex).continued.has(section.id);
 
             if (!(isFirstItem && headerOnThisPage)) {
               currentPageIndex++;
@@ -206,8 +207,11 @@ export const useResumePagination = (
             }
           }
 
+          // If at the top of a page, ignore top margin to keep it flush
+          const effectiveItemHeight = currentY === 0 ? (dims.height + dims.marginBottom) : itemTotal;
+
           getPage(currentPageIndex).items.add(item.id);
-          currentY += itemTotal;
+          currentY += effectiveItemHeight;
         });
       });
     };
@@ -215,9 +219,7 @@ export const useResumePagination = (
     const isDualColumn = resume.activeTemplateId === "modern";
 
     if (isDualColumn) {
-      const column1Sections = layout.sections.filter(
-        (s) => s.column === 1 || !s.column,
-      );
+      const column1Sections = layout.sections.filter((s) => s.column === 1 || !s.column);
       const column2Sections = layout.sections.filter((s) => s.column === 2);
       processColumn(column1Sections);
       processColumn(column2Sections);

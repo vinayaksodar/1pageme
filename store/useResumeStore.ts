@@ -28,6 +28,7 @@ export interface ResumeState {
   setActiveResume: (id: string) => void;
   setIsTextSelected: (isSelected: boolean) => void;
   updatePersonalInfo: (field: string, value: string) => void;
+  updatePersonalInfoVisibility: (visibility: any) => void;
   updateSectionTitle: (sectionId: string, title: string) => void;
   updateSectionItem: (sectionId: string, itemId: string, field: keyof SectionItem, value: any) => void;
   updateItemVisibility: (sectionId: string, itemId: string, visibility: Partial<ItemVisibility>) => void;
@@ -70,6 +71,19 @@ export const useResumeStore = create<ResumeState>()(
       updatePersonalInfo: (field, value) => set((state) => ({
         resumes: state.resumes.map(r => r.id === state.activeResumeId ? {
           ...r, content: { ...r.content, personalInfo: { ...r.content.personalInfo, [field]: value } }
+        } : r)
+      })),
+
+      updatePersonalInfoVisibility: (visibility) => set((state) => ({
+        resumes: state.resumes.map(r => r.id === state.activeResumeId ? {
+          ...r, 
+          content: { 
+            ...r.content, 
+            personalInfo: { 
+              ...r.content.personalInfo, 
+              visibility: { ...r.content.personalInfo.visibility, ...visibility } 
+            } 
+          }
         } : r)
       })),
 

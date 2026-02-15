@@ -65,6 +65,14 @@ export interface ResumeData {
       address: string;
       jobTitle?: string;
       profileImage?: string;
+      profileImageShape?: 'circle' | 'squircle';
+      visibility: {
+        showPhone: boolean;
+        showEmail: boolean;
+        showAddress: boolean;
+        showJobTitle: boolean;
+        showPhoto: boolean;
+      };
     };
     sections: Section[];
   };
