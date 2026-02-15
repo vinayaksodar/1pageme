@@ -6,11 +6,13 @@ import { Section, SectionItem, ResumeData } from '@/types/resume';
 import { cn } from '@/lib/utils';
 import ContentEditable from '@/components/ui/ContentEditable';
 import FloatingToolbar from '../FloatingToolbar';
+import { PageLayout } from '@/hooks/useResumePagination';
 
 interface TemplateProps {
   resume: ResumeData;
   focusedItemId: string | null;
   setFocusedItemId: (id: string | null) => void;
+  pageLayout?: PageLayout;
   actions: {
     updatePersonalInfo: (field: string, value: string) => void;
     updateSectionTitle: (sectionId: string, title: string) => void;
@@ -21,23 +23,45 @@ interface TemplateProps {
   };
 }
 
-export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, actions }: TemplateProps) => {
+export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLayout, actions }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
   const { isTextSelected } = useResumeStore();
   const layout = layouts[activeTemplateId];
   const { accentColor } = layout.globalStyles;
 
   const renderItem = (section: Section, item: SectionItem, index: number, total: number) => {
+    // Filter Logic
+    if (pageLayout && !pageLayout.items.has(item.id)) return null;
+
     const { visibility } = item;
+    
+    // Continued Header Logic
+    const isFirstOnPage = pageLayout 
+       ? section.items.find(i => pageLayout.items.has(i.id))?.id === item.id
+       : index === 0;
+
+    const showContinuedHeader = pageLayout?.continued.has(section.id) && isFirstOnPage;
+
     return (
-      <div 
-        key={item.id}
-        className={cn(
-          "group/item relative p-1 -mx-1 rounded transition-colors",
-          focusedItemId === item.id ? "bg-blue-50/10 ring-1 ring-blue-100/20" : "hover:bg-gray-50/50"
+      <React.Fragment key={item.id}>
+        {showContinuedHeader && (
+          <h3 
+            className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-4"
+          >
+             <span style={{ color: accentColor }}>{section.title} <span className="opacity-50 text-[10px] ml-1">(CONT.)</span></span>
+             <div className="h-[1px] flex-1 bg-gray-100" />
+          </h3>
         )}
-        onFocus={() => setFocusedItemId(item.id)}
-      >
+        <div 
+          data-resume-item={item.id}
+          data-resume-section-id={section.id}
+          data-resume-item-index={index}
+          className={cn(
+            "group/item relative p-1 -mx-1 rounded transition-colors break-inside-avoid",
+            focusedItemId === item.id ? "bg-blue-50/10 ring-1 ring-blue-100/20 z-30" : "hover:bg-gray-50/50 z-20"
+          )}
+          onFocus={() => setFocusedItemId(item.id)}
+        >
         {focusedItemId === item.id && !isTextSelected && (
                     <FloatingToolbar 
                       sectionId={section.id}
@@ -115,6 +139,7 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, action
           </ul>
         )}
       </div>
+      </React.Fragment>
     );
   };
 
@@ -122,12 +147,28 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, action
     const section = content.sections.find(s => s.id === config.id);
     if (!section || !config.isVisible) return null;
 
+    // Filter Logic
+    if (pageLayout) {
+        const hasItems = section.items.some(i => pageLayout.items.has(i.id));
+        const hasHeader = pageLayout.headers.has(section.id);
+        const isContinued = pageLayout.continued.has(section.id);
+        
+        if (!hasItems && !hasHeader && !isContinued) return null;
+    }
+    
+    const showMainHeader = pageLayout ? pageLayout.headers.has(section.id) : true;
+
     return (
       <div key={section.id} className="group/section relative mb-10">
-        <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-4">
-           <span style={{ color: accentColor }}>{section.title}</span>
-           <div className="h-[1px] flex-1 bg-gray-100" />
-        </h3>
+        {showMainHeader && (
+          <h3 
+            className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-4"
+            data-resume-section-header={section.id}
+          >
+             <span style={{ color: accentColor }}>{section.title}</span>
+             <div className="h-[1px] flex-1 bg-gray-100" />
+          </h3>
+        )}
         <div className="space-y-6">
           {section.items.map((item, index) => renderItem(section, item, index, section.items.length))}
         </div>
@@ -141,28 +182,30 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, action
 
   return (
     <div className="flex flex-col h-full">
-      <header className="flex justify-between items-start mb-16">
-        <div className="max-w-[60%]">
-          <ContentEditable
-            tagName="h1"
-            value={content.personalInfo.fullName}
-            onChange={(val) => actions.updatePersonalInfo('fullName', val)}
-            className="text-6xl font-black uppercase leading-[0.9] tracking-tighter mb-4"
-          />
-          <ContentEditable
-            tagName="h2"
-            value={content.personalInfo.jobTitle || ''}
-            onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
-            className="text-lg font-bold uppercase tracking-widest"
-            style={{ color: accentColor }}
-          />
-        </div>
-        <div className="text-right text-[10px] font-bold uppercase tracking-widest space-y-2 text-gray-400">
-           <div>{content.personalInfo.address}</div>
-           <div>{content.personalInfo.email}</div>
-           <div>{content.personalInfo.phone}</div>
-        </div>
-      </header>
+      {(!pageLayout || pageLayout.pageIndex === 0) && (
+        <header className="flex justify-between items-start mb-16">
+          <div className="max-w-[60%]">
+            <ContentEditable
+              tagName="h1"
+              value={content.personalInfo.fullName}
+              onChange={(val) => actions.updatePersonalInfo('fullName', val)}
+              className="text-6xl font-black uppercase leading-[0.9] tracking-tighter mb-4"
+            />
+            <ContentEditable
+              tagName="h2"
+              value={content.personalInfo.jobTitle || ''}
+              onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
+              className="text-lg font-bold uppercase tracking-widest"
+              style={{ color: accentColor }}
+            />
+          </div>
+          <div className="text-right text-[10px] font-bold uppercase tracking-widest space-y-2 text-gray-400">
+             <div>{content.personalInfo.address}</div>
+             <div>{content.personalInfo.email}</div>
+             <div>{content.personalInfo.phone}</div>
+          </div>
+        </header>
+      )}
 
       <div className="grid grid-cols-12 gap-16 flex-1">
          <div className="col-span-8">

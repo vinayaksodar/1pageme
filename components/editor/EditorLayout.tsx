@@ -23,7 +23,7 @@ const EditorLayout = () => {
   return (
     <div className="flex h-screen w-full bg-gray-100 overflow-hidden font-sans">
       {/* Left Sidebar - Controls */}
-      <div className="w-80 h-full bg-white border-r border-gray-200 flex-shrink-0 z-10 shadow-sm flex flex-col">
+      <div className="w-80 h-full bg-white border-r border-gray-200 flex-shrink-0 z-50 shadow-sm flex flex-col">
          <Sidebar />
       </div>
 
@@ -31,7 +31,7 @@ const EditorLayout = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
         {/* Top Toolbar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-50">
             <div className="flex items-center gap-4">
                 <button 
                     onClick={() => setActiveResume('')} // Empty string or null to go back

@@ -6,11 +6,13 @@ import { Section, SectionItem, ResumeData } from '@/types/resume';
 import { cn } from '@/lib/utils';
 import ContentEditable from '@/components/ui/ContentEditable';
 import FloatingToolbar from '../FloatingToolbar';
+import { PageLayout } from '@/hooks/useResumePagination';
 
 interface TemplateProps {
   resume: ResumeData;
   focusedItemId: string | null;
   setFocusedItemId: (id: string | null) => void;
+  pageLayout?: PageLayout; // Optional: If provided, renders only content for this page
   actions: {
     updatePersonalInfo: (field: string, value: string) => void;
     updateSectionTitle: (sectionId: string, title: string) => void;
@@ -21,23 +23,57 @@ interface TemplateProps {
   };
 }
 
-export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, actions }: TemplateProps) => {
+export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLayout, actions }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
   const { isTextSelected } = useResumeStore();
   const layout = layouts[activeTemplateId];
   const { accentColor } = layout.globalStyles;
 
   const renderItem = (section: Section, item: SectionItem, index: number, total: number) => {
+    // If pageLayout is provided, check if this item belongs to the page
+    if (pageLayout && !pageLayout.items.has(item.id)) return null;
+
     const { visibility } = item;
+    
+    // Check if we need to show a "Continued" header for this specific item
+    // Logic: If this is the FIRST item of the section on this page, AND the section is marked as 'continued', show header.
+    // However, the item loop iterates all items.
+    // We need to know if this is the *first rendered item* for this section on this page.
+    // Helper: Is this the first item in the intersection of (section.items, pageLayout.items)?
+    
+    const isFirstOnPage = pageLayout 
+       ? section.items.find(i => pageLayout.items.has(i.id))?.id === item.id
+       : index === 0;
+
+    const showContinuedHeader = pageLayout?.continued.has(section.id) && isFirstOnPage;
+
     return (
-      <div 
-        key={item.id}
-        className={cn(
-          "group/item relative p-1 -mx-1 rounded transition-colors",
-          focusedItemId === item.id ? "bg-blue-50/30 ring-1 ring-blue-100" : "hover:bg-gray-50/50"
+      <React.Fragment key={item.id}>
+        {showContinuedHeader && (
+          <div 
+            className="mb-4 pb-1 flex items-center justify-between border-b-2" 
+            style={{ 
+              borderColor: accentColor,
+            }}
+          >
+            <span 
+              className="text-sm font-bold uppercase tracking-wider inline-block" 
+              style={{ color: accentColor }}
+            >
+              {section.title} <span className="text-[10px] opacity-70 ml-2">(Continued)</span>
+            </span>
+          </div>
         )}
-        onFocus={() => setFocusedItemId(item.id)}
-      >
+        <div 
+          data-resume-item={item.id}
+          data-resume-section-id={section.id}
+          data-resume-item-index={index}
+          className={cn(
+            "group/item relative p-1 -mx-1 rounded transition-colors break-inside-avoid",
+            focusedItemId === item.id ? "bg-blue-50/30 ring-1 ring-blue-100 z-30" : "hover:bg-gray-50/50 z-20"
+          )}
+          onFocus={() => setFocusedItemId(item.id)}
+        >
         {focusedItemId === item.id && !isTextSelected && (
           <FloatingToolbar 
             sectionId={section.id}
@@ -125,6 +161,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, acti
           </ul>
         )}
       </div>
+      </React.Fragment>
     );
   };
 
@@ -132,17 +169,38 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, acti
     const section = content.sections.find(s => s.id === config.id);
     if (!section || !config.isVisible) return null;
 
+    // Filter Logic
+    if (pageLayout) {
+        const hasItems = section.items.some(i => pageLayout.items.has(i.id));
+        const hasHeader = pageLayout.headers.has(section.id);
+        const isContinued = pageLayout.continued.has(section.id);
+        
+        if (!hasItems && !hasHeader && !isContinued) return null;
+        
+        // Note: If !hasHeader, we should NOT render the main header.
+        // But the main header is rendered inside this component below.
+        // We need to conditionally render the header *inside* the return.
+    }
+
+    const showMainHeader = pageLayout ? pageLayout.headers.has(section.id) : true;
+
     return (
       <div key={section.id} className="group/section relative mb-8">
-        <div className="border-b-2 mb-4 pb-1 flex items-center justify-between" style={{ borderColor: accentColor }}>
-          <ContentEditable
-            tagName="h3"
-            value={section.title}
-            onChange={(val) => actions.updateSectionTitle(section.id, val)}
-            className="text-sm font-bold uppercase tracking-wider inline-block"
-            style={{ color: accentColor }}
-          />
-        </div>
+        {showMainHeader && (
+          <div 
+            className="border-b-2 mb-4 pb-1 flex items-center justify-between" 
+            style={{ borderColor: accentColor }}
+            data-resume-section-header={section.id}
+          >
+            <ContentEditable
+              tagName="h3"
+              value={section.title}
+              onChange={(val) => actions.updateSectionTitle(section.id, val)}
+              className="text-sm font-bold uppercase tracking-wider inline-block"
+              style={{ color: accentColor }}
+            />
+          </div>
+        )}
         <div className="space-y-5">
           {section.items.map((item, index) => renderItem(section, item, index, section.items.length))}
         </div>
@@ -152,27 +210,29 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, acti
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <header className="mb-10 border-b pb-8 border-gray-100">
-        <ContentEditable
-          tagName="h1"
-          value={content.personalInfo.fullName}
-          onChange={(val) => actions.updatePersonalInfo('fullName', val)}
-          className="text-5xl font-black uppercase tracking-tighter mb-2"
-          style={{ color: accentColor }}
-        />
-        <ContentEditable
-          tagName="h2"
-          value={content.personalInfo.jobTitle || ''}
-          onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
-          className="text-2xl font-medium text-gray-500"
-        />
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400 mt-6 font-medium">
-          <span>📍 <ContentEditable tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
-          <span>📧 <ContentEditable tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
-          <span>📞 <ContentEditable tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
-        </div>
-      </header>
+      {/* Header - Only render on Page 0 or if measuring (no pageLayout) */}
+      {(!pageLayout || pageLayout.pageIndex === 0) && (
+        <header className="mb-10 border-b pb-8 border-gray-100">
+          <ContentEditable
+            tagName="h1"
+            value={content.personalInfo.fullName}
+            onChange={(val) => actions.updatePersonalInfo('fullName', val)}
+            className="text-5xl font-black uppercase tracking-tighter mb-2"
+            style={{ color: accentColor }}
+          />
+          <ContentEditable
+            tagName="h2"
+            value={content.personalInfo.jobTitle || ''}
+            onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
+            className="text-2xl font-medium text-gray-500"
+          />
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400 mt-6 font-medium">
+            <span>📍 <ContentEditable tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
+            <span>📧 <ContentEditable tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
+            <span>📞 <ContentEditable tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
+          </div>
+        </header>
+      )}
 
       {/* Columns Logic */}
       <div className="flex-1">
