@@ -26,38 +26,38 @@ The state is strictly separated into **Semantic Content** and **Rendering Config
 // Defined in types/resume.ts
 
 interface ResumeData {
-  id: string;
-  title: string;
-  
+  id: string
+  title: string
+
   // 1. Semantic Content (The "What")
   content: {
     personalInfo: {
-      fullName: string;
-      email: string;
-      phone: string;
-      address: string;
-      jobTitle?: string;
-      profileImage?: string;
-    };
-    sections: Section[]; // Array of semantic sections (Summary, Experience, etc.)
-  };
-  
+      fullName: string
+      email: string
+      phone: string
+      address: string
+      jobTitle?: string
+      profileImage?: string
+    }
+    sections: Section[] // Array of semantic sections (Summary, Experience, etc.)
+  }
+
   // 2. Rendering Configuration (The "How")
-  activeTemplateId: TemplateId; // 'standard' | 'modern' | 'minimal'
-  
+  activeTemplateId: TemplateId // 'standard' | 'modern' | 'minimal'
+
   // Per-template layout configuration
-  layouts: Record<TemplateId, TemplateLayout>; 
+  layouts: Record<TemplateId, TemplateLayout>
 }
 
 interface TemplateLayout {
-  globalStyles: GlobalStyles; // { fontFamily, accentColor, margins, lineHeight }
-  sections: SectionConfig[];  // Order & visibility configuration for sections
+  globalStyles: GlobalStyles // { fontFamily, accentColor, margins, lineHeight }
+  sections: SectionConfig[] // Order & visibility configuration for sections
 }
 
 interface SectionConfig {
-  id: string;      // Links to content.sections[].id
-  column: number;  // 1 (Main) or 2 (Sidebar) - used by multi-column templates
-  isVisible: boolean;
+  id: string // Links to content.sections[].id
+  column: number // 1 (Main) or 2 (Sidebar) - used by multi-column templates
+  isVisible: boolean
 }
 ```
 

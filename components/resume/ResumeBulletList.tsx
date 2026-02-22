@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import RichTextEditor from "@/components/ui/RichTextEditor";
-import { TextNode } from "@/types/resume";
-import { emptyTextNodes } from "@/lib/utils";
+import React, { useState, useEffect } from 'react'
+import RichTextEditor from '@/components/ui/RichTextEditor'
+import { TextNode } from '@/types/resume'
+import { emptyTextNodes } from '@/lib/utils'
 
 interface ResumeBulletListProps {
-  items: TextNode[][];
-  onUpdate: (items: TextNode[][]) => void;
-  className?: string;
-  itemClassName?: string;
-  contentEditableClassName?: string;
-  renderBullet?: (index: number) => React.ReactNode;
+  items: TextNode[][]
+  onUpdate: (items: TextNode[][]) => void
+  className?: string
+  itemClassName?: string
+  contentEditableClassName?: string
+  renderBullet?: (index: number) => React.ReactNode
 }
 
 export const ResumeBulletList = ({
@@ -22,48 +22,50 @@ export const ResumeBulletList = ({
   contentEditableClassName,
   renderBullet,
 }: ResumeBulletListProps) => {
-  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+  const [focusIndex, setFocusIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (focusIndex !== null) {
       setTimeout(() => {
-        const item = document.querySelector(`[data-bullet-index="${focusIndex}"]`);
+        const item = document.querySelector(
+          `[data-bullet-index="${focusIndex}"]`,
+        )
         if (item) {
-          (item as HTMLElement).focus();
+          ;(item as HTMLElement).focus()
         }
-      }, 50);
+      }, 50)
     }
-  }, [focusIndex]);
+  }, [focusIndex])
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLElement>,
     index: number,
   ) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const newItems = [...items];
-      newItems.splice(index + 1, 0, emptyTextNodes());
-      onUpdate(newItems);
-      setFocusIndex(index + 1);
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const newItems = [...items]
+      newItems.splice(index + 1, 0, emptyTextNodes())
+      onUpdate(newItems)
+      setFocusIndex(index + 1)
     }
 
-    if (e.key === "Backspace") {
-      const currentText = items[index].map(n => n.text).join('');
-      if (currentText === "" && index > 0) {
-        e.preventDefault();
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        onUpdate(newItems);
-        setFocusIndex(index - 1);
+    if (e.key === 'Backspace') {
+      const currentText = items[index].map((n) => n.text).join('')
+      if (currentText === '' && index > 0) {
+        e.preventDefault()
+        const newItems = [...items]
+        newItems.splice(index, 1)
+        onUpdate(newItems)
+        setFocusIndex(index - 1)
       }
     }
-  };
+  }
 
   const handleChange = (val: TextNode[], index: number) => {
-    const newItems = [...items];
-    newItems[index] = val;
-    onUpdate(newItems);
-  };
+    const newItems = [...items]
+    newItems[index] = val
+    onUpdate(newItems)
+  }
 
   return (
     <ul className={className}>
@@ -76,11 +78,10 @@ export const ResumeBulletList = ({
             className={contentEditableClassName}
             autoFocus={focusIndex === idx}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            // @ts-ignore
             data-bullet-index={idx}
           />
         </li>
       ))}
     </ul>
-  );
-};
+  )
+}
