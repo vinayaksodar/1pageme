@@ -189,7 +189,7 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
         email: 'vinayak@example.com',
         phone: '+1 234 567 890',
         address: 'San Francisco, CA',
-        profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vinayak',
+        profileImage: '',
         profileImageShape: 'circle',
         visibility: {
           showPhone: true,

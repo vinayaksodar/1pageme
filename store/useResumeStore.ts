@@ -450,7 +450,7 @@ export const useResumeStore = create<ResumeState>()(
         })),
     }),
     {
-      name: 'resume-storage-v5',
+      name: 'resume-storage-v6',
     },
   ),
 )
