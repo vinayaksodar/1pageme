@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
-import { Section, SectionItem, ResumeData } from '@/types/resume';
+import { Section, SectionItem, ResumeData, TextNode } from '@/types/resume';
 import { cn } from '@/lib/utils';
-import ContentEditable from '@/components/ui/ContentEditable';
+import PlainTextEditor from '@/components/ui/PlainTextEditor';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import FloatingToolbar from '../FloatingToolbar';
 import { PageLayout } from '@/hooks/useResumePagination';
 import { Camera } from 'lucide-react';
@@ -17,7 +18,7 @@ interface TemplateProps {
   setFocusedItemId: (id: string | null) => void;
   pageLayout?: PageLayout; // Optional: If provided, renders only content for this page
   actions: {
-    updatePersonalInfo: (field: string, value: string) => void;
+    updatePersonalInfo: (field: string, value: any) => void;
     updatePersonalInfoVisibility: (visibility: any) => void;
     updateSectionTitle: (sectionId: string, title: string) => void;
     updateSectionItem: (sectionId: string, itemId: string, field: keyof SectionItem, value: any) => void;
@@ -88,12 +89,6 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
 
     const { visibility } = item;
     
-    // Check if we need to show a "Continued" header for this specific item
-    // Logic: If this is the FIRST item of the section on this page, AND the section is marked as 'continued', show header.
-    // However, the item loop iterates all items.
-    // We need to know if this is the *first rendered item* for this section on this page.
-    // Helper: Is this the first item in the intersection of (section.items, pageLayout.items)?
-    
     const isFirstOnPage = pageLayout 
        ? section.items.find(i => pageLayout.items.has(i.id))?.id === item.id
        : index === 0;
@@ -151,7 +146,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
 
         <div className="flex justify-between items-baseline mb-1">
           {visibility.showTitle && (
-            <ContentEditable
+            <PlainTextEditor
               value={item.title}
               onChange={(val) => actions.updateSectionItem(section.id, item.id, 'title', val)}
               className="font-bold text-gray-800"
@@ -160,7 +155,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
           )}
           {visibility.showDatePeriod && (
             <div className="flex items-center gap-1 group/date">
-              <ContentEditable
+              <PlainTextEditor
                 value={item.datePeriod || ''}
                 onChange={(val) => actions.updateSectionItem(section.id, item.id, 'datePeriod', val)}
                 className="text-xs text-gray-500 font-medium whitespace-nowrap ml-4"
@@ -172,7 +167,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
 
         <div className="mb-1 flex items-center gap-2 flex-wrap">
           {visibility.showSubtitle && (
-            <ContentEditable
+            <PlainTextEditor
               value={item.subtitle || ''}
               onChange={(val) => actions.updateSectionItem(section.id, item.id, 'subtitle', val)}
               className="text-sm font-semibold"
@@ -182,7 +177,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
           )}
           {visibility.showLocation && item.location && <span className="text-gray-300 text-xs">|</span>}
           {visibility.showLocation && (
-            <ContentEditable
+            <PlainTextEditor
               value={item.location || ''}
               onChange={(val) => actions.updateSectionItem(section.id, item.id, 'location', val)}
               className="text-xs text-gray-400"
@@ -192,8 +187,8 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
         </div>
 
         {visibility.showDescription && (
-          <ContentEditable
-            value={item.description || ''}
+          <RichTextEditor
+            value={item.description || []}
             onChange={(val) => actions.updateSectionItem(section.id, item.id, 'description', val)}
             className="text-sm text-gray-700 leading-relaxed mb-2 whitespace-pre-wrap"
             multiline
@@ -217,19 +212,6 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
     const section = content.sections.find(s => s.id === config.id);
     if (!section || !config.isVisible) return null;
 
-    // Filter Logic
-    if (pageLayout) {
-        const hasItems = section.items.some(i => pageLayout.items.has(i.id));
-        const hasHeader = pageLayout.headers.has(section.id);
-        const isContinued = pageLayout.continued.has(section.id);
-        
-        if (!hasItems && !hasHeader && !isContinued) return null;
-        
-        // Note: If !hasHeader, we should NOT render the main header.
-        // But the main header is rendered inside this component below.
-        // We need to conditionally render the header *inside* the return.
-    }
-
     const showMainHeader = pageLayout ? pageLayout.headers.has(section.id) : true;
 
     return (
@@ -240,7 +222,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
             style={{ borderColor: accentColor }}
             data-resume-section-header={section.id}
           >
-            <ContentEditable
+            <PlainTextEditor
               tagName="h3"
               value={section.title}
               onChange={(val) => actions.updateSectionTitle(section.id, val)}
@@ -258,7 +240,6 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header - Only render on Page 0 or if measuring (no pageLayout) */}
       {(!pageLayout || pageLayout.pageIndex === 0) && (
         <div 
           className={cn(
@@ -283,7 +264,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
             />
           )}
           <header className="flex-1 mt-0">
-            <ContentEditable
+            <PlainTextEditor
               tagName="h1"
               value={content.personalInfo.fullName}
               onChange={(val) => actions.updatePersonalInfo('fullName', val)}
@@ -291,7 +272,7 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
               style={{ color: accentColor }}
             />
             {visibility.showJobTitle && (
-              <ContentEditable
+              <PlainTextEditor
                 tagName="h2"
                 value={content.personalInfo.jobTitle || ''}
                 onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
@@ -300,13 +281,13 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
             )}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400 mt-6 font-medium">
               {visibility.showAddress && (
-                <span>📍 <ContentEditable tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
+                <span>📍 <PlainTextEditor tagName="span" value={content.personalInfo.address} onChange={v => actions.updatePersonalInfo('address', v)} /></span>
               )}
               {visibility.showEmail && (
-                <span>📧 <ContentEditable tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
+                <span>📧 <PlainTextEditor tagName="span" value={content.personalInfo.email} onChange={v => actions.updatePersonalInfo('email', v)} /></span>
               )}
               {visibility.showPhone && (
-                <span>📞 <ContentEditable tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
+                <span>📞 <PlainTextEditor tagName="span" value={content.personalInfo.phone} onChange={v => actions.updatePersonalInfo('phone', v)} /></span>
               )}
             </div>
           </header>
@@ -323,7 +304,6 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
         </div>
       )}
 
-      {/* Columns Logic */}
       <div className="flex-1">
         {layout.sections.map(renderSection)}
       </div>

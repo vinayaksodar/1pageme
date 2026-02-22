@@ -4,11 +4,11 @@ import React from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { Section, SectionItem, ResumeData } from '@/types/resume';
 import { cn } from '@/lib/utils';
-import ContentEditable from '@/components/ui/ContentEditable';
+import PlainTextEditor from '@/components/ui/PlainTextEditor';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import FloatingToolbar from '../FloatingToolbar';
 import { PageLayout } from '@/hooks/useResumePagination';
 import { Camera } from 'lucide-react';
-
 import { ResumeBulletList } from '@/components/resume/ResumeBulletList';
 
 interface TemplateProps {
@@ -17,7 +17,7 @@ interface TemplateProps {
   setFocusedItemId: (id: string | null) => void;
   pageLayout?: PageLayout;
   actions: {
-    updatePersonalInfo: (field: string, value: string) => void;
+    updatePersonalInfo: (field: string, value: any) => void;
     updatePersonalInfoVisibility: (visibility: any) => void;
     updateSectionTitle: (sectionId: string, title: string) => void;
     updateSectionItem: (sectionId: string, itemId: string, field: keyof SectionItem, value: any) => void;
@@ -73,7 +73,6 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
   const layout = layouts[activeTemplateId];
   const { accentColor } = layout.globalStyles;
 
-  // Defensive check for visibility (for existing resumes)
   const visibility = content.personalInfo.visibility || {
     showJobTitle: true,
     showEmail: true,
@@ -83,12 +82,10 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
   };
 
   const renderItem = (section: Section, item: SectionItem, index: number, total: number) => {
-    // Filter Logic
     if (pageLayout && !pageLayout.items.has(item.id)) return null;
 
     const { visibility } = item;
     
-    // Continued Header Logic
     const isFirstOnPage = pageLayout 
        ? section.items.find(i => pageLayout.items.has(i.id))?.id === item.id
        : index === 0;
@@ -121,12 +118,12 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
           onClick={() => setFocusedItemId(item.id)}
         >
         {focusedItemId === item.id && !isTextSelected && (
-                    <FloatingToolbar 
-                      sectionId={section.id}
-                      itemId={item.id}
-                      sectionType={section.type}
-                      settings={item.visibility}
-                      onAdd={() => actions.addSectionItem(section.id)}
+          <FloatingToolbar 
+            sectionId={section.id}
+            itemId={item.id}
+            sectionType={section.type}
+            settings={item.visibility}
+            onAdd={() => actions.addSectionItem(section.id)}
             onDelete={() => actions.removeSectionItem(section.id, item.id)}
             isFirst={index === 0}
             isLast={index === total - 1}
@@ -139,7 +136,7 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
 
         <div className="mb-1">
           {visibility.showTitle && (
-            <ContentEditable
+            <PlainTextEditor
               value={item.title}
               onChange={(val) => actions.updateSectionItem(section.id, item.id, 'title', val)}
               className="font-bold text-gray-900 text-base"
@@ -148,7 +145,7 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
           )}
           <div className="flex items-center justify-between mt-0.5">
             {visibility.showSubtitle && (
-              <ContentEditable
+              <PlainTextEditor
                 value={item.subtitle || ''}
                 onChange={(val) => actions.updateSectionItem(section.id, item.id, 'subtitle', val)}
                 className="text-sm font-bold uppercase tracking-tight"
@@ -158,7 +155,7 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
             )}
             {visibility.showDatePeriod && (
               <div className="flex items-center gap-1 group/date">
-                <ContentEditable
+                <PlainTextEditor
                   value={item.datePeriod || ''}
                   onChange={(val) => actions.updateSectionItem(section.id, item.id, 'datePeriod', val)}
                   className="text-[10px] font-black uppercase text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded"
@@ -170,8 +167,8 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
         </div>
 
         {visibility.showDescription && (
-          <ContentEditable
-            value={item.description || ''}
+          <RichTextEditor
+            value={item.description || []}
             onChange={(val) => actions.updateSectionItem(section.id, item.id, 'description', val)}
             className="text-xs text-gray-600 leading-snug mb-2 italic"
             multiline
@@ -197,15 +194,6 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
   const renderSection = (config: { id: string, isVisible: boolean }) => {
     const section = content.sections.find(s => s.id === config.id);
     if (!section || !config.isVisible) return null;
-
-    // Filter Logic
-    if (pageLayout) {
-        const hasItems = section.items.some(i => pageLayout.items.has(i.id));
-        const hasHeader = pageLayout.headers.has(section.id);
-        const isContinued = pageLayout.continued.has(section.id);
-        
-        if (!hasItems && !hasHeader && !isContinued) return null;
-    }
     
     const showMainHeader = pageLayout ? pageLayout.headers.has(section.id) : true;
 
@@ -216,7 +204,7 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
             className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-4"
             data-resume-section-header={section.id}
           >
-             <ContentEditable
+             <PlainTextEditor
                tagName="span"
                value={section.title}
                onChange={(val) => actions.updateSectionTitle(section.id, val)}
@@ -232,14 +220,12 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
     );
   };
 
-  // Modern uses 2 columns based on layout config
   const mainSections = layout.sections.filter(s => s.column === 1 || !s.column);
   const sideSections = layout.sections.filter(s => s.column === 2);
 
   return (
     <div className="w-full flex flex-col h-full">
       <div className="grid grid-cols-[2fr_1fr] gap-x-10 w-full">
-        {/* Header - Spans full width */}
         {(!pageLayout || pageLayout.pageIndex === 0) && (
           <div 
             className={cn(
@@ -265,14 +251,14 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
             )}
             <header className="flex-1 flex justify-between items-start gap-8 w-full mt-0">
               <div className="max-w-[50%]">
-                <ContentEditable
+                <PlainTextEditor
                   tagName="h1"
                   value={content.personalInfo.fullName}
                   onChange={(val) => actions.updatePersonalInfo('fullName', val)}
                   className="text-6xl font-black uppercase leading-[0.9] tracking-tighter mb-4"
                 />
                 {visibility.showJobTitle && (
-                  <ContentEditable
+                  <PlainTextEditor
                     tagName="h2"
                     value={content.personalInfo.jobTitle || ''}
                     onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
@@ -295,21 +281,21 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
               )}
               <div className="text-right text-[10px] font-bold uppercase tracking-widest space-y-2 text-gray-400">
                 {visibility.showAddress && (
-                  <ContentEditable 
+                  <PlainTextEditor 
                     value={content.personalInfo.address} 
                     onChange={v => actions.updatePersonalInfo('address', v)} 
                     placeholder="Address"
                   />
                 )}
                 {visibility.showEmail && (
-                  <ContentEditable 
+                  <PlainTextEditor 
                     value={content.personalInfo.email} 
                     onChange={v => actions.updatePersonalInfo('email', v)} 
                     placeholder="Email"
                   />
                 )}
                 {visibility.showPhone && (
-                  <ContentEditable 
+                  <PlainTextEditor 
                     value={content.personalInfo.phone} 
                     onChange={v => actions.updatePersonalInfo('phone', v)} 
                     placeholder="Phone"
@@ -320,7 +306,6 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
           </div>
         )}
 
-        {/* Content Columns - Always aligned to the same grid */}
         <div className="col-span-1 flex flex-col">
           {mainSections.map(renderSection)}
         </div>

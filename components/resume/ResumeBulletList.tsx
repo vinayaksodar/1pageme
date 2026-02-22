@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ContentEditable from "@/components/ui/ContentEditable";
-import { StructuredText } from "@/types/resume";
-import { emptyStructuredText, structuredTextToString } from "@/lib/utils";
+import RichTextEditor from "@/components/ui/RichTextEditor";
+import { TextNode } from "@/types/resume";
+import { emptyTextNodes } from "@/lib/utils";
 
 interface ResumeBulletListProps {
-  items: StructuredText[];
-  onUpdate: (items: StructuredText[]) => void;
+  items: TextNode[][];
+  onUpdate: (items: TextNode[][]) => void;
   className?: string;
   itemClassName?: string;
   contentEditableClassName?: string;
@@ -26,8 +26,6 @@ export const ResumeBulletList = ({
 
   useEffect(() => {
     if (focusIndex !== null) {
-      // This is a bit of a hack to focus the new item.
-      // A more robust solution might involve passing a ref to ContentEditable.
       setTimeout(() => {
         const item = document.querySelector(`[data-bullet-index="${focusIndex}"]`);
         if (item) {
@@ -44,17 +42,16 @@ export const ResumeBulletList = ({
     if (e.key === "Enter") {
       e.preventDefault();
       const newItems = [...items];
-      newItems.splice(index + 1, 0, emptyStructuredText());
+      newItems.splice(index + 1, 0, emptyTextNodes());
       onUpdate(newItems);
       setFocusIndex(index + 1);
     }
 
     if (e.key === "Backspace") {
-      const currentText = structuredTextToString(items[index]);
+      const currentText = items[index].map(n => n.text).join('');
       if (currentText === "" && index > 0) {
         e.preventDefault();
         const newItems = [...items];
-        const textToPrepend = structuredTextToString(items[index-1]);
         newItems.splice(index, 1);
         onUpdate(newItems);
         setFocusIndex(index - 1);
@@ -62,7 +59,7 @@ export const ResumeBulletList = ({
     }
   };
 
-  const handleChange = (val: StructuredText, index: number) => {
+  const handleChange = (val: TextNode[], index: number) => {
     const newItems = [...items];
     newItems[index] = val;
     onUpdate(newItems);
@@ -73,14 +70,12 @@ export const ResumeBulletList = ({
       {items.map((bullet, idx) => (
         <li key={idx} className={itemClassName}>
           {renderBullet && renderBullet(idx)}
-          <ContentEditable
+          <RichTextEditor
             value={bullet}
             onChange={(val) => handleChange(val, idx)}
             className={contentEditableClassName}
             autoFocus={focusIndex === idx}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            // The data-attribute is used for focusing
-            // This is not a standard prop, so it will be passed to the underlying div
             // @ts-ignore
             data-bullet-index={idx}
           />

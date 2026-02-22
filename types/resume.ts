@@ -16,11 +16,11 @@ export interface TextNode {
   marks?: Mark[];
 }
 
-export interface StructuredText {
-  type: 'doc';
-  content: TextNode[];
+export interface TextNode {
+  type: 'text';
+  text: string;
+  marks?: Mark[];
 }
-// End Structured Text Types
 
 export interface ItemVisibility {
   showTitle: boolean;
@@ -36,10 +36,10 @@ export interface ItemVisibility {
 export interface SectionItem {
   id: string;
   // Semantic Data
-  title: StructuredText;
-  subtitle?: StructuredText; // Company Name / Institution
-  description?: StructuredText;
-  bullets?: StructuredText[];
+  title: string;
+  subtitle?: string; // Company Name / Institution
+  description?: TextNode[];
+  bullets?: TextNode[][];
   location?: string;
   datePeriod?: string;
   link?: string;
@@ -52,7 +52,7 @@ export interface SectionItem {
 export interface Section {
   id: string;
   type: SectionType;
-  title: StructuredText;
+  title: string;
   items: SectionItem[]; 
 }
 
@@ -78,14 +78,14 @@ export type TemplateId = 'standard' | 'modern' | 'minimal';
 
 export interface ResumeData {
   id:string;
-  title: StructuredText;
+  title: string;
   content: {
     personalInfo: {
-      fullName: StructuredText;
+      fullName: string;
       email: string;
       phone: string;
-      address: StructuredText;
-      jobTitle?: StructuredText;
+      address: string;
+      jobTitle?: string;
       profileImage?: string;
       profileImageShape?: 'circle' | 'squircle';
       visibility: {

@@ -6,16 +6,13 @@ import ResumePreview from "../resume/ResumePreview";
 import { useReactToPrint } from "react-to-print";
 import { Download, Share2, ChevronLeft } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
-import { structuredTextToString } from "@/lib/utils";
 
 const EditorLayout = () => {
   const { activeResumeId, resumes, setActiveResume } = useResumeStore();
   const contentRef = useRef<HTMLDivElement>(null);
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
-  const resumeTitle = activeResume
-    ? structuredTextToString(activeResume.title)
-    : "Resume";
+  const resumeTitle = activeResume ? activeResume.title : "Resume";
 
   const handlePrint = useReactToPrint({
     contentRef: contentRef,

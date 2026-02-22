@@ -20,7 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Eye, EyeOff, Trash2, Columns } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
-import { cn, structuredTextToString } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 // Individual Sortable Item
 const SortableItem = ({ section, config }: { section: any; config: any }) => {
@@ -63,7 +63,7 @@ const SortableItem = ({ section, config }: { section: any; config: any }) => {
 
       <div className="flex-1 flex flex-col">
         <span className="font-bold text-xs text-gray-800 capitalize">
-          {structuredTextToString(section.title) || section.type}
+          {section.title || section.type}
         </span>
         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
           Column {config.column || 1}
@@ -94,7 +94,6 @@ const SortableItem = ({ section, config }: { section: any; config: any }) => {
     </div>
   );
 };
-
 export const SortableSectionList = () => {
   const { resumes, activeResumeId, reorderSections } = useResumeStore();
 

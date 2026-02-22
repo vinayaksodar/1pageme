@@ -1,7 +1,6 @@
 import React from 'react';
 import { useResumeStore } from '@/store/useResumeStore';
 import { Plus, FileText, Trash2, Clock } from 'lucide-react';
-import { structuredTextToString } from '@/lib/utils';
 
 const Dashboard = () => {
   const { resumes, createNewResume, setActiveResume, deleteResume } = useResumeStore();
@@ -35,7 +34,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                   <FileText size={24} />
                 </div>
-                <h3 className="font-bold text-lg text-gray-900 truncate">{structuredTextToString(resume.title) || 'Untitled Resume'}</h3>
+                <h3 className="font-bold text-lg text-gray-900 truncate">{resume.title || 'Untitled Resume'}</h3>
                 <div className="flex items-center gap-2 text-gray-400 text-xs mt-2">
                   <Clock size={12} />
                   <span>Last edited recently</span>

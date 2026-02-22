@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, PersistStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { 
   ResumeData, 
   SectionType, 
@@ -10,51 +10,17 @@ import {
   TemplateId, 
   TemplateLayout, 
   Section,
-  StructuredText
+  TextNode
 } from '@/types/resume';
 import { 
   SECTION_SCHEMAS, 
   getInitialVisibility, 
   createInitialResume 
 } from '@/lib/resume-config';
-import { htmlToStructuredText, stringToStructuredText, emptyStructuredText } from '@/lib/utils';
+import { emptyTextNodes } from '@/lib/utils';
 
 // This is a simplified deep-clone, sufficient for our state
 const deepClone = (obj: any) => JSON.parse(JSON.stringify(obj));
-
-const migrateResumeData = (resume: ResumeData): ResumeData => {
-  const newResume = deepClone(resume);
-
-  const toStructured = (field: any): StructuredText => {
-    if (typeof field === 'string') {
-      return htmlToStructuredText(field);
-    }
-    // Assume it's already StructuredText if it's not a string
-    return field as StructuredText;
-  };
-  
-  newResume.title = toStructured(newResume.title);
-
-  const pi = newResume.content.personalInfo;
-  pi.fullName = toStructured(pi.fullName);
-  pi.jobTitle = toStructured(pi.jobTitle);
-  pi.address = toStructured(pi.address);
-
-  newResume.content.sections.forEach((section: Section) => {
-    section.title = toStructured(section.title);
-    section.items.forEach((item: any) => { // Use any to handle old structure
-      item.title = toStructured(item.title);
-      item.subtitle = toStructured(item.subtitle);
-      item.description = toStructured(item.description);
-      if (item.bullets && Array.isArray(item.bullets)) {
-        item.bullets = item.bullets.map(toStructured);
-      }
-    });
-  });
-
-  return newResume;
-};
-
 
 export interface ResumeState {
   resumes: ResumeData[];
@@ -66,9 +32,9 @@ export interface ResumeState {
   deleteResume: (id: string) => void;
   setActiveResume: (id: string) => void;
   setIsTextSelected: (isSelected: boolean) => void;
-  updatePersonalInfo: (field: string, value: any) => void;
+  updatePersonalInfo: (field: string, value: string) => void;
   updatePersonalInfoVisibility: (visibility: any) => void;
-  updateSectionTitle: (sectionId: string, title: StructuredText) => void;
+  updateSectionTitle: (sectionId: string, title: string) => void;
   updateSectionItem: (sectionId: string, itemId: string, field: keyof SectionItem, value: any) => void;
   updateItemVisibility: (sectionId: string, itemId: string, visibility: Partial<ItemVisibility>) => void;
   addSectionItem: (sectionId: string) => void;
@@ -174,9 +140,9 @@ export const useResumeStore = create<ResumeState>()(
               ...s,
               items: [...s.items, {
                 id: Math.random().toString(36).substr(2, 9),
-                title: stringToStructuredText('New Item'),
-                subtitle: emptyStructuredText(),
-                description: emptyStructuredText(),
+                title: 'New Item',
+                subtitle: '',
+                description: emptyTextNodes(),
                 bullets: [],
                 location: '',
                 datePeriod: '',
@@ -238,9 +204,9 @@ export const useResumeStore = create<ResumeState>()(
         
         const initialItem: SectionItem = {
           id: Math.random().toString(36).substr(2, 9),
-          title: stringToStructuredText('New Item'),
-          subtitle: emptyStructuredText(),
-          description: emptyStructuredText(),
+          title: 'New Item',
+          subtitle: '',
+          description: emptyTextNodes(),
           bullets: [],
           location: '',
           datePeriod: '',
@@ -251,7 +217,7 @@ export const useResumeStore = create<ResumeState>()(
         const newSection: Section = {
           id: newSectionId,
           type,
-          title: stringToStructuredText(type.toUpperCase()),
+          title: type.toUpperCase(),
           items: [initialItem]
         };
         
@@ -339,16 +305,7 @@ export const useResumeStore = create<ResumeState>()(
       }))
     }),
     { 
-      name: 'resume-storage-v4',
-      onRehydrateStorage: () => (state, error) => {
-        if (error || !state) return;
-        
-        console.log('Rehydrating and migrating state...');
-        
-        const migratedResumes = state.resumes.map(migrateResumeData);
-        
-        state.resumes = migratedResumes;
-      }
+      name: 'resume-storage-v5',
     }
   )
 );

@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 import { ExternalLink, Trash2, Edit2 } from "lucide-react";
 import TextSelectionToolbar from "./TextSelectionToolbar";
 import { useResumeStore } from "@/store/useResumeStore";
-import { StructuredText } from "@/types/resume";
-import { structuredTextToHtml, htmlToStructuredText } from "@/lib/utils";
+import { TextNode } from "@/types/resume";
+import { textNodesToHtml, htmlToTextNodes } from "@/lib/utils";
 
-interface ContentEditableProps {
-  value: StructuredText | string;
-  onChange: (value: StructuredText) => void;
+interface RichTextEditorProps {
+  value: TextNode[];
+  onChange: (value: TextNode[]) => void;
   tagName?: string;
   className?: string;
   placeholder?: string;
@@ -20,7 +20,7 @@ interface ContentEditableProps {
   autoFocus?: boolean;
 }
 
-const ContentEditable = ({
+const RichTextEditor = ({
   value,
   onChange,
   tagName = "div",
@@ -30,18 +30,11 @@ const ContentEditable = ({
   style,
   onKeyDown,
   autoFocus,
-}: ContentEditableProps) => {
+}: RichTextEditorProps) => {
   const { setIsTextSelected } = useResumeStore();
   const contentEditableRef = useRef<HTMLElement>(null);
-  const [toolbarPosition, setToolbarPosition] = useState<{
-    top: number;
-    left: number;
-  } | null>(null);
-  const [activeLinkInfo, setActiveLinkInfo] = useState<{
-    url: string;
-    element: HTMLAnchorElement;
-    position: { top: number; left: number };
-  } | null>(null);
+  const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number; } | null>(null);
+  const [activeLinkInfo, setActiveLinkInfo] = useState<{ url: string; element: HTMLAnchorElement; position: { top: number; left: number }; } | null>(null);
 
   const lastValue = useRef(value);
 
@@ -54,7 +47,7 @@ const ContentEditable = ({
   useEffect(() => {
     if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
       const currentHtml = contentEditableRef.current.innerHTML;
-      const newHtml = structuredTextToHtml(value);
+      const newHtml = textNodesToHtml(value);
       if (currentHtml !== newHtml) {
         contentEditableRef.current.innerHTML = newHtml;
       }
@@ -62,22 +55,23 @@ const ContentEditable = ({
     lastValue.current = value;
   }, [value]);
 
-  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
-    const newHtml = e.target.innerHTML;
-    const newStructuredText = htmlToStructuredText(newHtml);
-    if (JSON.stringify(newStructuredText) !== JSON.stringify(lastValue.current)) {
-      onChange(newStructuredText);
+  const processChange = (html: string) => {
+    const newTextNodes = htmlToTextNodes(html);
+    if (JSON.stringify(newTextNodes) !== JSON.stringify(lastValue.current)) {
+      onChange(newTextNodes);
+      lastValue.current = newTextNodes;
     }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+    processChange(e.target.innerHTML);
     setToolbarPosition(null);
     setIsTextSelected(false);
     setTimeout(() => setActiveLinkInfo(null), 200);
   };
 
   const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    const newHtml = e.currentTarget.innerHTML;
-    const newStructuredText = htmlToStructuredText(newHtml);
-    lastValue.current = newStructuredText;
-    onChange(newStructuredText);
+    processChange(e.currentTarget.innerHTML);
   };
 
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -109,7 +103,7 @@ const ContentEditable = ({
           parent.insertBefore(anchor.firstChild, anchor);
         }
         parent.removeChild(anchor);
-        onChange(htmlToStructuredText(contentEditableRef.current.innerHTML));
+        processChange(contentEditableRef.current.innerHTML);
       }
       setActiveLinkInfo(null);
     }
@@ -122,7 +116,7 @@ const ContentEditable = ({
       const anchor = contentEditableRef.current.querySelector(`a[href="${activeLinkInfo.element.href}"]`) as HTMLAnchorElement;
       if (anchor) {
         anchor.href = absoluteUrl;
-        onChange(htmlToStructuredText(contentEditableRef.current.innerHTML));
+        processChange(contentEditableRef.current.innerHTML);
         setActiveLinkInfo({ ...activeLinkInfo, url: absoluteUrl, element: anchor });
       }
     }
@@ -221,4 +215,4 @@ const ContentEditable = ({
   );
 };
 
-export default ContentEditable;
+export default RichTextEditor;

@@ -1,37 +1,30 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { StructuredText, TextNode, Mark } from "@/types/resume";
+import { TextNode, Mark } from "@/types/resume";
 import { escape } from 'lodash';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function emptyStructuredText(): StructuredText {
-  return { type: 'doc', content: [{ type: 'text', text: '' }] };
+export function emptyTextNodes(): TextNode[] {
+  return [{ type: 'text', text: '' }];
 }
 
-export function stringToStructuredText(text: string): StructuredText {
-  if (!text) return emptyStructuredText();
-  return { type: 'doc', content: [{ type: 'text', text }] };
+export function textNodesToString(nodes: TextNode[]): string {
+  if (!nodes) return '';
+  return nodes.map(n => n.text).join('');
 }
 
-export function structuredTextToString(doc: StructuredText | string | undefined): string {
-  if (!doc) return '';
-  if (typeof doc === 'string') return doc;
-  return doc.content?.map(node => node.text).join('') || '';
-}
-
-export function structuredTextToHtml(doc: StructuredText | string | undefined): string {
-  if (!doc) return '';
-  if (typeof doc === 'string') {
+export function textNodesToHtml(nodes: TextNode[] | string | undefined): string {
+  if (!nodes) return '';
+  if (typeof nodes === 'string') {
     // If it's a plain string, just escape it and return.
-    // This is a fallback for data that might not have been migrated yet.
-    return escape(doc);
+    return escape(nodes);
   }
-  if (!doc.content) return '';
+  if (!Array.isArray(nodes)) return '';
 
-  return doc.content.map(node => {
+  return nodes.map(node => {
     let children = escape(node.text);
     if (node.marks) {
       // Order of wrapping is important for proper nesting
@@ -58,9 +51,9 @@ export function structuredTextToHtml(doc: StructuredText | string | undefined): 
 }
 
 
-export function htmlToStructuredText(html: string): StructuredText {
+export function htmlToTextNodes(html: string): TextNode[] {
   if (typeof window === 'undefined') {
-    return stringToStructuredText(html); // Fallback for SSR
+    return [{ type: 'text', text: html }]; // Fallback for SSR
   }
 
   // 1. Create a container and parse the HTML
@@ -120,8 +113,8 @@ export function htmlToStructuredText(html: string): StructuredText {
   }
 
   if (mergedNodes.length === 0) {
-    return emptyStructuredText();
+    return emptyTextNodes();
   }
 
-  return { type: 'doc', content: mergedNodes };
+  return mergedNodes;
 }

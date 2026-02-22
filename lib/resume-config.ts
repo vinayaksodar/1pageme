@@ -9,7 +9,6 @@ import {
   Section, 
   ResumeData 
 } from '@/types/resume';
-import { stringToStructuredText } from './utils';
 
 export const SECTION_SCHEMAS: Record<SectionType, { 
   fields: (keyof ItemVisibility)[], 
@@ -91,12 +90,12 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
     {
       id: 'summary',
       type: 'summary',
-      title: stringToStructuredText('SUMMARY'),
+      title: 'SUMMARY',
       items: [
         {
           id: 's1',
-          title: stringToStructuredText(''),
-          description: stringToStructuredText('Experienced software engineer with a focus on React and Next.js...'),
+          title: '',
+          description: [{type: 'text', text: 'Experienced software engineer with a focus on React and Next.js...'}],
           visibility: { 
             showTitle: false, showSubtitle: false, showDescription: true, 
             showBullets: false, showLocation: false, showDatePeriod: false,
@@ -108,7 +107,7 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
     {
       id: 'experience',
       type: 'experience',
-      title: stringToStructuredText('EXPERIENCE'),
+      title: 'EXPERIENCE',
       items: []
     }
   ];
@@ -117,14 +116,14 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
 
   return {
     id,
-    title: stringToStructuredText(title),
+    title: title,
     content: {
       personalInfo: {
-        fullName: stringToStructuredText('VINAYAK SODAR'),
-        jobTitle: stringToStructuredText('Software Engineer'),
+        fullName: 'VINAYAK SODAR',
+        jobTitle: 'Software Engineer',
         email: 'vinayak@example.com',
         phone: '+1 234 567 890',
-        address: stringToStructuredText('San Francisco, CA'),
+        address: 'San Francisco, CA',
         profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vinayak',
         profileImageShape: 'circle',
         visibility: {
