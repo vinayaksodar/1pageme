@@ -1,5 +1,27 @@
 export type SectionType = 'summary' | 'experience' | 'education' | 'projects' | 'skills' | 'custom';
 
+// Structured Text Types
+export type MarkType = 'bold' | 'italic' | 'underline' | 'strikethrough';
+export interface LinkMark {
+  type: 'link';
+  attrs: {
+    href: string;
+  };
+}
+export type Mark = MarkType | LinkMark;
+
+export interface TextNode {
+  type: 'text';
+  text: string;
+  marks?: Mark[];
+}
+
+export interface StructuredText {
+  type: 'doc';
+  content: TextNode[];
+}
+// End Structured Text Types
+
 export interface ItemVisibility {
   showTitle: boolean;
   showSubtitle: boolean;
@@ -14,10 +36,10 @@ export interface ItemVisibility {
 export interface SectionItem {
   id: string;
   // Semantic Data
-  title: string;
-  subtitle?: string; // Company Name / Institution
-  description?: string;
-  bullets?: string[];
+  title: StructuredText;
+  subtitle?: StructuredText; // Company Name / Institution
+  description?: StructuredText;
+  bullets?: StructuredText[];
   location?: string;
   datePeriod?: string;
   link?: string;
@@ -30,7 +52,7 @@ export interface SectionItem {
 export interface Section {
   id: string;
   type: SectionType;
-  title: string;
+  title: StructuredText;
   items: SectionItem[]; 
 }
 
@@ -55,15 +77,15 @@ export interface TemplateLayout {
 export type TemplateId = 'standard' | 'modern' | 'minimal';
 
 export interface ResumeData {
-  id: string;
-  title: string;
+  id:string;
+  title: StructuredText;
   content: {
     personalInfo: {
-      fullName: string;
+      fullName: StructuredText;
       email: string;
       phone: string;
-      address: string;
-      jobTitle?: string;
+      address: StructuredText;
+      jobTitle?: StructuredText;
       profileImage?: string;
       profileImageShape?: 'circle' | 'squircle';
       visibility: {

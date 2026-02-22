@@ -9,6 +9,8 @@ import FloatingToolbar from '../FloatingToolbar';
 import { PageLayout } from '@/hooks/useResumePagination';
 import { Camera } from 'lucide-react';
 
+import { ResumeBulletList } from '@/components/resume/ResumeBulletList';
+
 interface TemplateProps {
   resume: ResumeData;
   focusedItemId: string | null;
@@ -200,21 +202,11 @@ export const StandardTemplate = ({ resume, focusedItemId, setFocusedItemId, page
         )}
 
         {visibility.showBullets && item.bullets && (
-          <ul className="list-disc list-outside ml-4 text-sm text-gray-700 space-y-1">
-            {item.bullets.map((bullet, idx) => (
-              <li key={idx}>
-                <ContentEditable
-                  value={bullet}
-                  onChange={(val) => {
-                    const newBullets = [...(item.bullets || [])];
-                    newBullets[idx] = val;
-                    actions.updateSectionItem(section.id, item.id, 'bullets', newBullets);
-                  }}
-                  multiline
-                />
-              </li>
-            ))}
-          </ul>
+          <ResumeBulletList
+            items={item.bullets}
+            onUpdate={(newBullets) => actions.updateSectionItem(section.id, item.id, 'bullets', newBullets)}
+            className="list-disc list-outside ml-4 text-sm text-gray-700 space-y-1"
+          />
         )}
       </div>
       </React.Fragment>

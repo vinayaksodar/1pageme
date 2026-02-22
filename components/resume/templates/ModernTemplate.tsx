@@ -9,6 +9,8 @@ import FloatingToolbar from '../FloatingToolbar';
 import { PageLayout } from '@/hooks/useResumePagination';
 import { Camera } from 'lucide-react';
 
+import { ResumeBulletList } from '@/components/resume/ResumeBulletList';
+
 interface TemplateProps {
   resume: ResumeData;
   focusedItemId: string | null;
@@ -177,22 +179,15 @@ export const ModernTemplate = ({ resume, focusedItemId, setFocusedItemId, pageLa
         )}
 
         {visibility.showBullets && item.bullets && (
-          <ul className="list-none space-y-1.5">
-            {item.bullets.map((bullet, idx) => (
-              <li key={idx} className="text-xs text-gray-700 flex gap-2">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor }} />
-                <ContentEditable
-                  value={bullet}
-                  onChange={(val) => {
-                    const newBullets = [...(item.bullets || [])];
-                    newBullets[idx] = val;
-                    actions.updateSectionItem(section.id, item.id, 'bullets', newBullets);
-                  }}
-                  multiline
-                />
-              </li>
-            ))}
-          </ul>
+          <ResumeBulletList
+            items={item.bullets}
+            onUpdate={(newBullets) => actions.updateSectionItem(section.id, item.id, 'bullets', newBullets)}
+            className="list-none space-y-1.5"
+            itemClassName="text-xs text-gray-700 flex gap-2"
+            renderBullet={() => (
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor }} />
+            )}
+          />
         )}
       </div>
       </React.Fragment>

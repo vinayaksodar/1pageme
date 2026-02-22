@@ -5,15 +5,19 @@ import { cn } from "@/lib/utils";
 import { ExternalLink, Trash2, Edit2 } from "lucide-react";
 import TextSelectionToolbar from "./TextSelectionToolbar";
 import { useResumeStore } from "@/store/useResumeStore";
+import { StructuredText } from "@/types/resume";
+import { structuredTextToHtml, htmlToStructuredText } from "@/lib/utils";
 
 interface ContentEditableProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: StructuredText | string;
+  onChange: (value: StructuredText) => void;
   tagName?: string;
   className?: string;
   placeholder?: string;
   multiline?: boolean;
   style?: React.CSSProperties;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+  autoFocus?: boolean;
 }
 
 const ContentEditable = ({
@@ -24,6 +28,8 @@ const ContentEditable = ({
   placeholder,
   multiline = false,
   style,
+  onKeyDown,
+  autoFocus,
 }: ContentEditableProps) => {
   const { setIsTextSelected } = useResumeStore();
   const contentEditableRef = useRef<HTMLElement>(null);
@@ -37,31 +43,41 @@ const ContentEditable = ({
     position: { top: number; left: number };
   } | null>(null);
 
+  const lastValue = useRef(value);
+
   useEffect(() => {
-    if (
-      contentEditableRef.current &&
-      document.activeElement !== contentEditableRef.current
-    ) {
-      if (contentEditableRef.current.innerHTML !== value) {
-        contentEditableRef.current.innerHTML = value || "";
+    if (autoFocus && contentEditableRef.current) {
+      contentEditableRef.current.focus();
+    }
+  }, [autoFocus]);
+
+  useEffect(() => {
+    if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
+      const currentHtml = contentEditableRef.current.innerHTML;
+      const newHtml = structuredTextToHtml(value);
+      if (currentHtml !== newHtml) {
+        contentEditableRef.current.innerHTML = newHtml;
       }
     }
+    lastValue.current = value;
   }, [value]);
 
   const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
-    const newValue = e.target.innerHTML;
-    if (newValue !== value) {
-      onChange(newValue);
+    const newHtml = e.target.innerHTML;
+    const newStructuredText = htmlToStructuredText(newHtml);
+    if (JSON.stringify(newStructuredText) !== JSON.stringify(lastValue.current)) {
+      onChange(newStructuredText);
     }
     setToolbarPosition(null);
     setIsTextSelected(false);
-    // Delay hiding link info to allow clicking the remove button
     setTimeout(() => setActiveLinkInfo(null), 200);
   };
 
   const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    const newValue = e.currentTarget.innerHTML;
-    onChange(newValue);
+    const newHtml = e.currentTarget.innerHTML;
+    const newStructuredText = htmlToStructuredText(newHtml);
+    lastValue.current = newStructuredText;
+    onChange(newStructuredText);
   };
 
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -89,15 +105,11 @@ const ContentEditable = ({
       const anchor = activeLinkInfo.element;
       const parent = anchor.parentNode;
       if (parent) {
-        // Move all children of the anchor to be before it in the DOM
         while (anchor.firstChild) {
           parent.insertBefore(anchor.firstChild, anchor);
         }
-        // Remove the now-empty anchor
         parent.removeChild(anchor);
-
-        // Persist the change
-        onChange(contentEditableRef.current.innerHTML);
+        onChange(htmlToStructuredText(contentEditableRef.current.innerHTML));
       }
       setActiveLinkInfo(null);
     }
@@ -106,22 +118,12 @@ const ContentEditable = ({
   const editLink = () => {
     const newUrl = window.prompt("Edit URL:", activeLinkInfo?.url);
     if (newUrl && activeLinkInfo?.element && contentEditableRef.current) {
-      // Ensure the URL is absolute
-      const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(newUrl)
-        ? newUrl
-        : `https://${newUrl}`;
-      // Find the current anchor element in the DOM
-      const anchor = contentEditableRef.current.querySelector(
-        `a[href="${activeLinkInfo.element.href}"]`,
-      ) as HTMLAnchorElement;
+      const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(newUrl) ? newUrl : `https://${newUrl}`;
+      const anchor = contentEditableRef.current.querySelector(`a[href="${activeLinkInfo.element.href}"]`) as HTMLAnchorElement;
       if (anchor) {
         anchor.href = absoluteUrl;
-        onChange(contentEditableRef.current.innerHTML);
-        setActiveLinkInfo({
-          url: absoluteUrl,
-          element: anchor,
-          position: activeLinkInfo.position,
-        });
+        onChange(htmlToStructuredText(contentEditableRef.current.innerHTML));
+        setActiveLinkInfo({ ...activeLinkInfo, url: absoluteUrl, element: anchor });
       }
     }
   };
@@ -143,6 +145,11 @@ const ContentEditable = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (onKeyDown) {
+      onKeyDown(e);
+      if (e.defaultPrevented) return;
+    }
+    
     if (!multiline && e.key === "Enter") {
       e.preventDefault();
       e.currentTarget.blur();

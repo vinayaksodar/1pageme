@@ -32,7 +32,7 @@ const TextSelectionToolbar = ({ position }: TextSelectionToolbarProps) => {
       }}
       onMouseDown={(e) => e.preventDefault()} // Prevent losing selection
     >
-      <div className="flex items-center border-r border-gray-100 px-1">
+      <div className="flex items-center px-1">
         <button 
           onClick={() => applyFormat('bold')}
           className="p-2 hover:bg-gray-50 rounded-md transition-colors text-gray-500 hover:text-gray-900"
@@ -67,37 +67,6 @@ const TextSelectionToolbar = ({ position }: TextSelectionToolbarProps) => {
           title="Add Link"
         >
           <Link size={14} />
-        </button>
-      </div>
-
-      <div className="flex items-center px-1">
-        <button 
-          onClick={() => applyFormat('justifyLeft')}
-          className="p-2 hover:bg-gray-50 rounded-md transition-colors text-gray-500 hover:text-gray-900"
-          title="Align Left"
-        >
-          <AlignLeft size={14} />
-        </button>
-        <button 
-          onClick={() => applyFormat('justifyCenter')}
-          className="p-2 hover:bg-gray-50 rounded-md transition-colors text-gray-500 hover:text-gray-900"
-          title="Align Center"
-        >
-          <AlignCenter size={14} />
-        </button>
-        <button 
-          onClick={() => applyFormat('justifyRight')}
-          className="p-2 hover:bg-gray-50 rounded-md transition-colors text-gray-500 hover:text-gray-900"
-          title="Align Right"
-        >
-          <AlignRight size={14} />
-        </button>
-        <button 
-          onClick={() => applyFormat('justifyFull')}
-          className="p-2 hover:bg-gray-50 rounded-md transition-colors text-gray-500 hover:text-gray-900"
-          title="Justify"
-        >
-          <AlignJustify size={14} />
         </button>
       </div>
     </div>

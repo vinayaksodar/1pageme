@@ -9,10 +9,16 @@ import {
   Section, 
   ResumeData 
 } from '@/types/resume';
+import { stringToStructuredText } from './utils';
 
 export const SECTION_SCHEMAS: Record<SectionType, { 
   fields: (keyof ItemVisibility)[], 
-  defaults: Partial<SectionItem> 
+  defaults: Partial<Omit<SectionItem, 'title' | 'subtitle' | 'description' | 'bullets'>> & {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    bullets?: string[];
+  }
 }> = {
   summary: {
     fields: ['showDescription'],
@@ -85,12 +91,12 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
     {
       id: 'summary',
       type: 'summary',
-      title: 'SUMMARY',
+      title: stringToStructuredText('SUMMARY'),
       items: [
         {
           id: 's1',
-          title: '',
-          description: 'Experienced software engineer with a focus on React and Next.js...',
+          title: stringToStructuredText(''),
+          description: stringToStructuredText('Experienced software engineer with a focus on React and Next.js...'),
           visibility: { 
             showTitle: false, showSubtitle: false, showDescription: true, 
             showBullets: false, showLocation: false, showDatePeriod: false,
@@ -102,7 +108,7 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
     {
       id: 'experience',
       type: 'experience',
-      title: 'EXPERIENCE',
+      title: stringToStructuredText('EXPERIENCE'),
       items: []
     }
   ];
@@ -111,14 +117,14 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
 
   return {
     id,
-    title,
+    title: stringToStructuredText(title),
     content: {
       personalInfo: {
-        fullName: 'VINAYAK SODAR',
-        jobTitle: 'Software Engineer',
+        fullName: stringToStructuredText('VINAYAK SODAR'),
+        jobTitle: stringToStructuredText('Software Engineer'),
         email: 'vinayak@example.com',
         phone: '+1 234 567 890',
-        address: 'San Francisco, CA',
+        address: stringToStructuredText('San Francisco, CA'),
         profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vinayak',
         profileImageShape: 'circle',
         visibility: {
