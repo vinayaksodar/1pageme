@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { useResumeStore } from '@/store/useResumeStore'
-import { TemplateId, SectionType } from '@/types/resume'
-import { LayoutTemplate, Palette, MoveVertical } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { SortableSectionList } from './SortableSectionList'
+import React from "react";
+import { useResumeStore } from "@/store/useResumeStore";
+import { TemplateId, SectionType } from "@/types/resume";
+import { LayoutTemplate, Palette, MoveVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SortableSectionList } from "./SortableSectionList";
 
 const Sidebar = () => {
   const {
@@ -14,49 +14,49 @@ const Sidebar = () => {
     updateGlobalStyle,
     addSection,
     setTemplate,
-  } = useResumeStore()
+  } = useResumeStore();
   const [activeTab, setActiveTab] = React.useState<
-    'design' | 'rearrange' | 'templates'
-  >('design')
+    "design" | "rearrange" | "templates"
+  >("design");
 
-  const activeResume = resumes.find((r) => r.id === activeResumeId)
-  if (!activeResume) return null
-  const { layouts, activeTemplateId } = activeResume
-  const layout = layouts[activeTemplateId]
+  const activeResume = resumes.find((r) => r.id === activeResumeId);
+  if (!activeResume) return null;
+  const { layouts, activeTemplateId } = activeResume;
+  const layout = layouts[activeTemplateId];
 
   return (
     <div className="flex h-full flex-col">
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('design')}
+          onClick={() => setActiveTab("design")}
           className={cn(
-            'flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors',
-            activeTab === 'design'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-400 hover:text-gray-600',
+            "flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors",
+            activeTab === "design"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-400 hover:text-gray-600",
           )}
         >
           <Palette size={16} /> DESIGN
         </button>
         <button
-          onClick={() => setActiveTab('templates')}
+          onClick={() => setActiveTab("templates")}
           className={cn(
-            'flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors',
-            activeTab === 'templates'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-400 hover:text-gray-600',
+            "flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors",
+            activeTab === "templates"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-400 hover:text-gray-600",
           )}
         >
           <LayoutTemplate size={16} /> TEMPLATES
         </button>
         <button
-          onClick={() => setActiveTab('rearrange')}
+          onClick={() => setActiveTab("rearrange")}
           className={cn(
-            'flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors',
-            activeTab === 'rearrange'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-400 hover:text-gray-600',
+            "flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-black tracking-widest transition-colors",
+            activeTab === "rearrange"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-400 hover:text-gray-600",
           )}
         >
           <MoveVertical size={16} /> REARRANGE
@@ -65,7 +65,7 @@ const Sidebar = () => {
 
       {/* Content */}
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
-        {activeTab === 'design' && (
+        {activeTab === "design" && (
           <>
             {/* Margins */}
             <div className="space-y-3">
@@ -73,15 +73,15 @@ const Sidebar = () => {
                 Margins
               </label>
               <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1">
-                {['compact', 'standard', 'spacious'].map((m) => (
+                {["compact", "standard", "spacious"].map((m) => (
                   <button
                     key={m}
-                    onClick={() => updateGlobalStyle('margins', m)}
+                    onClick={() => updateGlobalStyle("margins", m)}
                     className={cn(
-                      'flex-1 rounded-lg py-2 text-[10px] font-bold tracking-tighter uppercase transition-all',
+                      "flex-1 rounded-lg py-2 text-[10px] font-bold tracking-tighter uppercase transition-all",
                       layout.globalStyles.margins === m
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600',
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-400 hover:text-gray-600",
                     )}
                   >
                     {m}
@@ -97,23 +97,23 @@ const Sidebar = () => {
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {[
-                  '#38bdf8',
-                  '#3b82f6',
-                  '#8b5cf6',
-                  '#ec4899',
-                  '#f43f5e',
-                  '#f97316',
-                  '#10b981',
-                  '#111827',
+                  "#38bdf8",
+                  "#3b82f6",
+                  "#8b5cf6",
+                  "#ec4899",
+                  "#f43f5e",
+                  "#f97316",
+                  "#10b981",
+                  "#111827",
                 ].map((color) => (
                   <button
                     key={color}
-                    onClick={() => updateGlobalStyle('accentColor', color)}
+                    onClick={() => updateGlobalStyle("accentColor", color)}
                     className={cn(
-                      'h-7 w-7 rounded-full border-2 transition-all',
+                      "h-7 w-7 rounded-full border-2 transition-all",
                       layout.globalStyles.accentColor === color
-                        ? 'scale-110 border-gray-900'
-                        : 'border-transparent hover:scale-105 hover:shadow-md',
+                        ? "scale-110 border-gray-900"
+                        : "border-transparent hover:scale-105 hover:shadow-md",
                     )}
                     style={{ backgroundColor: color }}
                   />
@@ -127,19 +127,19 @@ const Sidebar = () => {
                 Font Family
               </label>
               <div className="grid grid-cols-1 gap-2">
-                {['Rubik', 'Inter', 'Serif'].map((font) => (
+                {["Rubik", "Inter", "Serif"].map((font) => (
                   <button
                     key={font}
-                    onClick={() => updateGlobalStyle('fontFamily', font)}
+                    onClick={() => updateGlobalStyle("fontFamily", font)}
                     className={cn(
-                      'flex items-center rounded-xl border-2 px-4 py-2.5 text-xs font-bold transition-all',
+                      "flex items-center rounded-xl border-2 px-4 py-2.5 text-xs font-bold transition-all",
                       layout.globalStyles.fontFamily === font
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
-                        : 'border-gray-50 bg-gray-50/50 hover:border-gray-100',
+                        ? "border-blue-600 bg-blue-50 text-blue-600"
+                        : "border-gray-50 bg-gray-50/50 hover:border-gray-100",
                     )}
                   >
                     <span
-                      style={{ fontFamily: font === 'Serif' ? 'serif' : font }}
+                      style={{ fontFamily: font === "Serif" ? "serif" : font }}
                     >
                       {font}
                     </span>
@@ -160,7 +160,7 @@ const Sidebar = () => {
                 step="0.1"
                 value={layout.globalStyles.lineHeight}
                 onChange={(e) =>
-                  updateGlobalStyle('lineHeight', parseFloat(e.target.value))
+                  updateGlobalStyle("lineHeight", parseFloat(e.target.value))
                 }
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-100 accent-blue-600"
               />
@@ -168,7 +168,7 @@ const Sidebar = () => {
           </>
         )}
 
-        {activeTab === 'templates' && (
+        {activeTab === "templates" && (
           <div className="space-y-4">
             <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
               Layout Layers
@@ -176,32 +176,32 @@ const Sidebar = () => {
             <div className="grid grid-cols-1 gap-3">
               {[
                 {
-                  id: 'standard',
-                  name: 'Standard Professional',
-                  desc: 'Classic single column layout',
+                  id: "standard",
+                  name: "Standard Professional",
+                  desc: "Classic single column layout",
                 },
                 {
-                  id: 'modern',
-                  name: 'Modern Side-by-Side',
-                  desc: 'Sleek 2-column layout',
+                  id: "modern",
+                  name: "Modern Side-by-Side",
+                  desc: "Sleek 2-column layout",
                 },
               ].map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTemplate(t.id as TemplateId)}
                   className={cn(
-                    'flex flex-col items-start rounded-2xl border-2 p-4 text-left transition-all',
+                    "flex flex-col items-start rounded-2xl border-2 p-4 text-left transition-all",
                     activeTemplateId === t.id
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-50 bg-gray-50/50 hover:border-gray-100',
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-gray-50 bg-gray-50/50 hover:border-gray-100",
                   )}
                 >
                   <span
                     className={cn(
-                      'mb-1 text-xs font-black uppercase',
+                      "mb-1 text-xs font-black uppercase",
                       activeTemplateId === t.id
-                        ? 'text-blue-600'
-                        : 'text-gray-900',
+                        ? "text-blue-600"
+                        : "text-gray-900",
                     )}
                   >
                     {t.name}
@@ -213,7 +213,7 @@ const Sidebar = () => {
           </div>
         )}
 
-        {activeTab === 'rearrange' && (
+        {activeTab === "rearrange" && (
           <div className="space-y-6">
             <div>
               <label className="mb-4 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
@@ -228,11 +228,11 @@ const Sidebar = () => {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  'experience',
-                  'education',
-                  'projects',
-                  'skills',
-                  'custom',
+                  "experience",
+                  "education",
+                  "projects",
+                  "skills",
+                  "custom",
                 ].map((type) => (
                   <button
                     key={type}
@@ -248,7 +248,7 @@ const Sidebar = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

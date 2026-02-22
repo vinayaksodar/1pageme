@@ -1,10 +1,10 @@
-import React from 'react'
-import { useResumeStore } from '@/store/useResumeStore'
-import { Plus, FileText, Trash2, Clock } from 'lucide-react'
+import React from "react";
+import { useResumeStore } from "@/store/useResumeStore";
+import { Plus, FileText, Trash2, Clock } from "lucide-react";
 
 const Dashboard = () => {
   const { resumes, createNewResume, setActiveResume, deleteResume } =
-    useResumeStore()
+    useResumeStore();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -40,7 +40,7 @@ const Dashboard = () => {
                   <FileText size={24} />
                 </div>
                 <h3 className="truncate text-lg font-bold text-gray-900">
-                  {resume.title || 'Untitled Resume'}
+                  {resume.title || "Untitled Resume"}
                 </h3>
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
                   <Clock size={12} />
@@ -50,15 +50,15 @@ const Dashboard = () => {
 
               <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-4">
                 <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                  {resume?.activeTemplateId || 'standard'} Layout
+                  {resume?.activeTemplateId || "standard"} Layout
                 </span>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
+                    e.stopPropagation();
                     if (
-                      confirm('Are you sure you want to delete this resume?')
+                      confirm("Are you sure you want to delete this resume?")
                     ) {
-                      deleteResume(resume.id)
+                      deleteResume(resume.id);
                     }
                   }}
                   className="p-1 text-gray-400 transition-colors hover:text-red-500"
@@ -83,7 +83,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

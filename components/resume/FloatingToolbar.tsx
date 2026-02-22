@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import {
   Plus,
   Trash2,
@@ -8,30 +8,30 @@ import {
   ChevronDown,
   ArrowUp,
   ArrowDown,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useResumeStore } from '@/store/useResumeStore'
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useResumeStore } from "@/store/useResumeStore";
 import {
   ItemVisibility,
   SectionType,
   PersonalInfoVisibility,
-} from '@/types/resume'
-import { SECTION_SCHEMAS } from '@/lib/resume-config'
-import { MonthYearPicker } from '@/components/ui/MonthYearPicker'
+} from "@/types/resume";
+import { SECTION_SCHEMAS } from "@/lib/resume-config";
+import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 
 interface FloatingToolbarProps {
-  sectionId: string
-  itemId: string
-  sectionType: SectionType | 'header'
-  settings: ItemVisibility | PersonalInfoVisibility
-  onAdd: () => void
-  onDelete: () => void
-  isFirst?: boolean
-  isLast?: boolean
-  onMoveUp?: () => void
-  onMoveDown?: () => void
-  itemDatePeriod?: string
-  onDateChange?: (newVal: string) => void
+  sectionId: string;
+  itemId: string;
+  sectionType: SectionType | "header";
+  settings: ItemVisibility | PersonalInfoVisibility;
+  onAdd: () => void;
+  onDelete: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  itemDatePeriod?: string;
+  onDateChange?: (newVal: string) => void;
 }
 
 const FloatingToolbar = ({
@@ -54,40 +54,40 @@ const FloatingToolbar = ({
     activeResumeId,
     updatePersonalInfo,
     updatePersonalInfoVisibility,
-  } = useResumeStore()
-  const [showSettings, setShowSettings] = useState(false)
+  } = useResumeStore();
+  const [showSettings, setShowSettings] = useState(false);
 
-  const activeResume = resumes.find((r) => r.id === activeResumeId)
+  const activeResume = resumes.find((r) => r.id === activeResumeId);
   const profileImageShape =
-    activeResume?.content.personalInfo.profileImageShape || 'circle'
+    activeResume?.content.personalInfo.profileImageShape || "circle";
 
   const allOptions = [
-    { id: 'showTitle', label: 'Title' },
-    { id: 'showSubtitle', label: 'Company/School' },
-    { id: 'showDescription', label: 'Description' },
-    { id: 'showBullets', label: 'Bullets' },
-    { id: 'showLocation', label: 'Location' },
-    { id: 'showDatePeriod', label: 'Date Period' },
-    { id: 'showLink', label: 'Link' },
-    { id: 'showLogo', label: 'Company Logo' },
-  ]
+    { id: "showTitle", label: "Title" },
+    { id: "showSubtitle", label: "Company/School" },
+    { id: "showDescription", label: "Description" },
+    { id: "showBullets", label: "Bullets" },
+    { id: "showLocation", label: "Location" },
+    { id: "showDatePeriod", label: "Date Period" },
+    { id: "showLink", label: "Link" },
+    { id: "showLogo", label: "Company Logo" },
+  ];
 
   const PERSONAL_INFO_OPTIONS = [
-    { id: 'showJobTitle', label: 'Job Title' },
-    { id: 'showEmail', label: 'Email' },
-    { id: 'showPhone', label: 'Phone' },
-    { id: 'showAddress', label: 'Address' },
-    { id: 'showPhoto', label: 'Profile Photo' },
-  ]
+    { id: "showJobTitle", label: "Job Title" },
+    { id: "showEmail", label: "Email" },
+    { id: "showPhone", label: "Phone" },
+    { id: "showAddress", label: "Address" },
+    { id: "showPhoto", label: "Profile Photo" },
+  ];
 
-  const isHeader = sectionType === 'header'
-  const schema = !isHeader ? SECTION_SCHEMAS[sectionType as SectionType] : null
+  const isHeader = sectionType === "header";
+  const schema = !isHeader ? SECTION_SCHEMAS[sectionType as SectionType] : null;
   const options = isHeader
     ? PERSONAL_INFO_OPTIONS
     : allOptions.filter((opt) =>
         schema?.fields.includes(opt.id as keyof ItemVisibility),
-      )
-  const hasDatePeriod = !isHeader && schema?.fields.includes('showDatePeriod')
+      );
+  const hasDatePeriod = !isHeader && schema?.fields.includes("showDatePeriod");
 
   return (
     <div className="no-print animate-in fade-in zoom-in absolute -top-12 left-1/2 z-[110] flex -translate-x-1/2 items-center rounded-lg border border-gray-200 bg-white p-1 text-gray-900 shadow-xl duration-200">
@@ -142,10 +142,10 @@ const FloatingToolbar = ({
         <button
           onClick={() => setShowSettings(!showSettings)}
           className={cn(
-            'flex items-center gap-1 rounded-md p-2 transition-colors hover:bg-gray-50',
+            "flex items-center gap-1 rounded-md p-2 transition-colors hover:bg-gray-50",
             showSettings
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-400 hover:text-gray-900',
+              ? "bg-gray-100 text-gray-900"
+              : "text-gray-400 hover:text-gray-900",
           )}
         >
           <Settings size={14} />
@@ -162,26 +162,26 @@ const FloatingToolbar = ({
                 <div className="flex rounded-lg bg-gray-50 p-1">
                   <button
                     onClick={() =>
-                      updatePersonalInfo('profileImageShape', 'circle')
+                      updatePersonalInfo("profileImageShape", "circle")
                     }
                     className={cn(
-                      'flex-1 rounded-md py-1 text-[10px] font-bold transition-all',
-                      profileImageShape === 'circle'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600',
+                      "flex-1 rounded-md py-1 text-[10px] font-bold transition-all",
+                      profileImageShape === "circle"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-400 hover:text-gray-600",
                     )}
                   >
                     CIRCLE
                   </button>
                   <button
                     onClick={() =>
-                      updatePersonalInfo('profileImageShape', 'squircle')
+                      updatePersonalInfo("profileImageShape", "squircle")
                     }
                     className={cn(
-                      'flex-1 rounded-md py-1 text-[10px] font-bold transition-all',
-                      profileImageShape === 'squircle'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-400 hover:text-gray-600',
+                      "flex-1 rounded-md py-1 text-[10px] font-bold transition-all",
+                      profileImageShape === "squircle"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-400 hover:text-gray-600",
                     )}
                   >
                     SQUIRCLE
@@ -211,11 +211,11 @@ const FloatingToolbar = ({
                       if (isHeader) {
                         updatePersonalInfoVisibility({
                           [opt.id]: e.target.checked,
-                        })
+                        });
                       } else {
                         updateItemVisibility(sectionId, itemId, {
                           [opt.id]: e.target.checked,
-                        })
+                        });
                       }
                     }}
                   />
@@ -227,7 +227,7 @@ const FloatingToolbar = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FloatingToolbar
+export default FloatingToolbar;

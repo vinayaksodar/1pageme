@@ -1,48 +1,48 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { useResumeStore } from '@/store/useResumeStore'
+import React from "react";
+import { useResumeStore } from "@/store/useResumeStore";
 import {
   Section,
   SectionItem,
   ResumeData,
   PersonalInfoVisibility,
-} from '@/types/resume'
-import { cn } from '@/lib/utils'
-import PlainTextEditor from '@/components/ui/PlainTextEditor'
-import RichTextEditor from '@/components/ui/RichTextEditor'
-import FloatingToolbar from '../FloatingToolbar'
-import { PageLayout } from '@/hooks/useResumePagination'
-import { Camera } from 'lucide-react'
-import Image from 'next/image'
+} from "@/types/resume";
+import { cn } from "@/lib/utils";
+import PlainTextEditor from "@/components/ui/PlainTextEditor";
+import RichTextEditor from "@/components/ui/RichTextEditor";
+import FloatingToolbar from "../FloatingToolbar";
+import { PageLayout } from "@/hooks/useResumePagination";
+import { Camera } from "lucide-react";
+import Image from "next/image";
 
-import { ResumeBulletList } from '@/components/resume/ResumeBulletList'
+import { ResumeBulletList } from "@/components/resume/ResumeBulletList";
 
 interface TemplateProps {
-  resume: ResumeData
-  focusedItemId: string | null
-  setFocusedItemId: (id: string | null) => void
-  pageLayout?: PageLayout // Optional: If provided, renders only content for this page
+  resume: ResumeData;
+  focusedItemId: string | null;
+  setFocusedItemId: (id: string | null) => void;
+  pageLayout?: PageLayout; // Optional: If provided, renders only content for this page
   actions: {
-    updatePersonalInfo: (field: string, value: string) => void
+    updatePersonalInfo: (field: string, value: string) => void;
     updatePersonalInfoVisibility: (
       visibility: Partial<PersonalInfoVisibility>,
-    ) => void
-    updateSectionTitle: (sectionId: string, title: string) => void
+    ) => void;
+    updateSectionTitle: (sectionId: string, title: string) => void;
     updateSectionItem: (
       sectionId: string,
       itemId: string,
       field: keyof SectionItem,
       value: SectionItem[keyof SectionItem],
-    ) => void
-    addSectionItem: (sectionId: string) => void
-    removeSectionItem: (sectionId: string, itemId: string) => void
+    ) => void;
+    addSectionItem: (sectionId: string) => void;
+    removeSectionItem: (sectionId: string, itemId: string) => void;
     moveSectionItem: (
       sectionId: string,
       itemId: string,
-      direction: 'up' | 'down',
-    ) => void
-  }
+      direction: "up" | "down",
+    ) => void;
+  };
 }
 
 const EditableImage = ({
@@ -50,33 +50,33 @@ const EditableImage = ({
   onChange,
   className,
 }: {
-  src?: string
-  onChange: (val: string) => void
-  className?: string
+  src?: string;
+  onChange: (val: string) => void;
+  className?: string;
 }) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        onChange(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        onChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   return (
     <div
       className={cn(
-        'group relative cursor-pointer overflow-hidden bg-gray-100 print:bg-transparent',
+        "group relative cursor-pointer overflow-hidden bg-gray-100 print:bg-transparent",
         className,
       )}
       onClick={() => fileInputRef.current?.click()}
     >
       {src ? (
-        <Image src={src} alt="Profile" fill style={{ objectFit: 'cover' }} />
+        <Image src={src} alt="Profile" fill style={{ objectFit: "cover" }} />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-gray-400">
           <Camera size={24} />
@@ -93,8 +93,8 @@ const EditableImage = ({
         className="hidden"
       />
     </div>
-  )
-}
+  );
+};
 
 export const StandardTemplate = ({
   resume,
@@ -103,10 +103,10 @@ export const StandardTemplate = ({
   pageLayout,
   actions,
 }: TemplateProps) => {
-  const { content, activeTemplateId, layouts } = resume
-  const { isTextSelected } = useResumeStore()
-  const layout = layouts[activeTemplateId]
-  const { accentColor } = layout.globalStyles
+  const { content, activeTemplateId, layouts } = resume;
+  const { isTextSelected } = useResumeStore();
+  const layout = layouts[activeTemplateId];
+  const { accentColor } = layout.globalStyles;
 
   // Defensive check for visibility (for existing resumes)
   const visibility = content.personalInfo.visibility || {
@@ -115,7 +115,7 @@ export const StandardTemplate = ({
     showPhone: true,
     showAddress: true,
     showPhoto: true,
-  }
+  };
 
   const renderItem = (
     section: Section,
@@ -124,16 +124,16 @@ export const StandardTemplate = ({
     total: number,
   ) => {
     // If pageLayout is provided, check if this item belongs to the page
-    if (pageLayout && !pageLayout.items.has(item.id)) return null
+    if (pageLayout && !pageLayout.items.has(item.id)) return null;
 
-    const { visibility } = item
+    const { visibility } = item;
 
     const isFirstOnPage = pageLayout
       ? section.items.find((i) => pageLayout.items.has(i.id))?.id === item.id
-      : index === 0
+      : index === 0;
 
     const showContinuedHeader =
-      pageLayout?.continued.has(section.id) && isFirstOnPage
+      pageLayout?.continued.has(section.id) && isFirstOnPage;
 
     return (
       <React.Fragment key={item.id}>
@@ -148,7 +148,7 @@ export const StandardTemplate = ({
               className="inline-block text-sm font-bold tracking-wider uppercase"
               style={{ color: accentColor }}
             >
-              {section.title}{' '}
+              {section.title}{" "}
               <span className="ml-2 text-[10px] opacity-70">(Continued)</span>
             </span>
           </div>
@@ -158,10 +158,10 @@ export const StandardTemplate = ({
           data-resume-section-id={section.id}
           data-resume-item-index={index}
           className={cn(
-            'group/item relative -mx-1 break-inside-avoid rounded p-1 transition-colors',
+            "group/item relative -mx-1 break-inside-avoid rounded p-1 transition-colors",
             focusedItemId === item.id
-              ? 'z-30 print:!bg-transparent print:!shadow-none'
-              : 'z-20 hover:bg-gray-50/50',
+              ? "z-30 print:!bg-transparent print:!shadow-none"
+              : "z-20 hover:bg-gray-50/50",
           )}
           style={
             focusedItemId === item.id
@@ -185,17 +185,17 @@ export const StandardTemplate = ({
               isFirst={index === 0}
               isLast={index === total - 1}
               onMoveUp={() =>
-                actions.moveSectionItem(section.id, item.id, 'up')
+                actions.moveSectionItem(section.id, item.id, "up")
               }
               onMoveDown={() =>
-                actions.moveSectionItem(section.id, item.id, 'down')
+                actions.moveSectionItem(section.id, item.id, "down")
               }
-              itemDatePeriod={item.datePeriod || ''}
+              itemDatePeriod={item.datePeriod || ""}
               onDateChange={(val) =>
                 actions.updateSectionItem(
                   section.id,
                   item.id,
-                  'datePeriod',
+                  "datePeriod",
                   val,
                 )
               }
@@ -207,7 +207,7 @@ export const StandardTemplate = ({
               <PlainTextEditor
                 value={item.title}
                 onChange={(val) =>
-                  actions.updateSectionItem(section.id, item.id, 'title', val)
+                  actions.updateSectionItem(section.id, item.id, "title", val)
                 }
                 className="font-bold text-gray-800"
                 placeholder="Job Title / Project Name"
@@ -216,12 +216,12 @@ export const StandardTemplate = ({
             {visibility.showDatePeriod && (
               <div className="group/date flex items-center gap-1">
                 <PlainTextEditor
-                  value={item.datePeriod || ''}
+                  value={item.datePeriod || ""}
                   onChange={(val) =>
                     actions.updateSectionItem(
                       section.id,
                       item.id,
-                      'datePeriod',
+                      "datePeriod",
                       val,
                     )
                   }
@@ -235,12 +235,12 @@ export const StandardTemplate = ({
           <div className="mb-1 flex flex-wrap items-center gap-2">
             {visibility.showSubtitle && (
               <PlainTextEditor
-                value={item.subtitle || ''}
+                value={item.subtitle || ""}
                 onChange={(val) =>
                   actions.updateSectionItem(
                     section.id,
                     item.id,
-                    'subtitle',
+                    "subtitle",
                     val,
                   )
                 }
@@ -254,12 +254,12 @@ export const StandardTemplate = ({
             )}
             {visibility.showLocation && (
               <PlainTextEditor
-                value={item.location || ''}
+                value={item.location || ""}
                 onChange={(val) =>
                   actions.updateSectionItem(
                     section.id,
                     item.id,
-                    'location',
+                    "location",
                     val,
                   )
                 }
@@ -276,7 +276,7 @@ export const StandardTemplate = ({
                 actions.updateSectionItem(
                   section.id,
                   item.id,
-                  'description',
+                  "description",
                   val,
                 )
               }
@@ -293,7 +293,7 @@ export const StandardTemplate = ({
                 actions.updateSectionItem(
                   section.id,
                   item.id,
-                  'bullets',
+                  "bullets",
                   newBullets,
                 )
               }
@@ -302,16 +302,16 @@ export const StandardTemplate = ({
           )}
         </div>
       </React.Fragment>
-    )
-  }
+    );
+  };
 
   const renderSection = (config: { id: string; isVisible: boolean }) => {
-    const section = content.sections.find((s) => s.id === config.id)
-    if (!section || !config.isVisible) return null
+    const section = content.sections.find((s) => s.id === config.id);
+    if (!section || !config.isVisible) return null;
 
     const showMainHeader = pageLayout
       ? pageLayout.headers.has(section.id)
-      : true
+      : true;
 
     return (
       <div key={section.id} className="group/section relative mb-8">
@@ -336,31 +336,31 @@ export const StandardTemplate = ({
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="flex h-full flex-col">
       {(!pageLayout || pageLayout.pageIndex === 0) && (
         <div
           className={cn(
-            'group/header relative -mx-1 mb-10 flex items-start justify-between gap-6 rounded border-b border-gray-100 px-1 pb-8 transition-colors',
-            focusedItemId === 'header'
-              ? 'z-30 print:!bg-transparent print:!shadow-none'
-              : 'z-20 hover:bg-gray-50/50',
+            "group/header relative -mx-1 mb-10 flex items-start justify-between gap-6 rounded border-b border-gray-100 px-1 pb-8 transition-colors",
+            focusedItemId === "header"
+              ? "z-30 print:!bg-transparent print:!shadow-none"
+              : "z-20 hover:bg-gray-50/50",
           )}
           style={
-            focusedItemId === 'header'
+            focusedItemId === "header"
               ? {
                   boxShadow: `0 0 0 2px ${accentColor}`,
                   backgroundColor: `${accentColor}10`,
                 }
               : {}
           }
-          onFocus={() => setFocusedItemId('header')}
-          onClick={() => setFocusedItemId('header')}
+          onFocus={() => setFocusedItemId("header")}
+          onClick={() => setFocusedItemId("header")}
         >
-          {focusedItemId === 'header' && !isTextSelected && (
+          {focusedItemId === "header" && !isTextSelected && (
             <FloatingToolbar
               sectionId="header"
               itemId="header"
@@ -374,46 +374,46 @@ export const StandardTemplate = ({
             <PlainTextEditor
               tagName="h1"
               value={content.personalInfo.fullName}
-              onChange={(val) => actions.updatePersonalInfo('fullName', val)}
+              onChange={(val) => actions.updatePersonalInfo("fullName", val)}
               className="mb-2 text-5xl font-black tracking-tighter uppercase"
               style={{ color: accentColor }}
             />
             {visibility.showJobTitle && (
               <PlainTextEditor
                 tagName="h2"
-                value={content.personalInfo.jobTitle || ''}
-                onChange={(val) => actions.updatePersonalInfo('jobTitle', val)}
+                value={content.personalInfo.jobTitle || ""}
+                onChange={(val) => actions.updatePersonalInfo("jobTitle", val)}
                 className="text-2xl font-medium text-gray-500"
               />
             )}
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-gray-400">
               {visibility.showAddress && (
                 <span>
-                  📍{' '}
+                  📍{" "}
                   <PlainTextEditor
                     tagName="span"
                     value={content.personalInfo.address}
-                    onChange={(v) => actions.updatePersonalInfo('address', v)}
+                    onChange={(v) => actions.updatePersonalInfo("address", v)}
                   />
                 </span>
               )}
               {visibility.showEmail && (
                 <span>
-                  📧{' '}
+                  📧{" "}
                   <PlainTextEditor
                     tagName="span"
                     value={content.personalInfo.email}
-                    onChange={(v) => actions.updatePersonalInfo('email', v)}
+                    onChange={(v) => actions.updatePersonalInfo("email", v)}
                   />
                 </span>
               )}
               {visibility.showPhone && (
                 <span>
-                  📞{' '}
+                  📞{" "}
                   <PlainTextEditor
                     tagName="span"
                     value={content.personalInfo.phone}
-                    onChange={(v) => actions.updatePersonalInfo('phone', v)}
+                    onChange={(v) => actions.updatePersonalInfo("phone", v)}
                   />
                 </span>
               )}
@@ -423,13 +423,13 @@ export const StandardTemplate = ({
             <EditableImage
               src={content.personalInfo.profileImage}
               onChange={(val) =>
-                actions.updatePersonalInfo('profileImage', val)
+                actions.updatePersonalInfo("profileImage", val)
               }
               className={cn(
-                'h-32 w-32 border-4 border-gray-50 shadow-sm',
-                content.personalInfo.profileImageShape === 'squircle'
-                  ? 'rounded-3xl'
-                  : 'rounded-full',
+                "h-32 w-32 border-4 border-gray-50 shadow-sm",
+                content.personalInfo.profileImageShape === "squircle"
+                  ? "rounded-3xl"
+                  : "rounded-full",
               )}
             />
           )}
@@ -438,5 +438,5 @@ export const StandardTemplate = ({
 
       <div className="flex-1">{layout.sections.map(renderSection)}</div>
     </div>
-  )
-}
+  );
+};

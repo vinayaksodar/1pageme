@@ -1,5 +1,5 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import {
   ResumeData,
   SectionType,
@@ -11,59 +11,59 @@ import {
   TemplateLayout,
   Section,
   PersonalInfoVisibility,
-} from '@/types/resume'
+} from "@/types/resume";
 import {
   SECTION_SCHEMAS,
   getInitialVisibility,
   createInitialResume,
-} from '@/lib/resume-config'
-import { emptyTextNodes } from '@/lib/utils'
+} from "@/lib/resume-config";
+import { emptyTextNodes } from "@/lib/utils";
 
 export interface ResumeState {
-  resumes: ResumeData[]
-  activeResumeId: string | null
-  isTextSelected: boolean
+  resumes: ResumeData[];
+  activeResumeId: string | null;
+  isTextSelected: boolean;
 
   // Actions
-  createNewResume: () => void
-  deleteResume: (id: string) => void
-  setActiveResume: (id: string) => void
-  setIsTextSelected: (isSelected: boolean) => void
-  updatePersonalInfo: (field: string, value: string) => void
+  createNewResume: () => void;
+  deleteResume: (id: string) => void;
+  setActiveResume: (id: string) => void;
+  setIsTextSelected: (isSelected: boolean) => void;
+  updatePersonalInfo: (field: string, value: string) => void;
   updatePersonalInfoVisibility: (
     visibility: Partial<PersonalInfoVisibility>,
-  ) => void
-  updateSectionTitle: (sectionId: string, title: string) => void
+  ) => void;
+  updateSectionTitle: (sectionId: string, title: string) => void;
   updateSectionItem: (
     sectionId: string,
     itemId: string,
     field: keyof SectionItem,
     value: SectionItem[keyof SectionItem],
-  ) => void
+  ) => void;
   updateItemVisibility: (
     sectionId: string,
     itemId: string,
     visibility: Partial<ItemVisibility>,
-  ) => void
-  addSectionItem: (sectionId: string) => void
-  removeSectionItem: (sectionId: string, itemId: string) => void
+  ) => void;
+  addSectionItem: (sectionId: string) => void;
+  removeSectionItem: (sectionId: string, itemId: string) => void;
   moveSectionItem: (
     sectionId: string,
     itemId: string,
-    direction: 'up' | 'down',
-  ) => void
-  addSection: (type: SectionType) => void
-  removeSection: (sectionId: string) => void
-  reorderSections: (newOrder: SectionConfig[]) => void
+    direction: "up" | "down",
+  ) => void;
+  addSection: (type: SectionType) => void;
+  removeSection: (sectionId: string) => void;
+  reorderSections: (newOrder: SectionConfig[]) => void;
   updateSectionConfig: (
     sectionId: string,
     config: Partial<SectionConfig>,
-  ) => void
+  ) => void;
   updateGlobalStyle: (
     field: keyof GlobalStyles,
     value: GlobalStyles[keyof GlobalStyles],
-  ) => void
-  setTemplate: (templateId: TemplateId) => void
+  ) => void;
+  setTemplate: (templateId: TemplateId) => void;
 }
 
 export const useResumeStore = create<ResumeState>()(
@@ -74,12 +74,12 @@ export const useResumeStore = create<ResumeState>()(
       isTextSelected: false,
 
       createNewResume: () => {
-        const id = Math.random().toString(36).substr(2, 9)
-        const newResume = createInitialResume(id, 'New Resume')
+        const id = Math.random().toString(36).substr(2, 9);
+        const newResume = createInitialResume(id, "New Resume");
         set((state) => ({
           resumes: [...state.resumes, newResume],
           activeResumeId: id,
-        }))
+        }));
       },
 
       deleteResume: (id) =>
@@ -213,37 +213,37 @@ export const useResumeStore = create<ResumeState>()(
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) => {
-                      if (s.id !== sectionId) return s
+                      if (s.id !== sectionId) return s;
 
-                      const { defaults } = SECTION_SCHEMAS[s.type]
+                      const { defaults } = SECTION_SCHEMAS[s.type];
                       const {
                         description: defaultDescription,
                         bullets: defaultBullets,
                         ...restDefaults
-                      } = defaults
+                      } = defaults;
 
                       const newItem: SectionItem = {
                         id: Math.random().toString(36).substr(2, 9),
-                        title: 'New Item',
-                        subtitle: '',
+                        title: "New Item",
+                        subtitle: "",
                         description: defaultDescription
-                          ? [{ type: 'text', text: defaultDescription }]
+                          ? [{ type: "text", text: defaultDescription }]
                           : emptyTextNodes(),
                         bullets: defaultBullets
                           ? defaultBullets.map((b) => [
-                              { type: 'text', text: b },
+                              { type: "text", text: b },
                             ])
                           : [],
-                        location: '',
-                        datePeriod: '',
+                        location: "",
+                        datePeriod: "",
                         ...restDefaults,
                         visibility: getInitialVisibility(s.type),
-                      }
+                      };
 
                       return {
                         ...s,
                         items: [...s.items, newItem],
-                      }
+                      };
                     }),
                   },
                 }
@@ -254,15 +254,15 @@ export const useResumeStore = create<ResumeState>()(
       removeSectionItem: (sectionId, itemId) =>
         set((state) => ({
           resumes: state.resumes.map((r) => {
-            if (r.id !== state.activeResumeId) return r
+            if (r.id !== state.activeResumeId) return r;
 
             const newSections = r.content.sections.map((section) => {
               if (section.id === sectionId) {
-                const newItems = section.items.filter((i) => i.id !== itemId)
-                return { ...section, items: newItems }
+                const newItems = section.items.filter((i) => i.id !== itemId);
+                return { ...section, items: newItems };
               }
-              return section
-            })
+              return section;
+            });
 
             return {
               ...r,
@@ -270,7 +270,7 @@ export const useResumeStore = create<ResumeState>()(
                 ...r.content,
                 sections: newSections,
               },
-            }
+            };
           }),
         })),
 
@@ -283,22 +283,22 @@ export const useResumeStore = create<ResumeState>()(
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) => {
-                      if (s.id !== sectionId) return s
-                      const index = s.items.findIndex((i) => i.id === itemId)
-                      if (index === -1) return s
+                      if (s.id !== sectionId) return s;
+                      const index = s.items.findIndex((i) => i.id === itemId);
+                      if (index === -1) return s;
 
-                      const newItems = [...s.items]
+                      const newItems = [...s.items];
                       const targetIndex =
-                        direction === 'up' ? index - 1 : index + 1
+                        direction === "up" ? index - 1 : index + 1;
 
                       if (targetIndex >= 0 && targetIndex < newItems.length) {
-                        ;[newItems[index], newItems[targetIndex]] = [
+                        [newItems[index], newItems[targetIndex]] = [
                           newItems[targetIndex],
                           newItems[index],
-                        ]
+                        ];
                       }
 
-                      return { ...s, items: newItems }
+                      return { ...s, items: newItems };
                     }),
                   },
                 }
@@ -308,37 +308,37 @@ export const useResumeStore = create<ResumeState>()(
 
       addSection: (type) =>
         set((state) => {
-          const newSectionId = Math.random().toString(36).substr(2, 9)
+          const newSectionId = Math.random().toString(36).substr(2, 9);
 
-          const { defaults } = SECTION_SCHEMAS[type]
+          const { defaults } = SECTION_SCHEMAS[type];
           const {
             description: defaultDescription,
             bullets: defaultBullets,
             ...restDefaults
-          } = defaults
+          } = defaults;
 
           const initialItem: SectionItem = {
             id: Math.random().toString(36).substr(2, 9),
-            title: 'New Item',
-            subtitle: '',
+            title: "New Item",
+            subtitle: "",
             description: defaultDescription
-              ? [{ type: 'text', text: defaultDescription }]
+              ? [{ type: "text", text: defaultDescription }]
               : emptyTextNodes(),
             bullets: defaultBullets
-              ? defaultBullets.map((b) => [{ type: 'text', text: b }])
+              ? defaultBullets.map((b) => [{ type: "text", text: b }])
               : [],
-            location: '',
-            datePeriod: '',
+            location: "",
+            datePeriod: "",
             ...restDefaults,
             visibility: getInitialVisibility(type),
-          }
+          };
 
           const newSection: Section = {
             id: newSectionId,
             type,
             title: type.toUpperCase(),
             items: [initialItem],
-          }
+          };
 
           return {
             resumes: state.resumes.map((r) =>
@@ -351,7 +351,7 @@ export const useResumeStore = create<ResumeState>()(
                     },
                     layouts: Object.keys(r.layouts).reduce(
                       (acc, tid) => {
-                        const templateId = tid as TemplateId
+                        const templateId = tid as TemplateId;
                         acc[templateId] = {
                           ...r.layouts[templateId],
                           sections: [
@@ -362,15 +362,15 @@ export const useResumeStore = create<ResumeState>()(
                               column: 1,
                             },
                           ],
-                        }
-                        return acc
+                        };
+                        return acc;
                       },
                       {} as Record<TemplateId, TemplateLayout>,
                     ),
                   }
                 : r,
             ),
-          }
+          };
         }),
 
       removeSection: (id) =>
@@ -385,14 +385,14 @@ export const useResumeStore = create<ResumeState>()(
                   },
                   layouts: Object.keys(r.layouts).reduce(
                     (acc, tid) => {
-                      const templateId = tid as TemplateId
+                      const templateId = tid as TemplateId;
                       acc[templateId] = {
                         ...r.layouts[templateId],
                         sections: r.layouts[templateId].sections.filter(
                           (s) => s.id !== id,
                         ),
-                      }
-                      return acc
+                      };
+                      return acc;
                     },
                     {} as Record<TemplateId, TemplateLayout>,
                   ),
@@ -473,7 +473,7 @@ export const useResumeStore = create<ResumeState>()(
         })),
     }),
     {
-      name: 'resume-storage-v6',
+      name: "resume-storage-v6",
     },
   ),
-)
+);

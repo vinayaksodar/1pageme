@@ -1,25 +1,25 @@
-'use client'
+"use client";
 
-import React, { useRef } from 'react'
-import Sidebar from './Sidebar'
-import ResumePreview from '../resume/ResumePreview'
-import { useReactToPrint } from 'react-to-print'
-import { Download, ChevronLeft } from 'lucide-react'
-import { useResumeStore } from '@/store/useResumeStore'
+import React, { useRef } from "react";
+import Sidebar from "./Sidebar";
+import ResumePreview from "../resume/ResumePreview";
+import { useReactToPrint } from "react-to-print";
+import { Download, ChevronLeft } from "lucide-react";
+import { useResumeStore } from "@/store/useResumeStore";
 
 const EditorLayout = () => {
-  const { activeResumeId, resumes, setActiveResume } = useResumeStore()
-  const contentRef = useRef<HTMLDivElement>(null)
+  const { activeResumeId, resumes, setActiveResume } = useResumeStore();
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const activeResume = resumes.find((r) => r.id === activeResumeId)
-  const resumeTitle = activeResume ? activeResume.title : 'Resume'
+  const activeResume = resumes.find((r) => r.id === activeResumeId);
+  const resumeTitle = activeResume ? activeResume.title : "Resume";
 
   const handlePrint = useReactToPrint({
     contentRef: contentRef,
     documentTitle: resumeTitle,
-  })
+  });
 
-  if (!activeResume) return null
+  if (!activeResume) return null;
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-100 font-sans">
@@ -34,7 +34,7 @@ const EditorLayout = () => {
         <header className="z-50 flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setActiveResume('')} // Empty string or null to go back
+              onClick={() => setActiveResume("")} // Empty string or null to go back
               className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100"
               title="Back to Documents"
             >
@@ -67,7 +67,7 @@ const EditorLayout = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EditorLayout
+export default EditorLayout;
