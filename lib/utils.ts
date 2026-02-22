@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { TextNode, Mark } from '@/types/resume'
+import { TextNode, Mark, MarkType } from '@/types/resume'
 import { escape } from 'lodash'
 
 export function cn(...inputs: ClassValue[]) {
@@ -33,7 +33,7 @@ export function textNodesToHtml(
         // Order of wrapping is important for proper nesting
         const orderedMarks: Mark[] = [
           ...(
-            node.marks.filter((m) => typeof m === 'string') as string[]
+            node.marks.filter((m) => typeof m === 'string') as MarkType[]
           ).sort(),
           ...node.marks.filter((m) => typeof m === 'object'),
         ]

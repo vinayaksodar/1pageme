@@ -212,27 +212,39 @@ export const useResumeStore = create<ResumeState>()(
                   ...r,
                   content: {
                     ...r.content,
-                    sections: r.content.sections.map((s) =>
-                      s.id === sectionId
-                        ? {
-                            ...s,
-                            items: [
-                              ...s.items,
-                              {
-                                id: Math.random().toString(36).substr(2, 9),
-                                title: 'New Item',
-                                subtitle: '',
-                                description: emptyTextNodes(),
-                                bullets: [],
-                                location: '',
-                                datePeriod: '',
-                                ...SECTION_SCHEMAS[s.type].defaults,
-                                visibility: getInitialVisibility(s.type),
-                              },
-                            ],
-                          }
-                        : s,
-                    ),
+                    sections: r.content.sections.map((s) => {
+                      if (s.id !== sectionId) return s
+
+                      const { defaults } = SECTION_SCHEMAS[s.type]
+                      const {
+                        description: defaultDescription,
+                        bullets: defaultBullets,
+                        ...restDefaults
+                      } = defaults
+
+                      const newItem: SectionItem = {
+                        id: Math.random().toString(36).substr(2, 9),
+                        title: 'New Item',
+                        subtitle: '',
+                        description: defaultDescription
+                          ? [{ type: 'text', text: defaultDescription }]
+                          : emptyTextNodes(),
+                        bullets: defaultBullets
+                          ? defaultBullets.map((b) => [
+                              { type: 'text', text: b },
+                            ])
+                          : [],
+                        location: '',
+                        datePeriod: '',
+                        ...restDefaults,
+                        visibility: getInitialVisibility(s.type),
+                      }
+
+                      return {
+                        ...s,
+                        items: [...s.items, newItem],
+                      }
+                    }),
                   },
                 }
               : r,
@@ -298,15 +310,26 @@ export const useResumeStore = create<ResumeState>()(
         set((state) => {
           const newSectionId = Math.random().toString(36).substr(2, 9)
 
+          const { defaults } = SECTION_SCHEMAS[type]
+          const {
+            description: defaultDescription,
+            bullets: defaultBullets,
+            ...restDefaults
+          } = defaults
+
           const initialItem: SectionItem = {
             id: Math.random().toString(36).substr(2, 9),
             title: 'New Item',
             subtitle: '',
-            description: emptyTextNodes(),
-            bullets: [],
+            description: defaultDescription
+              ? [{ type: 'text', text: defaultDescription }]
+              : emptyTextNodes(),
+            bullets: defaultBullets
+              ? defaultBullets.map((b) => [{ type: 'text', text: b }])
+              : [],
             location: '',
             datePeriod: '',
-            ...SECTION_SCHEMAS[type].defaults,
+            ...restDefaults,
             visibility: getInitialVisibility(type),
           }
 
