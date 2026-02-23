@@ -27,19 +27,27 @@ const MultiBlockEditor = ({
   autoFocus,
 }: MultiBlockEditorProps) => {
   const { setIsTextSelected } = useResumeStore();
+
   const contentEditableRef = useRef<HTMLElement>(null);
+  const lastValue = useRef(value);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isComposing = useRef(false);
+
   const [toolbarPosition, setToolbarPosition] = useState<{
     top: number;
     left: number;
   } | null>(null);
+
   const [activeLinkInfo, setActiveLinkInfo] = useState<{
     url: string;
     element: HTMLAnchorElement;
     position: { top: number; left: number };
   } | null>(null);
 
-  const lastValue = useRef(value);
   const blockTagName = type === "bullets" ? "li" : "p";
+  const ContainerTag = type === "bullets" ? "ul" : "div";
+
+  /* ---------------- Autofocus ---------------- */
 
   useEffect(() => {
     if (autoFocus && contentEditableRef.current) {
@@ -47,37 +55,91 @@ const MultiBlockEditor = ({
     }
   }, [autoFocus]);
 
+  /* ---------------- Mount initializer ---------------- */
+
   useEffect(() => {
-    if (
-      contentEditableRef.current &&
-      document.activeElement !== contentEditableRef.current
-    ) {
-      const currentHtml = contentEditableRef.current.innerHTML;
-      const newHtml = blocksToHtml(value, blockTagName);
-      if (currentHtml !== newHtml) {
-        contentEditableRef.current.innerHTML = newHtml;
-      }
+    const el = contentEditableRef.current;
+    if (!el) return;
+
+    const initialHtml = blocksToHtml(lastValue.current, blockTagName);
+    if (el.innerHTML !== initialHtml) {
+      el.innerHTML = initialHtml;
     }
-    lastValue.current = value;
+  }, [blockTagName]);
+
+  /* ---------------- External sync ---------------- */
+
+  useEffect(() => {
+    const el = contentEditableRef.current;
+    if (!el) return;
+
+    const isFocused = document.activeElement === el;
+
+    if (!isFocused && value !== lastValue.current) {
+      const newHtml = blocksToHtml(value, blockTagName);
+      if (el.innerHTML !== newHtml) {
+        el.innerHTML = newHtml;
+      }
+      lastValue.current = value;
+    }
   }, [value, blockTagName]);
 
-  const processChange = (html: string) => {
+  /* ---------------- Debounced commit ---------------- */
+
+  const commitChange = (val: Block[]) => {
+    onChange(val);
+  };
+
+  const scheduleCommit = (val: Block[]) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      commitChange(val);
+    }, 250);
+  };
+
+  const processChange = () => {
+    const el = contentEditableRef.current;
+    if (!el) return;
+
+    const html = el.innerHTML;
     const newBlocks = htmlToBlocks(html, blockTagName);
+
     if (JSON.stringify(newBlocks) !== JSON.stringify(lastValue.current)) {
-      onChange(newBlocks);
       lastValue.current = newBlocks;
+      scheduleCommit(newBlocks);
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
-    processChange(e.target.innerHTML);
+  /* ---------------- Events ---------------- */
+
+  const handleInput = () => {
+    if (isComposing.current) return;
+    processChange();
+  };
+
+  const handleBlur = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
+    commitChange(lastValue.current);
+
     setToolbarPosition(null);
     setIsTextSelected(false);
     setTimeout(() => setActiveLinkInfo(null), 200);
   };
 
-  const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    processChange(e.currentTarget.innerHTML);
+  const handleCompositionStart = () => {
+    isComposing.current = true;
+  };
+
+  const handleCompositionEnd = () => {
+    isComposing.current = false;
+    processChange();
   };
 
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -100,42 +162,6 @@ const MultiBlockEditor = ({
     }
   };
 
-  const removeLink = () => {
-    if (activeLinkInfo?.element && contentEditableRef.current) {
-      const anchor = activeLinkInfo.element;
-      const parent = anchor.parentNode;
-      if (parent) {
-        while (anchor.firstChild) {
-          parent.insertBefore(anchor.firstChild, anchor);
-        }
-        parent.removeChild(anchor);
-        processChange(contentEditableRef.current.innerHTML);
-      }
-      setActiveLinkInfo(null);
-    }
-  };
-
-  const editLink = () => {
-    const newUrl = window.prompt("Edit URL:", activeLinkInfo?.url);
-    if (newUrl && activeLinkInfo?.element && contentEditableRef.current) {
-      const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(newUrl)
-        ? newUrl
-        : `https://${newUrl}`;
-      const anchor = contentEditableRef.current.querySelector(
-        `a[href="${activeLinkInfo.element.href}"]`,
-      ) as HTMLAnchorElement;
-      if (anchor) {
-        anchor.href = absoluteUrl;
-        processChange(contentEditableRef.current.innerHTML);
-        setActiveLinkInfo({
-          ...activeLinkInfo,
-          url: absoluteUrl,
-          element: anchor,
-        });
-      }
-    }
-  };
-
   const handleSelect = () => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
@@ -152,12 +178,49 @@ const MultiBlockEditor = ({
     }
   };
 
-  const handleKeyDown = () => {
-    // Basic block-level behavior for list items is handled natively by the browser
-    // when the container is a <ul> and we are inside <li>.
+  const removeLink = () => {
+    if (!activeLinkInfo?.element || !contentEditableRef.current) return;
+
+    const anchor = activeLinkInfo.element;
+    const parent = anchor.parentNode;
+
+    if (parent) {
+      while (anchor.firstChild) {
+        parent.insertBefore(anchor.firstChild, anchor);
+      }
+      parent.removeChild(anchor);
+      processChange();
+    }
+
+    setActiveLinkInfo(null);
   };
 
-  const ContainerTag = type === "bullets" ? "ul" : "div";
+  const editLink = () => {
+    const newUrl = window.prompt("Edit URL:", activeLinkInfo?.url);
+    if (!newUrl || !contentEditableRef.current) return;
+
+    const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(newUrl)
+      ? newUrl
+      : `https://${newUrl}`;
+
+    const anchor = contentEditableRef.current.querySelector(
+      `a[href="${activeLinkInfo?.element.href}"]`,
+    ) as HTMLAnchorElement | null;
+
+    if (!anchor) return;
+
+    anchor.href = absoluteUrl;
+
+    processChange();
+
+    setActiveLinkInfo({
+      url: absoluteUrl,
+      element: anchor,
+      position: activeLinkInfo!.position,
+    });
+  };
+
+  /* ---------------- Render ---------------- */
 
   return (
     <>
@@ -165,7 +228,7 @@ const MultiBlockEditor = ({
 
       {activeLinkInfo && (
         <div
-          className="animate-in fade-in zoom-in no-print fixed z-[130] flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-xl duration-150"
+          className="fixed z-[130] flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
           style={{
             top: activeLinkInfo.position.top,
             left: activeLinkInfo.position.left,
@@ -182,18 +245,19 @@ const MultiBlockEditor = ({
             <ExternalLink size={12} />
             {activeLinkInfo.url}
           </a>
-          <div className="h-4 w-[1px] bg-gray-100" />
+
+          <div className="h-4 w-[1px] bg-gray-200" />
+
           <button
             onClick={editLink}
             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-500"
-            title="Edit Link"
           >
             <Edit2 size={14} />
           </button>
+
           <button
             onClick={removeLink}
             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-            title="Remove Link"
           >
             <Trash2 size={14} />
           </button>
@@ -210,15 +274,16 @@ const MultiBlockEditor = ({
         )}
         contentEditable
         suppressContentEditableWarning
-        onBlur={handleBlur}
-        onInput={handleInput}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        onSelect={handleSelect}
-        {...(ContainerTag === "div" ? { placeholder } : {})}
         tabIndex={0}
         role="textbox"
         style={style}
+        onInput={handleInput}
+        onBlur={handleBlur}
+        onClick={handleClick}
+        onSelect={handleSelect}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        {...(ContainerTag === "div" ? { placeholder } : {})}
       />
     </>
   );

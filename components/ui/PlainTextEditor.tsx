@@ -57,6 +57,8 @@ const PlainTextEditor = ({
   /* ------------------------------------------------ */
   /* Sync external value → DOM (only when NOT editing) */
   /* ------------------------------------------------ */
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -75,6 +77,20 @@ const PlainTextEditor = ({
   /* ------------------------------------------------ */
   /* Process DOM → external state                    */
   /* ------------------------------------------------ */
+  const commitChange = (val: string) => {
+    onChange(val);
+  };
+
+  const scheduleCommit = (val: string) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      commitChange(val);
+    }, 250); // 250ms is a good balance
+  };
+
   const processChange = () => {
     const el = ref.current;
     if (!el) return;
@@ -86,7 +102,7 @@ const PlainTextEditor = ({
 
     if (newString !== lastValue.current) {
       lastValue.current = newString;
-      onChange(newString);
+      scheduleCommit(newString); // 🔥 debounce here
     }
   };
 
@@ -99,7 +115,12 @@ const PlainTextEditor = ({
   };
 
   const handleBlur = () => {
-    processChange();
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
+    commitChange(lastValue.current); // immediate final commit
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
