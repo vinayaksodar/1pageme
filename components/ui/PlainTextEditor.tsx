@@ -27,43 +27,79 @@ const PlainTextEditor = ({
   onKeyDown,
   autoFocus,
 }: PlainTextEditorProps) => {
-  const contentEditableRef = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const lastValue = useRef(value);
+  const isComposing = useRef(false);
 
+  /* ------------------------------------------------ */
+  /* Autofocus                                       */
+  /* ------------------------------------------------ */
   useEffect(() => {
-    if (autoFocus && contentEditableRef.current) {
-      contentEditableRef.current.focus();
+    if (autoFocus && ref.current) {
+      ref.current.focus();
     }
   }, [autoFocus]);
 
+  /* ------------------------------------------------ */
+  /* Initialize DOM once on mount                    */
+  /* ------------------------------------------------ */
   useEffect(() => {
-    if (
-      contentEditableRef.current &&
-      document.activeElement !== contentEditableRef.current
-    ) {
-      const currentHtml = contentEditableRef.current.innerHTML;
-      if (currentHtml !== value) {
-        contentEditableRef.current.innerHTML = value;
-      }
+    const el = ref.current;
+    if (!el) return;
+
+    const initialValue = lastValue.current;
+
+    if (el.innerHTML !== initialValue) {
+      el.innerHTML = initialValue;
     }
-    lastValue.current = value;
+  }, []);
+
+  /* ------------------------------------------------ */
+  /* Sync external value → DOM (only when NOT editing) */
+  /* ------------------------------------------------ */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const isFocused = document.activeElement === el;
+
+    // Never touch DOM while user is editing
+    if (!isFocused && value !== lastValue.current) {
+      if (el.innerHTML !== value) {
+        el.innerHTML = value;
+      }
+      lastValue.current = value;
+    }
   }, [value]);
 
-  const processChange = (html: string) => {
+  /* ------------------------------------------------ */
+  /* Process DOM → external state                    */
+  /* ------------------------------------------------ */
+  const processChange = () => {
+    const el = ref.current;
+    if (!el) return;
+
+    const html = el.innerHTML;
+
     const newTextNodes = htmlToTextNodes(html);
     const newString = textNodesToString(newTextNodes);
+
     if (newString !== lastValue.current) {
-      onChange(newString);
       lastValue.current = newString;
+      onChange(newString);
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
-    processChange(e.target.innerHTML);
+  /* ------------------------------------------------ */
+  /* Events                                          */
+  /* ------------------------------------------------ */
+  const handleInput = () => {
+    if (isComposing.current) return; // IME guard
+    processChange();
   };
 
-  const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    processChange(e.currentTarget.innerHTML);
+  const handleBlur = () => {
+    processChange();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -78,25 +114,38 @@ const PlainTextEditor = ({
     }
   };
 
+  const handleCompositionStart = () => {
+    isComposing.current = true;
+  };
+
+  const handleCompositionEnd = () => {
+    isComposing.current = false;
+    processChange();
+  };
+
+  /* ------------------------------------------------ */
+  /* Render                                          */
+  /* ------------------------------------------------ */
   const CustomTag = tagName as React.ElementType;
 
   return (
     <CustomTag
-      ref={contentEditableRef}
+      ref={ref}
       className={cn(
         "-mx-1 min-w-[10px] cursor-text rounded border border-transparent px-1 transition-colors outline-none empty:before:text-gray-300 empty:before:content-[attr(placeholder)] hover:bg-gray-100/50",
         className,
       )}
       contentEditable
       suppressContentEditableWarning
-      onBlur={handleBlur}
-      onInput={handleInput}
-      onKeyDown={handleKeyDown}
       placeholder={placeholder}
-      tabIndex={0}
       role="textbox"
+      tabIndex={0}
       style={style}
-      dangerouslySetInnerHTML={{ __html: value }}
+      onInput={handleInput}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      onCompositionStart={handleCompositionStart}
+      onCompositionEnd={handleCompositionEnd}
     />
   );
 };
