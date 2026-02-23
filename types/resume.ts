@@ -22,10 +22,9 @@ export interface TextNode {
   marks?: Mark[];
 }
 
-export interface TextNode {
-  type: "text";
-  text: string;
-  marks?: Mark[];
+export interface Block {
+  id: string;
+  content: TextNode[];
 }
 
 export interface ItemVisibility {
@@ -44,8 +43,8 @@ export interface SectionItem {
   // Semantic Data
   title: string;
   subtitle?: string; // Company Name / Institution
-  description?: TextNode[];
-  bullets?: TextNode[][];
+  description?: Block[];
+  bullets?: Block[];
   location?: string;
   datePeriod?: string;
   link?: string;

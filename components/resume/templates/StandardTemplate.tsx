@@ -10,13 +10,11 @@ import {
 } from "@/types/resume";
 import { cn } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
-import RichTextEditor from "@/components/ui/RichTextEditor";
+import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import FloatingToolbar from "../FloatingToolbar";
 import { PageLayout } from "@/hooks/useResumePagination";
 import { Camera } from "lucide-react";
 import Image from "next/image";
-
-import { ResumeBulletList } from "@/components/resume/ResumeBulletList";
 
 interface TemplateProps {
   resume: ResumeData;
@@ -269,9 +267,9 @@ export const StandardTemplate = ({
             )}
           </div>
 
-          {visibility.showDescription && (
-            <RichTextEditor
-              value={item.description || []}
+          {visibility.showDescription && item.description && (
+            <MultiBlockEditor
+              value={item.description}
               onChange={(val) =>
                 actions.updateSectionItem(
                   section.id,
@@ -280,16 +278,15 @@ export const StandardTemplate = ({
                   val,
                 )
               }
-              className="mb-2 text-sm leading-relaxed whitespace-pre-wrap text-gray-700"
-              multiline
+              className="mb-2 text-sm leading-relaxed text-gray-700"
               placeholder="Description..."
             />
           )}
 
           {visibility.showBullets && item.bullets && (
-            <ResumeBulletList
-              items={item.bullets}
-              onUpdate={(newBullets) =>
+            <MultiBlockEditor
+              value={item.bullets}
+              onChange={(newBullets) =>
                 actions.updateSectionItem(
                   section.id,
                   item.id,
@@ -297,7 +294,8 @@ export const StandardTemplate = ({
                   newBullets,
                 )
               }
-              className="ml-4 list-outside list-disc space-y-1 text-sm text-gray-700"
+              type="bullets"
+              className="list-disc space-y-1 text-sm text-gray-700"
             />
           )}
         </div>

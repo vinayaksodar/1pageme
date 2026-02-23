@@ -10,11 +10,10 @@ import {
 } from "@/types/resume";
 import { cn } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
-import RichTextEditor from "@/components/ui/RichTextEditor";
+import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import FloatingToolbar from "../FloatingToolbar";
 import { PageLayout } from "@/hooks/useResumePagination";
 import { Camera } from "lucide-react";
-import { ResumeBulletList } from "@/components/resume/ResumeBulletList";
 import Image from "next/image";
 
 interface TemplateProps {
@@ -240,9 +239,9 @@ export const ModernTemplate = ({
             </div>
           </div>
 
-          {visibility.showDescription && (
-            <RichTextEditor
-              value={item.description || []}
+          {visibility.showDescription && item.description && (
+            <MultiBlockEditor
+              value={item.description}
               onChange={(val) =>
                 actions.updateSectionItem(
                   section.id,
@@ -252,14 +251,14 @@ export const ModernTemplate = ({
                 )
               }
               className="mb-2 text-xs leading-snug text-gray-600 italic"
-              multiline
+              placeholder="Description..."
             />
           )}
 
           {visibility.showBullets && item.bullets && (
-            <ResumeBulletList
-              items={item.bullets}
-              onUpdate={(newBullets) =>
+            <MultiBlockEditor
+              value={item.bullets}
+              onChange={(newBullets) =>
                 actions.updateSectionItem(
                   section.id,
                   item.id,
@@ -267,14 +266,9 @@ export const ModernTemplate = ({
                   newBullets,
                 )
               }
-              className="list-none space-y-1.5"
-              itemClassName="text-xs text-gray-700 flex gap-2"
-              renderBullet={() => (
-                <span
-                  className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: accentColor }}
-                />
-              )}
+              type="bullets"
+              className="list-disc space-y-1.5 text-xs text-gray-700"
+              style={{ "--accent-color": accentColor } as React.CSSProperties}
             />
           )}
         </div>

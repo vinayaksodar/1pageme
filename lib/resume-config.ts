@@ -152,8 +152,13 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
           title: "",
           description: [
             {
-              type: "text",
-              text: "Experienced software engineer with a focus on React and Next.js...",
+              id: "summary-block-1",
+              content: [
+                {
+                  type: "text",
+                  text: "Experienced software engineer with a focus on React and Next.js...",
+                },
+              ],
             },
           ],
           visibility: {

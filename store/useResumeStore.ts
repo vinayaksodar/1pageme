@@ -17,7 +17,7 @@ import {
   getInitialVisibility,
   createInitialResume,
 } from "@/lib/resume-config";
-import { emptyTextNodes } from "@/lib/utils";
+import { emptyBlock, createBlock } from "@/lib/utils";
 
 export interface ResumeState {
   resumes: ResumeData[];
@@ -227,12 +227,16 @@ export const useResumeStore = create<ResumeState>()(
                         title: "New Item",
                         subtitle: "",
                         description: defaultDescription
-                          ? [{ type: "text", text: defaultDescription }]
-                          : emptyTextNodes(),
+                          ? [
+                              createBlock([
+                                { type: "text", text: defaultDescription },
+                              ]),
+                            ]
+                          : [emptyBlock()],
                         bullets: defaultBullets
-                          ? defaultBullets.map((b) => [
-                              { type: "text", text: b },
-                            ])
+                          ? defaultBullets.map((b) =>
+                              createBlock([{ type: "text", text: b }]),
+                            )
                           : [],
                         location: "",
                         datePeriod: "",
@@ -322,10 +326,12 @@ export const useResumeStore = create<ResumeState>()(
             title: "New Item",
             subtitle: "",
             description: defaultDescription
-              ? [{ type: "text", text: defaultDescription }]
-              : emptyTextNodes(),
+              ? [createBlock([{ type: "text", text: defaultDescription }])]
+              : [emptyBlock()],
             bullets: defaultBullets
-              ? defaultBullets.map((b) => [{ type: "text", text: b }])
+              ? defaultBullets.map((b) =>
+                  createBlock([{ type: "text", text: b }]),
+                )
               : [],
             location: "",
             datePeriod: "",
@@ -474,6 +480,66 @@ export const useResumeStore = create<ResumeState>()(
     }),
     {
       name: "resume-storage-v6",
+      version: 7,
+      migrate: (persistedState: unknown, version: number) => {
+        if (version < 7) {
+          const state = persistedState as Record<string, unknown>;
+          if (state.resumes && Array.isArray(state.resumes)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            state.resumes = state.resumes.map((resume: any) => ({
+              ...resume,
+              content: {
+                ...resume.content,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sections: resume.content.sections.map((section: any) => ({
+                  ...section,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  items: section.items.map((item: any) => {
+                    // Migrate description from TextNode[] to Block[]
+                    let description = item.description;
+                    if (
+                      description &&
+                      Array.isArray(description) &&
+                      description.length > 0 &&
+                      !("id" in description[0])
+                    ) {
+                      description = [
+                        {
+                          id: Math.random().toString(36).substr(2, 9),
+                          content: description,
+                        },
+                      ];
+                    }
+
+                    // Migrate bullets from TextNode[][] to Block[]
+                    let bullets = item.bullets;
+                    if (
+                      bullets &&
+                      Array.isArray(bullets) &&
+                      bullets.length > 0 &&
+                      Array.isArray(bullets[0])
+                    ) {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      bullets = bullets.map((b: any) => ({
+                        id: Math.random().toString(36).substr(2, 9),
+                        content: b,
+                      }));
+                    }
+
+                    return {
+                      ...item,
+                      description,
+                      bullets,
+                    };
+                  }),
+                })),
+              },
+            }));
+          }
+          return state;
+        }
+        return persistedState;
+      },
     },
   ),
 );

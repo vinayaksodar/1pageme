@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { TextNode, Mark, MarkType } from "@/types/resume";
+import { TextNode, Mark, MarkType, Block } from "@/types/resume";
 import { escape } from "lodash";
 
 export function cn(...inputs: ClassValue[]) {
@@ -9,6 +9,57 @@ export function cn(...inputs: ClassValue[]) {
 
 export function emptyTextNodes(): TextNode[] {
   return [{ type: "text", text: "" }];
+}
+
+export function createBlock(content: TextNode[] = emptyTextNodes()): Block {
+  return {
+    id: crypto.randomUUID(),
+    content,
+  };
+}
+
+export function emptyBlock(): Block {
+  return createBlock();
+}
+
+export function blocksToHtml(
+  blocks: Block[],
+  tagName: "p" | "li" = "p",
+): string {
+  return blocks
+    .map((block) => {
+      const content = textNodesToHtml(block.content);
+      return `<${tagName} data-block-id="${block.id}">${content || (tagName === "li" ? "" : "<br>")}</${tagName}>`;
+    })
+    .join("");
+}
+
+export function htmlToBlocks(
+  html: string,
+  blockTagName: "p" | "li" = "p",
+): Block[] {
+  if (typeof window === "undefined") return [];
+
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  // If it's bullets, the li might be wrapped in ul/ol. We want to find all li.
+  const blockElements = Array.from(container.querySelectorAll(blockTagName));
+
+  if (blockElements.length === 0 && container.textContent?.trim()) {
+    // Fallback if browser didn't use the expected tags but has content
+    return [createBlock(htmlToTextNodes(html))];
+  }
+
+  const blocks = blockElements.map((el) => {
+    const id = el.getAttribute("data-block-id") || crypto.randomUUID();
+    return {
+      id,
+      content: htmlToTextNodes(el.innerHTML),
+    };
+  });
+
+  return blocks.length > 0 ? blocks : [emptyBlock()];
 }
 
 export function textNodesToString(nodes: TextNode[]): string {
