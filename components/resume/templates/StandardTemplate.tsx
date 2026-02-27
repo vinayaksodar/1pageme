@@ -7,6 +7,7 @@ import {
   SectionItem,
   ResumeData,
   PersonalInfoVisibility,
+  TemplateStyles,
 } from "@/types/resume";
 import { cn } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
@@ -20,7 +21,7 @@ interface TemplateProps {
   resume: ResumeData;
   focusedItemId: string | null;
   setFocusedItemId: (id: string | null) => void;
-  pageLayout?: PageLayout; // Optional: If provided, renders only content for this page
+  pageLayout?: PageLayout;
   actions: {
     updatePersonalInfo: (field: string, value: string) => void;
     updatePersonalInfoVisibility: (
@@ -41,6 +42,7 @@ interface TemplateProps {
       direction: "up" | "down",
     ) => void;
   };
+  templateStyles: TemplateStyles;
 }
 
 const EditableImage = ({
@@ -100,13 +102,13 @@ export const StandardTemplate = ({
   setFocusedItemId,
   pageLayout,
   actions,
+  templateStyles,
 }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
   const { isTextSelected } = useResumeStore();
   const layout = layouts[activeTemplateId];
-  const { accentColor } = layout.globalStyles;
+  const { accentColor, sectionSpacing, itemSpacing } = templateStyles;
 
-  // Defensive check for visibility (for existing resumes)
   const visibility = content.personalInfo.visibility || {
     showJobTitle: true,
     showEmail: true,
@@ -121,15 +123,12 @@ export const StandardTemplate = ({
     index: number,
     total: number,
   ) => {
-    // If pageLayout is provided, check if this item belongs to the page
     if (pageLayout && !pageLayout.items.has(item.id)) return null;
 
     const { visibility } = item;
-
     const isFirstOnPage = pageLayout
       ? section.items.find((i) => pageLayout.items.has(i.id))?.id === item.id
       : index === 0;
-
     const showContinuedHeader =
       pageLayout?.continued.has(section.id) && isFirstOnPage;
 
@@ -161,14 +160,15 @@ export const StandardTemplate = ({
               ? "z-30 print:!bg-transparent print:!shadow-none"
               : "z-20 hover:bg-gray-50/50",
           )}
-          style={
-            focusedItemId === item.id
+          style={{
+            marginBottom: `${itemSpacing}rem`,
+            ...(focusedItemId === item.id
               ? {
                   boxShadow: `0 0 0 2px ${accentColor}`,
-                  backgroundColor: `${accentColor}10`, // 10 is ~6% opacity
+                  backgroundColor: `${accentColor}10`,
                 }
-              : {}
-          }
+              : {}),
+          }}
           onFocus={() => setFocusedItemId(item.id)}
           onClick={() => setFocusedItemId(item.id)}
         >
@@ -312,7 +312,11 @@ export const StandardTemplate = ({
       : true;
 
     return (
-      <div key={section.id} className="group/section relative mb-8">
+      <div
+        key={section.id}
+        className="group/section relative"
+        style={{ marginBottom: `${sectionSpacing}rem` }}
+      >
         {showMainHeader && (
           <div
             className="mb-4 flex items-center justify-between border-b-2 pb-1"
@@ -328,7 +332,7 @@ export const StandardTemplate = ({
             />
           </div>
         )}
-        <div className="space-y-5">
+        <div>
           {section.items.map((item, index) =>
             renderItem(section, item, index, section.items.length),
           )}
@@ -342,19 +346,20 @@ export const StandardTemplate = ({
       {(!pageLayout || pageLayout.pageIndex === 0) && (
         <div
           className={cn(
-            "group/header relative -mx-1 mb-10 flex items-start justify-between gap-6 rounded border-b border-gray-100 px-1 pb-8 transition-colors",
+            "group/header relative -mx-1 flex items-start justify-between gap-6 rounded border-b border-gray-100 px-1 pb-8 transition-colors",
             focusedItemId === "header"
               ? "z-30 print:!bg-transparent print:!shadow-none"
               : "z-20 hover:bg-gray-50/50",
           )}
-          style={
-            focusedItemId === "header"
+          style={{
+            marginBottom: `${sectionSpacing}rem`,
+            ...(focusedItemId === "header"
               ? {
                   boxShadow: `0 0 0 2px ${accentColor}`,
                   backgroundColor: `${accentColor}10`,
                 }
-              : {}
-          }
+              : {}),
+          }}
           onFocus={() => setFocusedItemId("header")}
           onClick={() => setFocusedItemId("header")}
         >

@@ -7,6 +7,7 @@ import {
   SectionItem,
   ResumeData,
   PersonalInfoVisibility,
+  TemplateStyles,
 } from "@/types/resume";
 import { cn } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
@@ -41,6 +42,7 @@ interface TemplateProps {
       direction: "up" | "down",
     ) => void;
   };
+  templateStyles: TemplateStyles;
 }
 
 const EditableImage = ({
@@ -100,11 +102,20 @@ export const ModernTemplate = ({
   setFocusedItemId,
   pageLayout,
   actions,
+  templateStyles,
 }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
   const { isTextSelected } = useResumeStore();
-  const layout = layouts[activeTemplateId];
-  const { accentColor } = layout.globalStyles;
+  const layoutConfig = layouts[activeTemplateId];
+
+  const {
+    accentColor,
+    sectionSpacing,
+    itemSpacing,
+    layout,
+    columnWidths = [65, 35],
+    columnGap = 2.5,
+  } = templateStyles;
 
   const visibility = content.personalInfo.visibility || {
     showJobTitle: true,
@@ -123,11 +134,9 @@ export const ModernTemplate = ({
     if (pageLayout && !pageLayout.items.has(item.id)) return null;
 
     const { visibility } = item;
-
     const isFirstOnPage = pageLayout
       ? section.items.find((i) => pageLayout.items.has(i.id))?.id === item.id
       : index === 0;
-
     const showContinuedHeader =
       pageLayout?.continued.has(section.id) && isFirstOnPage;
 
@@ -152,14 +161,15 @@ export const ModernTemplate = ({
               ? "z-30 print:!bg-transparent print:!shadow-none"
               : "z-20 hover:bg-gray-50/50",
           )}
-          style={
-            focusedItemId === item.id
+          style={{
+            marginBottom: `${itemSpacing}rem`,
+            ...(focusedItemId === item.id
               ? {
                   boxShadow: `0 0 0 2px ${accentColor}`,
                   backgroundColor: `${accentColor}10`,
                 }
-              : {}
-          }
+              : {}),
+          }}
           onFocus={() => setFocusedItemId(item.id)}
           onClick={() => setFocusedItemId(item.id)}
         >
@@ -285,7 +295,11 @@ export const ModernTemplate = ({
       : true;
 
     return (
-      <div key={section.id} className="group/section relative mb-10">
+      <div
+        key={section.id}
+        className="group/section relative"
+        style={{ marginBottom: `${sectionSpacing}rem` }}
+      >
         {showMainHeader && (
           <h3
             className="mb-6 flex items-center gap-4 text-xs font-black tracking-widest uppercase"
@@ -300,7 +314,7 @@ export const ModernTemplate = ({
             <div className="h-[1px] flex-1 bg-gray-100" />
           </h3>
         )}
-        <div className="space-y-6">
+        <div>
           {section.items.map((item, index) =>
             renderItem(section, item, index, section.items.length),
           )}
@@ -309,30 +323,41 @@ export const ModernTemplate = ({
     );
   };
 
-  const mainSections = layout.sections.filter(
+  const mainSections = layoutConfig.sections.filter(
     (s) => s.column === 1 || !s.column,
   );
-  const sideSections = layout.sections.filter((s) => s.column === 2);
+  const sideSections = layoutConfig.sections.filter((s) => s.column === 2);
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="grid w-full grid-cols-[2fr_1fr] gap-x-10">
+      <div
+        className="grid w-full"
+        style={{
+          gridTemplateColumns:
+            layout === "two-column"
+              ? `${columnWidths[0]}fr ${columnWidths[1]}fr`
+              : "1fr",
+          columnGap: `${columnGap}rem`,
+          rowGap: `${sectionSpacing}rem`,
+        }}
+      >
         {(!pageLayout || pageLayout.pageIndex === 0) && (
           <div
             className={cn(
-              "group/header relative col-span-2 -mx-1 mb-10 flex items-start justify-between gap-8 rounded px-1 transition-colors",
+              "group/header relative col-span-full -mx-1 flex items-start justify-between gap-8 rounded px-1 transition-colors",
               focusedItemId === "header"
                 ? "z-30 print:!bg-transparent print:!shadow-none"
                 : "z-20 hover:bg-gray-50/50",
             )}
-            style={
-              focusedItemId === "header"
+            style={{
+              marginBottom: `${sectionSpacing}rem`,
+              ...(focusedItemId === "header"
                 ? {
                     boxShadow: `0 0 0 2px ${accentColor}`,
                     backgroundColor: `${accentColor}10`,
                   }
-                : {}
-            }
+                : {}),
+            }}
             onFocus={() => setFocusedItemId("header")}
             onClick={() => setFocusedItemId("header")}
           >
@@ -414,9 +439,11 @@ export const ModernTemplate = ({
         <div className="col-span-1 flex flex-col">
           {mainSections.map(renderSection)}
         </div>
-        <div className="col-span-1 flex flex-col">
-          {sideSections.map(renderSection)}
-        </div>
+        {layout === "two-column" && (
+          <div className="col-span-1 flex flex-col">
+            {sideSections.map(renderSection)}
+          </div>
+        )}
       </div>
     </div>
   );

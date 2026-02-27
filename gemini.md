@@ -50,7 +50,7 @@ interface ResumeData {
 }
 
 interface TemplateLayout {
-  globalStyles: GlobalStyles; // { fontFamily, accentColor, margins, lineHeight }
+  templateStyles: TemplateStyles; // { fontFamily, accentColor, margins, lineHeight }
   sections: SectionConfig[]; // Order & visibility configuration for sections
 }
 

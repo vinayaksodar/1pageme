@@ -6,23 +6,17 @@ import { TemplateId, SectionType } from "@/types/resume";
 import { LayoutTemplate, Palette, MoveVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SortableSectionList } from "./SortableSectionList";
+import ThemeSidebar from "./ThemeSidebar"; // Import ThemeSidebar
 
 const Sidebar = () => {
-  const {
-    resumes,
-    activeResumeId,
-    updateGlobalStyle,
-    addSection,
-    setTemplate,
-  } = useResumeStore();
+  const { resumes, activeResumeId, addSection, setTemplate } = useResumeStore();
   const [activeTab, setActiveTab] = React.useState<
     "design" | "rearrange" | "templates"
   >("design");
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   if (!activeResume) return null;
-  const { layouts, activeTemplateId } = activeResume;
-  const layout = layouts[activeTemplateId];
+  const { activeTemplateId } = activeResume;
 
   return (
     <div className="flex h-full flex-col">
@@ -64,112 +58,11 @@ const Sidebar = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 space-y-6 overflow-y-auto p-4">
-        {activeTab === "design" && (
-          <>
-            {/* Margins */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                Margins
-              </label>
-              <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1">
-                {["compact", "standard", "spacious"].map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => updateGlobalStyle("margins", m)}
-                    className={cn(
-                      "flex-1 rounded-lg py-2 text-[10px] font-bold tracking-tighter uppercase transition-all",
-                      layout.globalStyles.margins === m
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-400 hover:text-gray-600",
-                    )}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Colors */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                Accent Color
-              </label>
-              <div className="flex flex-wrap gap-2.5">
-                {[
-                  "#38bdf8",
-                  "#3b82f6",
-                  "#8b5cf6",
-                  "#ec4899",
-                  "#f43f5e",
-                  "#f97316",
-                  "#10b981",
-                  "#111827",
-                ].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => updateGlobalStyle("accentColor", color)}
-                    className={cn(
-                      "h-7 w-7 rounded-full border-2 transition-all",
-                      layout.globalStyles.accentColor === color
-                        ? "scale-110 border-gray-900"
-                        : "border-transparent hover:scale-105 hover:shadow-md",
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Font Family */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                Font Family
-              </label>
-              <div className="grid grid-cols-1 gap-2">
-                {["Rubik", "Inter", "Serif"].map((font) => (
-                  <button
-                    key={font}
-                    onClick={() => updateGlobalStyle("fontFamily", font)}
-                    className={cn(
-                      "flex items-center rounded-xl border-2 px-4 py-2.5 text-xs font-bold transition-all",
-                      layout.globalStyles.fontFamily === font
-                        ? "border-blue-600 bg-blue-50 text-blue-600"
-                        : "border-gray-50 bg-gray-50/50 hover:border-gray-100",
-                    )}
-                  >
-                    <span
-                      style={{ fontFamily: font === "Serif" ? "serif" : font }}
-                    >
-                      {font}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Line Height */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                Line Height: {layout.globalStyles.lineHeight}
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="2"
-                step="0.1"
-                value={layout.globalStyles.lineHeight}
-                onChange={(e) =>
-                  updateGlobalStyle("lineHeight", parseFloat(e.target.value))
-                }
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-100 accent-blue-600"
-              />
-            </div>
-          </>
-        )}
+      <div className="flex-1 space-y-6 overflow-y-auto">
+        {activeTab === "design" && <ThemeSidebar />}
 
         {activeTab === "templates" && (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <label className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
               Layout Layers
             </label>
@@ -214,7 +107,7 @@ const Sidebar = () => {
         )}
 
         {activeTab === "rearrange" && (
-          <div className="space-y-6">
+          <div className="space-y-6 p-4">
             <div>
               <label className="mb-4 block text-[10px] font-black tracking-widest text-gray-400 uppercase">
                 Rearrange Sections

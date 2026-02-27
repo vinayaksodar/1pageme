@@ -6,7 +6,7 @@ import {
   SectionItem,
   ItemVisibility,
   SectionConfig,
-  GlobalStyles,
+  TemplateStyles,
   TemplateId,
   TemplateLayout,
   Section,
@@ -60,8 +60,8 @@ export interface ResumeState {
     config: Partial<SectionConfig>,
   ) => void;
   updateGlobalStyle: (
-    field: keyof GlobalStyles,
-    value: GlobalStyles[keyof GlobalStyles],
+    field: keyof TemplateStyles,
+    value: TemplateStyles[keyof TemplateStyles],
   ) => void;
   setTemplate: (templateId: TemplateId) => void;
 }
@@ -455,8 +455,8 @@ export const useResumeStore = create<ResumeState>()(
                     ...r.layouts,
                     [r.activeTemplateId]: {
                       ...r.layouts[r.activeTemplateId],
-                      globalStyles: {
-                        ...r.layouts[r.activeTemplateId].globalStyles,
+                      templateStyles: {
+                        ...r.layouts[r.activeTemplateId].templateStyles,
                         [field]: value,
                       },
                     },

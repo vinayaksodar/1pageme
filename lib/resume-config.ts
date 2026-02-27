@@ -2,7 +2,7 @@ import {
   SectionType,
   ItemVisibility,
   SectionItem,
-  GlobalStyles,
+  TemplateStyles,
   TemplateId,
   TemplateLayout,
   SectionConfig,
@@ -114,11 +114,17 @@ export const getInitialVisibility = (type: SectionType): ItemVisibility => {
   return visibility;
 };
 
-export const DEFAULT_STYLES: GlobalStyles = {
+export const DEFAULT_STYLES: TemplateStyles = {
   fontFamily: "Rubik",
+  fontSize: 1, // 1rem
   accentColor: "#38bdf8",
-  margins: "standard",
+  pageMargins: 2, // 2rem
+  sectionSpacing: 2, // 2rem
+  itemSpacing: 1, // 1rem
   lineHeight: 1.5,
+  layout: "one-column",
+  columnWidths: [65, 35],
+  columnGap: 2.5, // in rem
 };
 
 export const getInitialLayout = (
@@ -135,7 +141,7 @@ export const getInitialLayout = (
   }));
 
   return {
-    globalStyles: { ...DEFAULT_STYLES },
+    templateStyles: { ...DEFAULT_STYLES },
     sections: configs,
   };
 };

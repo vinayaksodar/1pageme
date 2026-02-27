@@ -24,25 +24,17 @@ const ResumePreview = () => {
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
 
-  // Calculate margin in pixels for the hook
-  const currentMargins =
-    activeResume?.layouts[activeResume.activeTemplateId].globalStyles.margins ||
-    "standard";
-  const marginPx =
-    {
-      compact: 32,
-      standard: 48,
-      spacious: 64,
-    }[currentMargins] || 48;
+  const templateStyles =
+    activeResume?.layouts[activeResume.activeTemplateId].templateStyles;
 
   // Pagination Logic
   const pages = useResumePagination(
     activeResume,
     "measurement-container",
-    marginPx,
+    (templateStyles?.pageMargins ?? 2) * 16, // Convert rem to px
   );
 
-  if (!activeResume) return null;
+  if (!activeResume || !templateStyles) return null;
 
   const templateProps = {
     resume: activeResume,
@@ -57,6 +49,7 @@ const ResumePreview = () => {
       removeSectionItem,
       moveSectionItem,
     },
+    templateStyles: templateStyles, // Pass styles to templates
   };
 
   const renderTemplate = (pageLayout?: PageLayout) => {
@@ -69,21 +62,7 @@ const ResumePreview = () => {
     }
   };
 
-  const layout = activeResume.layouts[activeResume.activeTemplateId];
-  const { margins, fontFamily, lineHeight } = layout.globalStyles;
-
-  const getMargins = () => {
-    switch (margins) {
-      case "compact":
-        return "p-8";
-      case "standard":
-        return "p-12";
-      case "spacious":
-        return "p-16";
-      default:
-        return "p-12";
-    }
-  };
+  const { fontFamily, lineHeight, fontSize, pageMargins } = templateStyles;
 
   return (
     <div
@@ -91,19 +70,18 @@ const ResumePreview = () => {
       style={{
         fontFamily: fontFamily === "Serif" ? "serif" : fontFamily,
         lineHeight: lineHeight,
+        fontSize: `${fontSize}rem`,
+        ["--accent-color" as string]: templateStyles.accentColor,
       }}
       onClick={(e) => {
-        // Clear focus if clicking outside items
         if (e.target === e.currentTarget) setFocusedItemId(null);
       }}
     >
       {/* Hidden Measurement Container - Renders full content to measure heights */}
       <div
         id="measurement-container"
-        className={cn(
-          "pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0",
-          getMargins(),
-        )}
+        className="pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0"
+        style={{ padding: `${pageMargins}rem` }}
       >
         {renderTemplate()}
       </div>
@@ -114,9 +92,9 @@ const ResumePreview = () => {
           key={index}
           className={cn(
             "relative h-[297mm] w-[210mm] bg-white shadow-2xl transition-all duration-300 print:min-h-0 print:min-w-full print:shadow-none",
-            getMargins(),
             index > 0 ? "mt-8 print:mt-0 print:break-before-page" : "",
           )}
+          style={{ padding: `${pageMargins}rem` }}
         >
           {/* Visual Page Number */}
           <div className="absolute top-2 right-[-40px] text-xs font-medium text-gray-400 print:hidden">

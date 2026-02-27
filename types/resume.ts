@@ -61,11 +61,17 @@ export interface Section {
   items: SectionItem[];
 }
 
-export interface GlobalStyles {
-  fontFamily: "Rubik" | "Inter" | "Serif";
+export interface TemplateStyles {
+  fontFamily: "Rubik" | "Inter" | "Serif" | "Roboto" | "Lato";
+  fontSize: number; // in rem
   accentColor: string;
-  margins: "compact" | "standard" | "spacious";
+  pageMargins: number; // in rem
+  sectionSpacing: number; // in rem
+  itemSpacing: number; // in rem
   lineHeight: number;
+  layout: "one-column" | "two-column";
+  columnWidths: [number, number]; // percentages
+  columnGap: number; // in rem
 }
 
 export interface SectionConfig {
@@ -75,7 +81,7 @@ export interface SectionConfig {
 }
 
 export interface TemplateLayout {
-  globalStyles: GlobalStyles;
+  templateStyles: TemplateStyles;
   sections: SectionConfig[]; // The order of this array determines rendering order
 }
 
