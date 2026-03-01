@@ -65,6 +65,9 @@ const SortableItem = ({
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   const sectionConfigs =
     activeResume?.layouts[activeResume.activeTemplateId].sections || [];
+  const isTwoColumn =
+    activeResume?.layouts[activeResume.activeTemplateId].templateStyles
+      .layout === "two-column";
 
   const moveSection = (direction: number) => {
     const newConfigs = [...sectionConfigs];
@@ -98,12 +101,14 @@ const SortableItem = ({
         <p className="truncate text-[10px] font-black tracking-wider text-slate-700 uppercase">
           {section.title || section.type}
         </p>
-        <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
-          {config.column === 1 ? "Main Content" : "Sidebar"}
-        </span>
+        {isTwoColumn && (
+          <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
+            {config.column === 1 ? "Main Content" : "Sidebar"}
+          </span>
+        )}
       </div>
 
-      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex items-center gap-1 transition-opacity">
         <button
           onClick={() => moveSection(-1)}
           disabled={index === 0}
@@ -120,15 +125,25 @@ const SortableItem = ({
         >
           <ArrowDown size={12} />
         </button>
+        {isTwoColumn && (
+          <button
+            onClick={toggleColumn}
+            className="p-1 text-slate-400 transition-colors hover:text-blue-600"
+            title="Move column"
+          >
+            <ArrowRightLeft size={12} />
+          </button>
+        )}
         <button
-          onClick={toggleColumn}
-          className="p-1 text-slate-400 transition-colors hover:text-blue-600"
-          title="Move column"
-        >
-          <ArrowRightLeft size={12} />
-        </button>
-        <button
-          onClick={() => removeSection(section.id)}
+          onClick={() => {
+            if (
+              window.confirm(
+                `Are you sure you want to delete the "${section.title || section.type}" section?`,
+              )
+            ) {
+              removeSection(section.id);
+            }
+          }}
           className="p-1 text-slate-400 transition-colors hover:text-red-500"
           title="Delete Section"
         >
