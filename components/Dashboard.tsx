@@ -274,15 +274,6 @@ const Dashboard = () => {
 
       <main className="flex-1 overflow-auto bg-slate-50/50 p-8 lg:p-12">
         <div className="mx-auto max-w-7xl">
-          <header className="mb-10">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              My Resumes
-            </h1>
-            <p className="mt-1 font-medium text-slate-500">
-              Select a document to edit or create a new one.
-            </p>
-          </header>
-
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {sortedResumes.map((resume) => (
               <div
