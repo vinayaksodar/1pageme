@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Download, ClipboardCopy, X } from "lucide-react";
-import { LLM_PROMPT } from "@/lib/resume-config";
+import { LLM_PROMPT } from "@/lib/prompts";
 import { ResumeData } from "@/types/resume";
 
 interface ImportModalProps {

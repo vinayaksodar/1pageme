@@ -12,7 +12,7 @@ import {
   Edit2,
   Check,
 } from "lucide-react";
-import { LLM_PROMPT } from "@/lib/resume-config";
+import { LLM_PROMPT } from "@/lib/prompts";
 import { ResumeData } from "@/types/resume";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
