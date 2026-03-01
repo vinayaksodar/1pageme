@@ -18,6 +18,7 @@ import {
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "./TemplateLibraryModal";
 import ImportModal from "../ui/ImportModal";
+import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";
 import { ResumeData } from "@/types/resume";
 
@@ -98,22 +99,9 @@ const EditorLayout = () => {
       {/* TOP BAR */}
       <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
         <div className="flex items-center gap-5">
-          <button
-            onClick={() => setActiveResume("")}
-            className="group flex items-center gap-3 transition-transform active:scale-95"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xl font-black text-white italic shadow-lg shadow-blue-100 transition-colors group-hover:bg-blue-700">
-              1
-            </div>
-            <h1 className="hidden text-lg font-black tracking-tighter text-slate-900 uppercase italic sm:block">
-              1PageMe
-            </h1>
-          </button>
+          <Logo onClick={() => setActiveResume("")} />
           <div className="h-6 w-[1px] bg-slate-200"></div>
           <div className="relative flex flex-col" ref={dropdownRef}>
-            <span className="mb-1.5 text-[10px] leading-none font-black tracking-[0.2em] text-slate-300 uppercase">
-              Project
-            </span>
             {isEditingTitle ? (
               <div className="flex items-center gap-2">
                 <input

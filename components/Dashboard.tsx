@@ -16,6 +16,7 @@ import { LLM_PROMPT } from "@/lib/resume-config";
 import { ResumeData } from "@/types/resume";
 import TemplateLibraryModal from "./editor/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
+import { Logo } from "./ui/Logo";
 
 const formatDate = (timestamp: number) => {
   const now = Date.now();
@@ -81,14 +82,7 @@ const Dashboard = () => {
       {/* TOP BAR */}
       <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
         <div className="flex items-center gap-5">
-          <div className="group flex items-center gap-3 transition-transform">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xl font-black text-white italic shadow-lg shadow-blue-100 transition-colors group-hover:bg-blue-700">
-              1
-            </div>
-            <h1 className="hidden text-lg font-black tracking-tighter text-slate-900 uppercase italic sm:block">
-              1PageMe
-            </h1>
-          </div>
+          <Logo />
         </div>
         <div className="flex items-center gap-4">
           <button
