@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
   Plus,
@@ -10,204 +10,12 @@ import {
   ClipboardCopy,
   X,
   Edit2,
+  Check,
 } from "lucide-react";
 import { LLM_PROMPT } from "@/lib/resume-config";
 import { ResumeData } from "@/types/resume";
 import TemplateLibraryModal from "./editor/TemplateLibraryModal";
-
-const RenameModal = ({
-  isOpen,
-  onClose,
-  onRename,
-  initialTitle,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onRename: (title: string) => void;
-  initialTitle: string;
-}) => {
-  const [title, setTitle] = useState(initialTitle);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="animate-in fade-in zoom-in w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl duration-200">
-        <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6">
-          <h2 className="text-xl font-black tracking-tight text-slate-900">
-            Rename Resume
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-8">
-          <input
-            autoFocus
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && title.trim()) {
-                onRename(title);
-                onClose();
-              }
-            }}
-            placeholder="Enter new title..."
-            className="w-full rounded-xl border-none bg-slate-50 p-4 text-sm font-bold text-slate-900 shadow-inner ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600"
-          />
-
-          <div className="mt-8 flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="rounded-xl px-6 py-3 text-xs font-black tracking-widest text-slate-400 uppercase transition-all hover:text-slate-900"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (title.trim()) {
-                  onRename(title);
-                  onClose();
-                }
-              }}
-              disabled={!title.trim()}
-              className="rounded-xl bg-blue-600 px-8 py-3 text-xs font-black tracking-widest text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50"
-            >
-              Rename
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ImportModal = ({
-  isOpen,
-  onClose,
-  onImport,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onImport: (resume: ResumeData) => void;
-}) => {
-  const [jsonInput, setJsonInput] = useState("");
-  const [error, setError] = useState("");
-
-  if (!isOpen) return null;
-
-  const handleImport = () => {
-    try {
-      const parsed = JSON.parse(jsonInput) as ResumeData;
-      onImport(parsed);
-      onClose();
-      setJsonInput("");
-      setError("");
-    } catch {
-      setError("Invalid JSON format. Please check the LLM output.");
-    }
-  };
-
-  const copyPrompt = () => {
-    navigator.clipboard.writeText(LLM_PROMPT);
-    alert("Prompt copied to clipboard!");
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="animate-in fade-in zoom-in w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl duration-200">
-        <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6">
-          <div>
-            <h2 className="text-xl font-black tracking-tight text-slate-900">
-              Import from LLM
-            </h2>
-            <p className="text-sm font-medium text-slate-500">
-              Follow the steps to import your resume.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="custom-scrollbar max-h-[70vh] overflow-auto p-8">
-          <div className="mb-8 space-y-4">
-            <div className="flex items-start gap-4 rounded-2xl bg-blue-50/50 p-6">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
-                1
-              </div>
-              <div className="flex-1">
-                <h4 className="mb-2 text-sm font-black text-slate-900">
-                  Copy the prompt
-                </h4>
-                <p className="mb-4 text-xs leading-relaxed font-medium text-slate-500">
-                  Copy this prompt and paste it into ChatGPT, Claude, or Gemini
-                  along with your resume PDF or text.
-                </p>
-                <button
-                  onClick={copyPrompt}
-                  className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-[10px] font-black tracking-widest text-blue-600 uppercase shadow-sm ring-1 ring-blue-100 transition-all hover:bg-blue-600 hover:text-white"
-                >
-                  <ClipboardCopy size={14} /> Copy Prompt
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 rounded-2xl bg-slate-50/50 p-6">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-                2
-              </div>
-              <div className="flex-1">
-                <h4 className="mb-2 text-sm font-black text-slate-900">
-                  Paste the JSON output
-                </h4>
-                <p className="mb-4 text-xs leading-relaxed font-medium text-slate-500">
-                  Once the LLM generates the JSON structure, paste it here to
-                  create your resume.
-                </p>
-                <textarea
-                  value={jsonInput}
-                  onChange={(e) => setJsonInput(e.target.value)}
-                  placeholder='{ "title": "My Resume", ... }'
-                  className="h-48 w-full rounded-xl border-none bg-white p-4 font-mono text-xs text-slate-600 shadow-inner ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600"
-                />
-                {error && (
-                  <p className="mt-2 text-[10px] font-black tracking-wider text-red-500 uppercase">
-                    {error}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="rounded-xl px-6 py-3 text-xs font-black tracking-widest text-slate-400 uppercase transition-all hover:text-slate-900"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleImport}
-              disabled={!jsonInput.trim()}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-xs font-black tracking-widest text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
-            >
-              <Download size={14} /> Import Resume
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import ImportModal from "./ui/ImportModal";
 
 const formatDate = (timestamp: number) => {
   const now = Date.now();
@@ -243,9 +51,30 @@ const Dashboard = () => {
   const [pendingImportData, setPendingImportData] = useState<ResumeData | null>(
     null,
   );
-  const [renamingResumeId, setRenamingResumeId] = useState<string | null>(null);
+  const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
+  const [tempTitle, setTempTitle] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
+
+  const startEditing = (resumeId: string, currentTitle: string) => {
+    setEditingResumeId(resumeId);
+    setTempTitle(currentTitle);
+  };
+
+  const saveTitle = () => {
+    if (editingResumeId && tempTitle.trim()) {
+      renameResume(editingResumeId, tempTitle.trim());
+    }
+    setEditingResumeId(null);
+  };
+
+  useEffect(() => {
+    if (editingResumeId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingResumeId]);
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-50 font-sans text-slate-900">
@@ -287,24 +116,57 @@ const Dashboard = () => {
               >
                 <div
                   onClick={() => setActiveResume(resume.id)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    startEditing(resume.id, resume.title);
+                  }}
                   className="flex-1 cursor-pointer p-8"
                 >
                   <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 transition-all group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-blue-100">
                     <FileText size={28} />
                   </div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="truncate text-xl font-black text-slate-900">
-                      {resume.title || "Untitled Resume"}
-                    </h3>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRenamingResumeId(resume.id);
-                      }}
-                      className="mt-1 shrink-0 text-slate-300 transition-colors group-hover:opacity-100 hover:text-blue-600 lg:opacity-0"
-                    >
-                      <Edit2 size={14} />
-                    </button>
+                    {editingResumeId === resume.id ? (
+                      <div className="flex w-full items-center gap-2">
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          value={tempTitle}
+                          onChange={(e) => setTempTitle(e.target.value)}
+                          onBlur={saveTitle}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveTitle();
+                            if (e.key === "Escape") setEditingResumeId(null);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full rounded-lg border-none bg-slate-50 px-2 py-1 text-xl font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveTitle();
+                          }}
+                          className="rounded-full bg-blue-600 p-1 text-white shadow-md hover:bg-blue-700"
+                        >
+                          <Check size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <h3 className="truncate text-xl font-black text-slate-900">
+                          {resume.title || "Untitled Resume"}
+                        </h3>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(resume.id, resume.title);
+                          }}
+                          className="mt-1 shrink-0 text-slate-300 transition-colors group-hover:opacity-100 hover:text-blue-600 lg:opacity-0"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                   <div className="mt-3 flex items-center gap-2 text-[10px] font-black tracking-widest text-slate-300 uppercase">
                     <Clock size={12} />
@@ -388,17 +250,6 @@ const Dashboard = () => {
           }
         }}
       />
-
-      {renamingResumeId && (
-        <RenameModal
-          isOpen={!!renamingResumeId}
-          onClose={() => setRenamingResumeId(null)}
-          onRename={(title) => renameResume(renamingResumeId, title)}
-          initialTitle={
-            resumes.find((r) => r.id === renamingResumeId)?.title || ""
-          }
-        />
-      )}
 
       <style
         dangerouslySetInnerHTML={{

@@ -1,19 +1,49 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ResumePreview from "../resume/ResumePreview";
 import { useReactToPrint } from "react-to-print";
-import { Download, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Download,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Copy,
+  FileDown,
+  Edit2,
+  Check,
+} from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "./TemplateLibraryModal";
+import ImportModal from "../ui/ImportModal";
 import { cn } from "@/lib/utils";
+import { ResumeData } from "@/types/resume";
 
 const EditorLayout = () => {
-  const { activeResumeId, resumes, setActiveResume, setTemplate } =
-    useResumeStore();
+  const {
+    activeResumeId,
+    resumes,
+    setActiveResume,
+    setTemplate,
+    createNewResume,
+    duplicateResume,
+    importResume,
+    renameResume,
+  } = useResumeStore();
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isNewResumeModalOpen, setIsNewResumeModalOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [tempTitle, setTempTitle] = useState("");
+  const [pendingImportData, setPendingImportData] = useState<ResumeData | null>(
+    null,
+  );
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
@@ -23,6 +53,43 @@ const EditorLayout = () => {
     contentRef: contentRef,
     documentTitle: resumeTitle,
   });
+
+  const startEditing = () => {
+    if (activeResume) {
+      setTempTitle(activeResume.title);
+      setIsEditingTitle(true);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const saveTitle = () => {
+    if (activeResumeId && tempTitle.trim()) {
+      renameResume(activeResumeId, tempTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   if (!activeResume) return null;
 
@@ -43,13 +110,85 @@ const EditorLayout = () => {
             </h1>
           </button>
           <div className="h-6 w-[1px] bg-slate-200"></div>
-          <div className="flex flex-col">
+          <div className="relative flex flex-col" ref={dropdownRef}>
             <span className="mb-1.5 text-[10px] leading-none font-black tracking-[0.2em] text-slate-300 uppercase">
               Project
             </span>
-            <button className="group flex items-center gap-2 text-sm font-black text-slate-900">
-              {resumeTitle} <ChevronDown size={14} className="text-slate-300" />
-            </button>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={editInputRef}
+                  type="text"
+                  value={tempTitle}
+                  onChange={(e) => setTempTitle(e.target.value)}
+                  onBlur={saveTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveTitle();
+                    if (e.key === "Escape") setIsEditingTitle(false);
+                  }}
+                  className="rounded border-none bg-slate-50 px-2 py-0.5 text-sm font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none"
+                />
+                <button
+                  onClick={saveTitle}
+                  className="rounded-full bg-blue-600 p-1 text-white shadow-sm hover:bg-blue-700"
+                >
+                  <Check size={12} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  startEditing();
+                }}
+                className="group flex items-center gap-2 text-sm font-black text-slate-900"
+              >
+                {resumeTitle}{" "}
+                <ChevronDown size={14} className="text-slate-300" />
+              </button>
+            )}
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="animate-in fade-in zoom-in absolute top-full left-0 z-[100] mt-2 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl duration-200">
+                <div className="p-2">
+                  <button
+                    onClick={startEditing}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
+                  >
+                    <Edit2 size={16} /> Rename
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsNewResumeModalOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
+                  >
+                    <Plus size={16} /> Create New
+                  </button>
+                  <button
+                    onClick={() => {
+                      duplicateResume(activeResume.id);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
+                  >
+                    <Copy size={16} /> Duplicate
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportModalOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
+                  >
+                    <FileDown size={16} /> Import from LLM
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -103,11 +242,39 @@ const EditorLayout = () => {
         </div>
       </div>
 
+      {/* MODALS */}
       <TemplateLibraryModal
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
         currentTemplate={activeResume.activeTemplateId}
         onSelect={(id) => setTemplate(id)}
+      />
+
+      <TemplateLibraryModal
+        isOpen={isNewResumeModalOpen || !!pendingImportData}
+        onClose={() => {
+          setIsNewResumeModalOpen(false);
+          setPendingImportData(null);
+        }}
+        currentTemplate="standard"
+        onSelect={(templateId) => {
+          if (pendingImportData) {
+            importResume(pendingImportData, templateId);
+            setPendingImportData(null);
+          } else {
+            createNewResume(templateId);
+          }
+          setIsNewResumeModalOpen(false);
+        }}
+      />
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={(resume) => {
+          setPendingImportData(resume);
+          setIsImportModalOpen(false);
+        }}
       />
 
       <style
