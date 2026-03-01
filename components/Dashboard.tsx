@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { LLM_PROMPT } from "@/lib/resume-config";
 import { ResumeData } from "@/types/resume";
+import TemplateLibraryModal from "./editor/TemplateLibraryModal";
 
 const RenameModal = ({
   isOpen,
@@ -238,6 +239,7 @@ const Dashboard = () => {
   } = useResumeStore();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [renamingResumeId, setRenamingResumeId] = useState<string | null>(null);
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -264,7 +266,7 @@ const Dashboard = () => {
             <Download size={14} /> Import from LLM
           </button>
           <button
-            onClick={createNewResume}
+            onClick={() => setIsTemplateModalOpen(true)}
             className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-6 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
           >
             <Plus size={14} /> Create New
@@ -345,7 +347,7 @@ const Dashboard = () => {
 
             {resumes.length === 0 && (
               <div
-                onClick={createNewResume}
+                onClick={() => setIsTemplateModalOpen(true)}
                 className="col-span-full flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-20 text-slate-300 transition-all hover:border-blue-400 hover:bg-blue-50/30 hover:text-blue-500"
               >
                 <Plus size={48} className="mb-4 opacity-20" />
@@ -362,6 +364,13 @@ const Dashboard = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={(resume) => importResume(resume)}
+      />
+
+      <TemplateLibraryModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        currentTemplate="standard"
+        onSelect={(templateId) => createNewResume(templateId)}
       />
 
       {renamingResumeId && (

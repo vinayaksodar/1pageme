@@ -6,6 +6,7 @@ import {
   TemplateLayout,
   Section,
   ResumeData,
+  TemplateId,
 } from "@/types/resume";
 
 export const SECTION_SCHEMAS: Record<
@@ -161,7 +162,11 @@ export const getMinimalLayout = (sectionIds: string[]): TemplateLayout => ({
   })),
 });
 
-export const createInitialResume = (id: string, title: string): ResumeData => {
+export const createInitialResume = (
+  id: string,
+  title: string,
+  templateId: TemplateId = "standard",
+): ResumeData => {
   const initialSections: Section[] = [
     {
       id: "summary",
@@ -230,7 +235,7 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
       },
       sections: initialSections,
     },
-    activeTemplateId: "standard",
+    activeTemplateId: templateId,
     layouts: {
       standard: getStandardLayout(sectionIds),
       modern: getModernLayout(sectionIds),

@@ -28,7 +28,7 @@ export interface ResumeState {
   isTextSelected: boolean;
 
   // Actions
-  createNewResume: () => void;
+  createNewResume: (templateId?: TemplateId) => void;
   deleteResume: (id: string) => void;
   setActiveResume: (id: string) => void;
   setIsTextSelected: (isSelected: boolean) => void;
@@ -79,9 +79,9 @@ export const useResumeStore = create<ResumeState>()(
       activeResumeId: null,
       isTextSelected: false,
 
-      createNewResume: () => {
+      createNewResume: (templateId?: TemplateId) => {
         const id = Math.random().toString(36).substr(2, 9);
-        const newResume = createInitialResume(id, "New Resume");
+        const newResume = createInitialResume(id, "New Resume", templateId);
         set((state) => ({
           resumes: [...state.resumes, newResume],
           activeResumeId: id,
