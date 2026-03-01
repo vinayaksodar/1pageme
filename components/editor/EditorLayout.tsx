@@ -16,7 +16,7 @@ import {
   Check,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
-import TemplateLibraryModal from "./TemplateLibraryModal";
+import TemplateLibraryModal from "../ui/TemplateLibraryModal";
 import ImportModal from "../ui/ImportModal";
 import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";

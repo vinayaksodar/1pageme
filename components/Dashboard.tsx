@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { LLM_PROMPT } from "@/lib/resume-config";
 import { ResumeData } from "@/types/resume";
-import TemplateLibraryModal from "./editor/TemplateLibraryModal";
+import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
 import { Logo } from "./ui/Logo";
 

@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
-import FloatingToolbar from "../FloatingToolbar";
+import FloatingToolbar from "../../ui/FloatingToolbar";
 import { PageLayout } from "@/hooks/useResumePagination";
 import { Camera } from "lucide-react";
 import Image from "next/image";
