@@ -18,18 +18,27 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Columns } from "lucide-react";
+import {
+  GripVertical,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  ArrowRightLeft,
+} from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
-import { cn } from "@/lib/utils";
 import { Section, SectionConfig } from "@/types/resume";
 
 // Individual Sortable Item
 const SortableItem = ({
   section,
   config,
+  index,
+  total,
 }: {
   section: Section;
   config: SectionConfig;
+  index: number;
+  total: number;
 }) => {
   const {
     attributes,
@@ -40,11 +49,28 @@ const SortableItem = ({
     isDragging,
   } = useSortable({ id: section.id });
 
-  const { removeSection, updateSectionConfig } = useResumeStore();
+  const {
+    removeSection,
+    updateSectionConfig,
+    reorderSections,
+    resumes,
+    activeResumeId,
+  } = useResumeStore();
 
   const toggleColumn = () => {
     const newColumn = (config.column || 1) === 1 ? 2 : 1;
     updateSectionConfig(section.id, { column: newColumn });
+  };
+
+  const activeResume = resumes.find((r) => r.id === activeResumeId);
+  const sectionConfigs =
+    activeResume?.layouts[activeResume.activeTemplateId].sections || [];
+
+  const moveSection = (direction: number) => {
+    const newConfigs = [...sectionConfigs];
+    const [item] = newConfigs.splice(index, 1);
+    newConfigs.splice(index + direction, 0, item);
+    reorderSections(newConfigs);
   };
 
   const style = {
@@ -58,44 +84,55 @@ const SortableItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="group mb-2 flex items-center gap-3 rounded-xl border-2 border-gray-50 bg-white p-3 shadow-sm transition-all hover:border-blue-100"
+      className="group mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition-all hover:bg-white hover:shadow-sm"
     >
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab text-gray-300 transition-colors hover:text-gray-600"
+        className="cursor-grab text-slate-300 transition-colors hover:text-slate-500"
       >
-        <GripVertical size={16} />
+        <GripVertical size={14} />
       </div>
 
-      <div className="flex flex-1 flex-col">
-        <span className="text-xs font-bold text-gray-800 capitalize">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[10px] font-black tracking-wider text-slate-700 uppercase">
           {section.title || section.type}
-        </span>
-        <span className="text-[10px] font-bold tracking-tight text-gray-400 uppercase">
-          Column {config.column || 1}
+        </p>
+        <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
+          {config.column === 1 ? "Main Content" : "Sidebar"}
         </span>
       </div>
 
       <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
-          onClick={toggleColumn}
-          className={cn(
-            "rounded-lg p-1.5 transition-colors",
-            config.column === 2
-              ? "bg-blue-50 text-blue-600"
-              : "text-gray-400 hover:bg-gray-50 hover:text-gray-600",
-          )}
-          title="Switch Column"
+          onClick={() => moveSection(-1)}
+          disabled={index === 0}
+          className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
+          title="Move Up"
         >
-          <Columns size={14} />
+          <ArrowUp size={12} />
+        </button>
+        <button
+          onClick={() => moveSection(1)}
+          disabled={index === total - 1}
+          className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
+          title="Move Down"
+        >
+          <ArrowDown size={12} />
+        </button>
+        <button
+          onClick={toggleColumn}
+          className="p-1 text-slate-400 transition-colors hover:text-blue-600"
+          title="Move column"
+        >
+          <ArrowRightLeft size={12} />
         </button>
         <button
           onClick={() => removeSection(section.id)}
-          className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-          title="Remove Section"
+          className="p-1 text-slate-400 transition-colors hover:text-red-500"
+          title="Delete Section"
         >
-          <Trash2 size={14} />
+          <Trash2 size={12} />
         </button>
       </div>
     </div>
@@ -144,8 +181,8 @@ export const SortableSectionList = () => {
         items={sectionConfigs.map((s) => s.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="p-1">
-          {sectionConfigs.map((config) => {
+        <div className="space-y-1">
+          {sectionConfigs.map((config, idx) => {
             const section = sections.find((s) => s.id === config.id);
             if (!section) return null;
             return (
@@ -153,6 +190,8 @@ export const SortableSectionList = () => {
                 key={section.id}
                 section={section}
                 config={config}
+                index={idx}
+                total={sectionConfigs.length}
               />
             );
           })}

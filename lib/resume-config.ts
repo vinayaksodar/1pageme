@@ -3,9 +3,7 @@ import {
   ItemVisibility,
   SectionItem,
   TemplateStyles,
-  TemplateId,
   TemplateLayout,
-  SectionConfig,
   Section,
   ResumeData,
 } from "@/types/resume";
@@ -127,24 +125,41 @@ export const DEFAULT_STYLES: TemplateStyles = {
   columnGap: 2.5, // in rem
 };
 
-export const getInitialLayout = (
-  templateId: TemplateId,
-  sectionIds: string[],
-): TemplateLayout => {
-  const configs: SectionConfig[] = sectionIds.map((id) => ({
+export const getStandardLayout = (sectionIds: string[]): TemplateLayout => ({
+  templateStyles: {
+    ...DEFAULT_STYLES,
+    layout: "one-column",
+  },
+  sections: sectionIds.map((id) => ({
     id,
     isVisible: true,
-    column:
-      templateId === "modern" && (id === "education" || id === "skills")
-        ? 2
-        : 1,
-  }));
+    column: 1,
+  })),
+});
 
-  return {
-    templateStyles: { ...DEFAULT_STYLES },
-    sections: configs,
-  };
-};
+export const getModernLayout = (sectionIds: string[]): TemplateLayout => ({
+  templateStyles: {
+    ...DEFAULT_STYLES,
+    layout: "two-column",
+  },
+  sections: sectionIds.map((id) => ({
+    id,
+    isVisible: true,
+    column: id === "education" || id === "skills" ? 2 : 1,
+  })),
+});
+
+export const getMinimalLayout = (sectionIds: string[]): TemplateLayout => ({
+  templateStyles: {
+    ...DEFAULT_STYLES,
+    layout: "one-column",
+  },
+  sections: sectionIds.map((id) => ({
+    id,
+    isVisible: true,
+    column: 1,
+  })),
+});
 
 export const createInitialResume = (id: string, title: string): ResumeData => {
   const initialSections: Section[] = [
@@ -214,9 +229,9 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
     },
     activeTemplateId: "standard",
     layouts: {
-      standard: getInitialLayout("standard", sectionIds),
-      modern: getInitialLayout("modern", sectionIds),
-      minimal: getInitialLayout("minimal", sectionIds),
+      standard: getStandardLayout(sectionIds),
+      modern: getModernLayout(sectionIds),
+      minimal: getMinimalLayout(sectionIds),
     },
   };
 };
