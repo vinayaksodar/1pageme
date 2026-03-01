@@ -96,7 +96,7 @@ const FloatingToolbar = ({
           onClick={onAdd}
           className="flex items-center gap-1.5 rounded-md border-r border-gray-100 px-3 py-1.5 text-[10px] font-black tracking-widest transition-colors hover:bg-gray-50"
         >
-          <Plus size={14} className="text-green-500" /> ENTRY
+          <Plus size={14} /> ENTRY
         </button>
       )}
 
