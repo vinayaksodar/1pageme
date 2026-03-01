@@ -69,6 +69,7 @@ export interface ResumeState {
   setTemplate: (templateId: TemplateId) => void;
   duplicateResume: (id: string) => void;
   importResume: (resume: ResumeData) => void;
+  renameResume: (id: string, title: string) => void;
 }
 
 export const useResumeStore = create<ResumeState>()(
@@ -87,16 +88,26 @@ export const useResumeStore = create<ResumeState>()(
         }));
       },
 
+      renameResume: (id, title) =>
+        set((state) => ({
+          resumes: state.resumes.map((r) =>
+            r.id === id ? { ...r, title } : r,
+          ),
+        })),
+
       duplicateResume: (id) =>
         set((state) => {
           const resumeToDuplicate = state.resumes.find((r) => r.id === id);
           if (!resumeToDuplicate) return state;
 
           const newId = Math.random().toString(36).substr(2, 9);
+          const now = Date.now();
           const duplicatedResume: ResumeData = {
             ...structuredClone(resumeToDuplicate),
             id: newId,
             title: `${resumeToDuplicate.title} (Copy)`,
+            createdAt: now,
+            updatedAt: now,
           };
 
           return {
@@ -109,6 +120,7 @@ export const useResumeStore = create<ResumeState>()(
         const id = Math.random().toString(36).substr(2, 9);
         const sectionIds =
           resume.content?.sections?.map((s: Section) => s.id) || [];
+        const now = Date.now();
 
         // Helper to ensure section config is valid
         const ensureSectionConfig = (sections: SectionConfig[] | string[]) => {
@@ -155,6 +167,8 @@ export const useResumeStore = create<ResumeState>()(
         const importedResume: ResumeData = {
           id,
           title: resume.title || "Imported Resume",
+          createdAt: resume.createdAt || now,
+          updatedAt: now,
           content: {
             personalInfo: {
               fullName: resume.content?.personalInfo?.fullName || "",
@@ -205,6 +219,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     personalInfo: { ...r.content.personalInfo, [field]: value },
@@ -220,6 +235,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     personalInfo: {
@@ -241,6 +257,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) =>
@@ -258,6 +275,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) =>
@@ -282,6 +300,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) =>
@@ -314,6 +333,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) => {
@@ -374,6 +394,7 @@ export const useResumeStore = create<ResumeState>()(
 
             return {
               ...r,
+              updatedAt: Date.now(),
               content: {
                 ...r.content,
                 sections: newSections,
@@ -388,6 +409,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.map((s) => {
@@ -455,6 +477,7 @@ export const useResumeStore = create<ResumeState>()(
               r.id === state.activeResumeId
                 ? {
                     ...r,
+                    updatedAt: Date.now(),
                     content: {
                       ...r.content,
                       sections: [...r.content.sections, newSection],
@@ -489,6 +512,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   content: {
                     ...r.content,
                     sections: r.content.sections.filter((s) => s.id !== id),
@@ -517,6 +541,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   layouts: {
                     ...r.layouts,
                     [r.activeTemplateId]: {
@@ -535,6 +560,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   layouts: {
                     ...r.layouts,
                     [r.activeTemplateId]: {
@@ -555,6 +581,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   layouts: {
                     ...r.layouts,
                     [r.activeTemplateId]: {
@@ -576,6 +603,7 @@ export const useResumeStore = create<ResumeState>()(
             r.id === state.activeResumeId
               ? {
                   ...r,
+                  updatedAt: Date.now(),
                   activeTemplateId: templateId,
                 }
               : r,
@@ -589,9 +617,12 @@ export const useResumeStore = create<ResumeState>()(
         if (version < 7) {
           const state = persistedState as Record<string, unknown>;
           if (state.resumes && Array.isArray(state.resumes)) {
+            const now = Date.now();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             state.resumes = state.resumes.map((resume: any) => ({
               ...resume,
+              createdAt: resume.createdAt || now,
+              updatedAt: resume.updatedAt || now,
               content: {
                 ...resume.content,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

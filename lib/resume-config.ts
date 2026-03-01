@@ -204,10 +204,13 @@ export const createInitialResume = (id: string, title: string): ResumeData => {
   ];
 
   const sectionIds = initialSections.map((s) => s.id);
+  const now = Date.now();
 
   return {
     id,
     title: title,
+    updatedAt: now,
+    createdAt: now,
     content: {
       personalInfo: {
         fullName: "VINAYAK SODAR",

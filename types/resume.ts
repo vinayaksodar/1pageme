@@ -98,6 +98,8 @@ export interface PersonalInfoVisibility {
 export interface ResumeData {
   id: string;
   title: string;
+  updatedAt: number;
+  createdAt: number;
   content: {
     personalInfo: {
       fullName: string;
