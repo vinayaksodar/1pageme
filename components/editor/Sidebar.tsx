@@ -145,11 +145,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
 
   const [openPanels, setOpenPanels] = useState({
     config: true,
-    layout: true,
+    design: true,
     sections: true,
-    typography: false,
   });
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showFontMenu, setShowFontMenu] = useState(false);
 
   if (!activeResume) return null;
 
@@ -165,12 +165,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
     setOpenPanels((prev) => ({ ...prev, sections: true }));
   };
 
+  const fonts = ["Rubik", "Inter", "Serif", "Roboto", "Lato"] as const;
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="custom-scrollbar flex-1 overflow-y-auto pt-4">
         {/* PANEL 1: Templates */}
         <CollapsiblePanel
-          title="Templates"
+          title="Template"
           isOpen={openPanels.config}
           onToggle={() => togglePanel("config")}
           statusText={currentTemplateId}
@@ -195,13 +197,67 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
           </div>
         </CollapsiblePanel>
 
-        {/* PANEL 2: Layout & Styles */}
+        {/* PANEL 2: Design & Layout */}
         <CollapsiblePanel
-          title="Layout & Styles"
-          isOpen={openPanels.layout}
-          onToggle={() => togglePanel("layout")}
+          title="Design & Layout"
+          isOpen={openPanels.design}
+          onToggle={() => togglePanel("design")}
         >
           <div className="px-1">
+            <div className="mb-6 space-y-2">
+              <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                Typography
+              </label>
+              <div className="relative">
+                <button
+                  onClick={() => setShowFontMenu(!showFontMenu)}
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black tracking-widest text-slate-900 uppercase shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none"
+                >
+                  <span>{currentStyles.fontFamily}</span>
+                  <div className="text-slate-400">
+                    <ChevronDown
+                      size={14}
+                      className={cn(
+                        "transition-transform",
+                        showFontMenu && "rotate-180",
+                      )}
+                    />
+                  </div>
+                </button>
+
+                {showFontMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[55]"
+                      onClick={() => setShowFontMenu(false)}
+                    />
+                    <div className="animate-in zoom-in-95 absolute top-full left-0 z-[60] mt-2 w-full rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl">
+                      {fonts.map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => {
+                            updateGlobalStyle("fontFamily", f);
+                            setShowFontMenu(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
+                            currentStyles.fontFamily === f
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-slate-600 hover:bg-slate-50",
+                          )}
+                        >
+                          <span className="tracking-widest uppercase">{f}</span>
+                          {currentStyles.fontFamily === f && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             <SliderControl
               label="Page Margins"
               value={currentStyles.pageMargins}
@@ -238,10 +294,32 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
               onChange={(v) => updateGlobalStyle("lineHeight", v)}
             />
 
-            <div className="mt-6 space-y-2">
+            <div className="mt-6 space-y-3">
               <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Accent Color
               </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "#2563eb", // Blue 600
+                  "#0f172a", // Slate 900
+                  "#991b1b", // Red 800
+                  "#065f46", // Emerald 800
+                  "#4338ca", // Indigo 700
+                  "#b45309", // Amber 700
+                  "#be185d", // Pink 700
+                ].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => updateGlobalStyle("accentColor", color)}
+                    className={cn(
+                      "h-6 w-6 rounded-full border border-slate-200 transition-all hover:scale-110",
+                      currentStyles.accentColor === color &&
+                        "ring-2 ring-blue-500 ring-offset-2",
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
               <div className="flex items-center gap-3">
                 <div
                   className="relative h-10 w-10 overflow-hidden rounded-xl border border-slate-200 shadow-sm"
@@ -268,7 +346,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
 
         {/* PANEL 3: Manage Sections */}
         <CollapsiblePanel
-          title="Manage Sections"
+          title="Sections"
           isOpen={openPanels.sections}
           onToggle={() => togglePanel("sections")}
           statusText={`${activeResume.content.sections.length} Sections`}
@@ -276,7 +354,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
           <div className="space-y-4">
             <div className="mb-4 flex items-center justify-between">
               <label className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                <Layers size={12} /> Structure
+                <Layers size={12} /> Rearrange and add
               </label>
               <div className="relative">
                 <button
@@ -307,33 +385,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
               </div>
             </div>
             <SortableSectionList />
-          </div>
-        </CollapsiblePanel>
-
-        {/* PANEL 3: Typography */}
-        <CollapsiblePanel
-          title="Typography"
-          isOpen={openPanels.typography}
-          onToggle={() => togglePanel("typography")}
-          statusText={currentStyles.fontFamily}
-        >
-          <div className="grid grid-cols-1 gap-2">
-            {(["Rubik", "Inter", "Serif", "Roboto", "Lato"] as const).map(
-              (f) => (
-                <button
-                  key={f}
-                  onClick={() => updateGlobalStyle("fontFamily", f)}
-                  className={cn(
-                    "rounded-xl border-2 px-4 py-3.5 text-left text-[10px] font-bold tracking-widest uppercase transition-all",
-                    currentStyles.fontFamily === f
-                      ? "border-blue-600 bg-blue-50 text-blue-600 shadow-sm"
-                      : "border-slate-50 text-slate-400 hover:border-slate-200",
-                  )}
-                >
-                  {f}
-                </button>
-              ),
-            )}
           </div>
         </CollapsiblePanel>
       </div>

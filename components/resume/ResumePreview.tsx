@@ -6,6 +6,7 @@ import { useResumePagination, PageLayout } from "@/hooks/useResumePagination";
 import { StandardTemplate } from "./templates/StandardTemplate";
 import { ModernTemplate } from "./templates/ModernTemplate";
 import { cn } from "@/lib/utils";
+import { fontVariables } from "@/lib/fonts";
 
 const ResumePreview = () => {
   const {
@@ -64,11 +65,31 @@ const ResumePreview = () => {
 
   const { fontFamily, lineHeight, fontSize, pageMargins } = templateStyles;
 
+  const getFontFamily = (family: string) => {
+    switch (family) {
+      case "Rubik":
+        return "var(--font-rubik)";
+      case "Inter":
+        return "var(--font-inter)";
+      case "Roboto":
+        return "var(--font-roboto)";
+      case "Lato":
+        return "var(--font-lato)";
+      case "Serif":
+        return "serif";
+      default:
+        return "var(--font-rubik)";
+    }
+  };
+
   return (
     <div
-      className="relative mb-20 flex flex-col items-center print:mb-0"
+      className={cn(
+        "relative mb-20 flex flex-col items-center print:mb-0",
+        fontVariables,
+      )}
       style={{
-        fontFamily: fontFamily === "Serif" ? "serif" : fontFamily,
+        fontFamily: getFontFamily(fontFamily),
         lineHeight: lineHeight,
         fontSize: `${fontSize}rem`,
         ["--accent-color" as string]: templateStyles.accentColor,
