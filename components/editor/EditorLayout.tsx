@@ -4,14 +4,16 @@ import React, { useRef, useState } from "react";
 import Sidebar from "./Sidebar";
 import ResumePreview from "../resume/ResumePreview";
 import { useReactToPrint } from "react-to-print";
-import { Download, ChevronDown } from "lucide-react";
+import { Download, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "./TemplateLibraryModal";
+import { cn } from "@/lib/utils";
 
 const EditorLayout = () => {
   const { activeResumeId, resumes, setActiveResume, setTemplate } =
     useResumeStore();
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
@@ -61,9 +63,33 @@ const EditorLayout = () => {
       </header>
 
       <div className="relative flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div className="z-50 flex h-full w-72 flex-shrink-0 flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-300">
-          <Sidebar onOpenLibrary={() => setIsLibraryOpen(true)} />
+        {/* Sidebar Wrapper */}
+        <div
+          className={cn(
+            "relative z-40 flex h-full flex-shrink-0 flex-col bg-white shadow-sm transition-all duration-300 ease-in-out",
+            isSidebarOpen
+              ? "w-72 border-r border-slate-200"
+              : "w-0 border-r-transparent",
+          )}
+        >
+          {/* Border Toggle Button */}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className={cn(
+              "absolute top-10 z-50 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-xl transition-all hover:text-blue-600 active:scale-95",
+              isSidebarOpen ? "-right-4" : "-right-8 rotate-180",
+            )}
+            title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {/* Sidebar Content with its own overflow control */}
+          <div className="flex h-full flex-1 flex-col overflow-hidden">
+            <div className="h-full w-72">
+              <Sidebar onOpenLibrary={() => setIsLibraryOpen(true)} />
+            </div>
+          </div>
         </div>
 
         {/* Canvas Scroll Area */}
