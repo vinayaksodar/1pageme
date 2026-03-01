@@ -240,6 +240,9 @@ const Dashboard = () => {
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState<ResumeData | null>(
+    null,
+  );
   const [renamingResumeId, setRenamingResumeId] = useState<string | null>(null);
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -363,14 +366,27 @@ const Dashboard = () => {
       <ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onImport={(resume) => importResume(resume)}
+        onImport={(resume) => {
+          setPendingImportData(resume);
+          setIsTemplateModalOpen(true);
+        }}
       />
 
       <TemplateLibraryModal
         isOpen={isTemplateModalOpen}
-        onClose={() => setIsTemplateModalOpen(false)}
+        onClose={() => {
+          setIsTemplateModalOpen(false);
+          setPendingImportData(null);
+        }}
         currentTemplate="standard"
-        onSelect={(templateId) => createNewResume(templateId)}
+        onSelect={(templateId) => {
+          if (pendingImportData) {
+            importResume(pendingImportData, templateId);
+            setPendingImportData(null);
+          } else {
+            createNewResume(templateId);
+          }
+        }}
       />
 
       {renamingResumeId && (

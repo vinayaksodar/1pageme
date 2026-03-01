@@ -68,7 +68,7 @@ export interface ResumeState {
   ) => void;
   setTemplate: (templateId: TemplateId) => void;
   duplicateResume: (id: string) => void;
-  importResume: (resume: ResumeData) => void;
+  importResume: (resume: ResumeData, templateId?: TemplateId) => void;
   renameResume: (id: string, title: string) => void;
 }
 
@@ -116,7 +116,7 @@ export const useResumeStore = create<ResumeState>()(
           };
         }),
 
-      importResume: (resume: Partial<ResumeData>) => {
+      importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => {
         const id = Math.random().toString(36).substr(2, 9);
         const sectionIds =
           resume.content?.sections?.map((s: Section) => s.id) || [];
@@ -147,17 +147,17 @@ export const useResumeStore = create<ResumeState>()(
         const mergedLayouts = { ...defaultLayouts };
         if (resume.layouts) {
           Object.keys(resume.layouts).forEach((key) => {
-            const templateId = key as TemplateId;
-            const importedLayout = resume.layouts?.[templateId];
-            if (mergedLayouts[templateId] && importedLayout) {
-              mergedLayouts[templateId] = {
+            const templateIdKey = key as TemplateId;
+            const importedLayout = resume.layouts?.[templateIdKey];
+            if (mergedLayouts[templateIdKey] && importedLayout) {
+              mergedLayouts[templateIdKey] = {
                 templateStyles: {
-                  ...mergedLayouts[templateId].templateStyles,
+                  ...mergedLayouts[templateIdKey].templateStyles,
                   ...importedLayout.templateStyles,
                 },
                 sections: ensureSectionConfig(
                   (importedLayout.sections as SectionConfig[]) ||
-                    defaultLayouts[templateId].sections,
+                    defaultLayouts[templateIdKey].sections,
                 ),
               };
             }
@@ -190,7 +190,7 @@ export const useResumeStore = create<ResumeState>()(
             },
             sections: resume.content?.sections || [],
           },
-          activeTemplateId: resume.activeTemplateId || "standard",
+          activeTemplateId: templateId || resume.activeTemplateId || "standard",
           layouts: mergedLayouts,
         };
 
