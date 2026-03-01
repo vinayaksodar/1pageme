@@ -8,6 +8,7 @@ import {
   ResumeData,
   TemplateId,
 } from "@/types/resume";
+import { INITIAL_PERSONAL_INFO, INITIAL_SECTIONS } from "./initial-data";
 
 export const SECTION_SCHEMAS: Record<
   SectionType,
@@ -176,47 +177,7 @@ export const createInitialResume = (
   title: string,
   templateId: TemplateId = "standard",
 ): ResumeData => {
-  const initialSections: Section[] = [
-    {
-      id: "summary",
-      type: "summary",
-      title: "SUMMARY",
-      items: [
-        {
-          id: "s1",
-          title: "",
-          description: [
-            {
-              id: "summary-block-1",
-              content: [
-                {
-                  type: "text",
-                  text: "Experienced software engineer with a focus on React and Next.js...",
-                },
-              ],
-            },
-          ],
-          visibility: {
-            showTitle: false,
-            showSubtitle: false,
-            showDescription: true,
-            showBullets: false,
-            showLocation: false,
-            showDatePeriod: false,
-            showLink: false,
-            showLogo: false,
-          },
-        },
-      ],
-    },
-    {
-      id: "experience",
-      type: "experience",
-      title: "EXPERIENCE",
-      items: [],
-    },
-  ];
-
+  const initialSections = structuredClone(INITIAL_SECTIONS);
   const sectionIds = initialSections.map((s) => s.id);
   const now = Date.now();
 
@@ -226,22 +187,7 @@ export const createInitialResume = (
     updatedAt: now,
     createdAt: now,
     content: {
-      personalInfo: {
-        fullName: "VINAYAK SODAR",
-        jobTitle: "Software Engineer",
-        email: "vinayak@example.com",
-        phone: "+1 234 567 890",
-        address: "San Francisco, CA",
-        profileImage: "",
-        profileImageShape: "circle",
-        visibility: {
-          showPhone: true,
-          showEmail: true,
-          showAddress: true,
-          showJobTitle: true,
-          showPhoto: true,
-        },
-      },
+      personalInfo: structuredClone(INITIAL_PERSONAL_INFO),
       sections: initialSections,
     },
     activeTemplateId: templateId,
