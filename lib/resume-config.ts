@@ -41,7 +41,10 @@ export const SECTION_SCHEMAS: Record<
       title: "Job Title",
       subtitle: "Company Name",
       location: "City, State",
-      datePeriod: "2020 - Present",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2020 },
+        endDate: "Present",
+      },
     },
   },
   education: {
@@ -57,7 +60,10 @@ export const SECTION_SCHEMAS: Record<
       title: "Degree Name",
       subtitle: "University Name",
       location: "City, State",
-      datePeriod: "2016 - 2020",
+      datePeriod: {
+        startDate: { month: "Aug", year: 2016 },
+        endDate: { month: "May", year: 2020 },
+      },
     },
   },
   projects: {
@@ -71,7 +77,10 @@ export const SECTION_SCHEMAS: Record<
     defaults: {
       title: "Project Name",
       description: "Brief project overview...",
-      datePeriod: "2023",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2023 },
+        endDate: { month: "Dec", year: 2023 },
+      },
     },
   },
   skills: {
@@ -275,7 +284,7 @@ export const LLM_PROMPT = `I want you to act as a resume parser. I will provide 
             "title": "Role/Degree",
             "subtitle": "Company/University",
             "location": "Location",
-            "datePeriod": "Dates",
+            "datePeriod": { startDate: { month: "Jan", year: 2024 }, endDate: "Present" },
             "description": [ { "id": "block-1", "content": [{ "type": "text", "text": "..." }] } ],
             "bullets": [ { "id": "bullet-1", "content": [{ "type": "text", "text": "..." }] } ],
             "visibility": { "showTitle": true, "showSubtitle": true, "showDescription": true, "showBullets": true, "showLocation": true, "showDatePeriod": true, "showLink": false, "showLogo": false }

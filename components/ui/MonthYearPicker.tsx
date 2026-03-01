@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DatePeriod, DateValue } from "@/types/resume";
 
 interface MonthYearPickerProps {
-  initialDate?: string;
-  onSelect: (dateString: string) => void;
+  initialDate?: DatePeriod | string;
+  onSelect: (datePeriod: DatePeriod) => void;
   className?: string;
+  children?: React.ReactNode;
 }
 
 const MONTHS = [
@@ -25,12 +27,11 @@ const MONTHS = [
   "Dec",
 ];
 
-type DateValue = { month: string; year: number } | "Present" | null;
-
 export const MonthYearPicker = ({
   initialDate,
   onSelect,
   className,
+  children,
 }: MonthYearPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"start" | "end">("start");
@@ -43,38 +44,59 @@ export const MonthYearPicker = ({
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     if (isOpen && initialDate) {
-      // Simple parser logic (Start - End)
-      const parts = initialDate.split(" - ");
-      if (parts.length === 2) {
-        // Parse Start
-        const startParts = parts[0].split(" ");
-        if (startParts.length === 2) {
-          setStartDate({ month: startParts[0], year: parseInt(startParts[1]) });
+      if (typeof initialDate === "object" && initialDate !== null) {
+        setStartDate(initialDate.startDate || null);
+        setEndDate(initialDate.endDate || null);
+        if (
+          typeof initialDate.endDate === "object" &&
+          initialDate.endDate !== null &&
+          "year" in initialDate.endDate
+        ) {
+          setViewYear(initialDate.endDate.year);
+        } else if (
+          typeof initialDate.startDate === "object" &&
+          initialDate.startDate !== null &&
+          "year" in initialDate.startDate
+        ) {
+          setViewYear(initialDate.startDate.year);
         }
-
-        // Parse End
-        if (parts[1] === "Present") {
-          setEndDate("Present");
-        } else {
-          const endParts = parts[1].split(" ");
-          if (endParts.length === 2) {
-            setEndDate({ month: endParts[0], year: parseInt(endParts[1]) });
-            // Set view year to end year initially if it exists
-            setViewYear(parseInt(endParts[1]));
-          }
-        }
-      } else {
-        // Maybe just a single date or "Present"
-        if (initialDate === "Present") {
-          setStartDate(null);
-          setEndDate("Present");
-        } else {
-          const singleParts = initialDate.split(" ");
-          if (singleParts.length === 2) {
+      } else if (typeof initialDate === "string") {
+        // Fallback for old string format
+        const parts = initialDate.split(" - ");
+        if (parts.length === 2) {
+          // Parse Start
+          const startParts = parts[0].split(" ");
+          if (startParts.length === 2) {
             setStartDate({
-              month: singleParts[0],
-              year: parseInt(singleParts[1]),
+              month: startParts[0],
+              year: parseInt(startParts[1]),
             });
+          }
+
+          // Parse End
+          if (parts[1] === "Present") {
+            setEndDate("Present");
+          } else {
+            const endParts = parts[1].split(" ");
+            if (endParts.length === 2) {
+              setEndDate({ month: endParts[0], year: parseInt(endParts[1]) });
+              // Set view year to end year initially if it exists
+              setViewYear(parseInt(endParts[1]));
+            }
+          }
+        } else {
+          // Maybe just a single date or "Present"
+          if (initialDate === "Present") {
+            setStartDate(null);
+            setEndDate("Present");
+          } else {
+            const singleParts = initialDate.split(" ");
+            if (singleParts.length === 2) {
+              setStartDate({
+                month: singleParts[0],
+                year: parseInt(singleParts[1]),
+              });
+            }
           }
         }
       }
@@ -96,22 +118,7 @@ export const MonthYearPicker = ({
   };
 
   const handleApply = () => {
-    let result = "";
-
-    if (startDate && typeof startDate !== "string") {
-      result += `${startDate.month} ${startDate.year}`;
-    }
-
-    if (endDate) {
-      if (result) result += " - ";
-      if (endDate === "Present") {
-        result += "Present";
-      } else {
-        result += `${endDate.month} ${endDate.year}`;
-      }
-    }
-
-    onSelect(result);
+    onSelect({ startDate, endDate });
     setIsOpen(false);
   };
 
@@ -122,17 +129,23 @@ export const MonthYearPicker = ({
   };
 
   return (
-    <div className={cn("no-print relative inline-block", className)}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
-        title="Pick Date Range"
-      >
-        <Calendar size={14} />
-      </button>
+    <div className={cn("relative inline-block", className)}>
+      {children ? (
+        <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+          {children}
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="no-print flex items-center gap-1.5 rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          title="Pick Date Range"
+        >
+          <Calendar size={14} />
+        </button>
+      )}
 
       {isOpen && (
-        <div className="animate-in fade-in zoom-in absolute top-full right-0 z-[150] mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-2xl duration-150">
+        <div className="no-print animate-in fade-in zoom-in absolute top-full right-0 z-[150] mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-2xl duration-150">
           {/* Mode Tabs */}
           <div className="mb-4 flex rounded-lg bg-gray-100 p-1">
             <button

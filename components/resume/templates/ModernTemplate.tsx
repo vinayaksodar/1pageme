@@ -9,10 +9,11 @@ import {
   PersonalInfoVisibility,
   TemplateStyles,
 } from "@/types/resume";
-import { cn } from "@/lib/utils";
+import { cn, formatDatePeriod } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import FloatingToolbar from "../../ui/FloatingToolbar";
+import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { PageLayout } from "@/hooks/useResumePagination";
 import { Camera } from "lucide-react";
 import Image from "next/image";
@@ -173,7 +174,7 @@ export const ModernTemplate = ({
           onFocus={() => setFocusedItemId(item.id)}
           onClick={() => setFocusedItemId(item.id)}
         >
-          {focusedItemId === item.id && !isTextSelected && (
+          {focusedItemId === item.id && !isTextSelected && pageLayout && (
             <FloatingToolbar
               sectionId={section.id}
               itemId={item.id}
@@ -188,15 +189,6 @@ export const ModernTemplate = ({
               }
               onMoveDown={() =>
                 actions.moveSectionItem(section.id, item.id, "down")
-              }
-              itemDatePeriod={item.datePeriod || ""}
-              onDateChange={(val) =>
-                actions.updateSectionItem(
-                  section.id,
-                  item.id,
-                  "datePeriod",
-                  val,
-                )
               }
             />
           )}
@@ -230,21 +222,21 @@ export const ModernTemplate = ({
                 />
               )}
               {visibility.showDatePeriod && (
-                <div className="group/date flex items-center gap-1">
-                  <PlainTextEditor
-                    value={item.datePeriod || ""}
-                    onChange={(val) =>
-                      actions.updateSectionItem(
-                        section.id,
-                        item.id,
-                        "datePeriod",
-                        val,
-                      )
-                    }
-                    className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-black text-gray-400 uppercase"
-                    placeholder="Date"
-                  />
-                </div>
+                <MonthYearPicker
+                  initialDate={item.datePeriod}
+                  onSelect={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "datePeriod",
+                      val,
+                    )
+                  }
+                >
+                  <div className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-black text-gray-400 uppercase transition-colors hover:bg-gray-100 hover:text-gray-600">
+                    {formatDatePeriod(item.datePeriod) || "DATE"}
+                  </div>
+                </MonthYearPicker>
               )}
             </div>
           </div>
@@ -361,7 +353,7 @@ export const ModernTemplate = ({
             onFocus={() => setFocusedItemId("header")}
             onClick={() => setFocusedItemId("header")}
           >
-            {focusedItemId === "header" && !isTextSelected && (
+            {focusedItemId === "header" && !isTextSelected && pageLayout && (
               <FloatingToolbar
                 sectionId="header"
                 itemId="header"

@@ -17,7 +17,6 @@ import {
   PersonalInfoVisibility,
 } from "@/types/resume";
 import { SECTION_SCHEMAS } from "@/lib/resume-config";
-import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 
 interface FloatingToolbarProps {
   sectionId: string;
@@ -30,8 +29,6 @@ interface FloatingToolbarProps {
   isLast?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
-  itemDatePeriod?: string;
-  onDateChange?: (newVal: string) => void;
 }
 
 const FloatingToolbar = ({
@@ -45,8 +42,6 @@ const FloatingToolbar = ({
   isLast,
   onMoveUp,
   onMoveDown,
-  itemDatePeriod,
-  onDateChange,
 }: FloatingToolbarProps) => {
   const {
     updateItemVisibility,
@@ -87,7 +82,6 @@ const FloatingToolbar = ({
     : allOptions.filter((opt) =>
         schema?.fields.includes(opt.id as keyof ItemVisibility),
       );
-  const hasDatePeriod = !isHeader && schema?.fields.includes("showDatePeriod");
 
   return (
     <div className="no-print animate-in fade-in zoom-in absolute -top-12 left-1/2 z-[110] flex -translate-x-1/2 items-center rounded-lg border border-gray-200 bg-white p-1 text-gray-900 shadow-xl duration-200">
@@ -127,15 +121,6 @@ const FloatingToolbar = ({
         >
           <ArrowDown size={14} />
         </button>
-      )}
-
-      {hasDatePeriod && onDateChange && (
-        <div className="flex items-center border-r border-gray-100 px-1">
-          <MonthYearPicker
-            initialDate={itemDatePeriod}
-            onSelect={onDateChange}
-          />
-        </div>
       )}
 
       <div className="relative">

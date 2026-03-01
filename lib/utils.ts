@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { TextNode, Mark, MarkType, Block } from "@/types/resume";
+import { TextNode, Mark, MarkType, Block, DatePeriod } from "@/types/resume";
 import { escape } from "lodash";
 
 export function cn(...inputs: ClassValue[]) {
@@ -201,4 +201,31 @@ export function htmlToTextNodes(html: string): TextNode[] {
   }
 
   return mergedNodes;
+}
+
+export function formatDatePeriod(period?: DatePeriod | string | null): string {
+  if (!period) return "";
+  if (typeof period === "string") return period;
+
+  let result = "";
+  if (
+    period.startDate &&
+    typeof period.startDate === "object" &&
+    period.startDate.month
+  ) {
+    result += `${period.startDate.month} ${period.startDate.year}`;
+  } else if (period.startDate === "Present") {
+    result += "Present";
+  }
+
+  if (period.endDate) {
+    if (result) result += " - ";
+    if (period.endDate === "Present") {
+      result += "Present";
+    } else if (typeof period.endDate === "object" && period.endDate.month) {
+      result += `${period.endDate.month} ${period.endDate.year}`;
+    }
+  }
+
+  return result;
 }

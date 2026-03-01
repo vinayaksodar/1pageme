@@ -38,6 +38,13 @@ export interface ItemVisibility {
   showLogo: boolean;
 }
 
+export type DateValue = { month: string; year: number } | "Present" | null;
+
+export interface DatePeriod {
+  startDate: DateValue;
+  endDate: DateValue;
+}
+
 export interface SectionItem {
   id: string;
   // Semantic Data
@@ -46,7 +53,7 @@ export interface SectionItem {
   description?: Block[];
   bullets?: Block[];
   location?: string;
-  datePeriod?: string;
+  datePeriod?: DatePeriod;
   link?: string;
   logo?: string;
 

@@ -363,7 +363,7 @@ export const useResumeStore = create<ResumeState>()(
                             )
                           : [],
                         location: "",
-                        datePeriod: "",
+                        datePeriod: { startDate: null, endDate: null },
                         ...restDefaults,
                         visibility: getInitialVisibility(s.type),
                       };
@@ -460,7 +460,7 @@ export const useResumeStore = create<ResumeState>()(
                 )
               : [],
             location: "",
-            datePeriod: "",
+            datePeriod: { startDate: null, endDate: null },
             ...restDefaults,
             visibility: getInitialVisibility(type),
           };

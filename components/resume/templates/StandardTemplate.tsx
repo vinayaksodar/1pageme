@@ -9,10 +9,11 @@ import {
   PersonalInfoVisibility,
   TemplateStyles,
 } from "@/types/resume";
-import { cn } from "@/lib/utils";
+import { cn, formatDatePeriod } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import FloatingToolbar from "../../ui/FloatingToolbar";
+import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { PageLayout } from "@/hooks/useResumePagination";
 import { Camera } from "lucide-react";
 import Image from "next/image";
@@ -172,7 +173,7 @@ export const StandardTemplate = ({
           onFocus={() => setFocusedItemId(item.id)}
           onClick={() => setFocusedItemId(item.id)}
         >
-          {focusedItemId === item.id && !isTextSelected && (
+          {focusedItemId === item.id && !isTextSelected && pageLayout && (
             <FloatingToolbar
               sectionId={section.id}
               itemId={item.id}
@@ -187,15 +188,6 @@ export const StandardTemplate = ({
               }
               onMoveDown={() =>
                 actions.moveSectionItem(section.id, item.id, "down")
-              }
-              itemDatePeriod={item.datePeriod || ""}
-              onDateChange={(val) =>
-                actions.updateSectionItem(
-                  section.id,
-                  item.id,
-                  "datePeriod",
-                  val,
-                )
               }
             />
           )}
@@ -212,21 +204,23 @@ export const StandardTemplate = ({
               />
             )}
             {visibility.showDatePeriod && (
-              <div className="group/date flex items-center gap-1">
-                <PlainTextEditor
-                  value={item.datePeriod || ""}
-                  onChange={(val) =>
-                    actions.updateSectionItem(
-                      section.id,
-                      item.id,
-                      "datePeriod",
-                      val,
-                    )
-                  }
-                  className="ml-4 text-xs font-medium whitespace-nowrap text-gray-500"
-                  placeholder="Date Period"
-                />
-              </div>
+              <MonthYearPicker
+                initialDate={item.datePeriod}
+                onSelect={(val) =>
+                  actions.updateSectionItem(
+                    section.id,
+                    item.id,
+                    "datePeriod",
+                    val,
+                  )
+                }
+              >
+                <div className="ml-4 text-xs font-medium whitespace-nowrap text-gray-500 transition-colors hover:text-gray-800">
+                  {formatDatePeriod(item.datePeriod) || (
+                    <span className="text-gray-300 italic">Select Date</span>
+                  )}
+                </div>
+              </MonthYearPicker>
             )}
           </div>
 
@@ -363,7 +357,7 @@ export const StandardTemplate = ({
           onFocus={() => setFocusedItemId("header")}
           onClick={() => setFocusedItemId("header")}
         >
-          {focusedItemId === "header" && !isTextSelected && (
+          {focusedItemId === "header" && !isTextSelected && pageLayout && (
             <FloatingToolbar
               sectionId="header"
               itemId="header"
