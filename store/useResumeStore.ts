@@ -16,6 +16,9 @@ import {
   SECTION_SCHEMAS,
   getInitialVisibility,
   createInitialResume,
+  getStandardLayout,
+  getModernLayout,
+  getMinimalLayout,
 } from "@/lib/resume-config";
 import { emptyBlock, createBlock } from "@/lib/utils";
 
@@ -64,6 +67,8 @@ export interface ResumeState {
     value: TemplateStyles[keyof TemplateStyles],
   ) => void;
   setTemplate: (templateId: TemplateId) => void;
+  duplicateResume: (id: string) => void;
+  importResume: (resume: ResumeData) => void;
 }
 
 export const useResumeStore = create<ResumeState>()(
@@ -78,6 +83,105 @@ export const useResumeStore = create<ResumeState>()(
         const newResume = createInitialResume(id, "New Resume");
         set((state) => ({
           resumes: [...state.resumes, newResume],
+          activeResumeId: id,
+        }));
+      },
+
+      duplicateResume: (id) =>
+        set((state) => {
+          const resumeToDuplicate = state.resumes.find((r) => r.id === id);
+          if (!resumeToDuplicate) return state;
+
+          const newId = Math.random().toString(36).substr(2, 9);
+          const duplicatedResume: ResumeData = {
+            ...structuredClone(resumeToDuplicate),
+            id: newId,
+            title: `${resumeToDuplicate.title} (Copy)`,
+          };
+
+          return {
+            resumes: [...state.resumes, duplicatedResume],
+            activeResumeId: newId,
+          };
+        }),
+
+      importResume: (resume: Partial<ResumeData>) => {
+        const id = Math.random().toString(36).substr(2, 9);
+        const sectionIds =
+          resume.content?.sections?.map((s: Section) => s.id) || [];
+
+        // Helper to ensure section config is valid
+        const ensureSectionConfig = (sections: SectionConfig[] | string[]) => {
+          if (!Array.isArray(sections)) return [];
+          return sections.map((s: SectionConfig | string) => {
+            if (typeof s === "string") {
+              return { id: s, column: 1, isVisible: true };
+            }
+            return {
+              id: s.id,
+              column: s.column || 1,
+              isVisible: s.isVisible !== undefined ? s.isVisible : true,
+            };
+          });
+        };
+
+        const defaultLayouts = {
+          standard: getStandardLayout(sectionIds),
+          modern: getModernLayout(sectionIds),
+          minimal: getMinimalLayout(sectionIds),
+        };
+
+        // Merge imported layouts with defaults to ensure all template IDs exist
+        const mergedLayouts = { ...defaultLayouts };
+        if (resume.layouts) {
+          Object.keys(resume.layouts).forEach((key) => {
+            const templateId = key as TemplateId;
+            const importedLayout = resume.layouts?.[templateId];
+            if (mergedLayouts[templateId] && importedLayout) {
+              mergedLayouts[templateId] = {
+                templateStyles: {
+                  ...mergedLayouts[templateId].templateStyles,
+                  ...importedLayout.templateStyles,
+                },
+                sections: ensureSectionConfig(
+                  (importedLayout.sections as SectionConfig[]) ||
+                    defaultLayouts[templateId].sections,
+                ),
+              };
+            }
+          });
+        }
+
+        const importedResume: ResumeData = {
+          id,
+          title: resume.title || "Imported Resume",
+          content: {
+            personalInfo: {
+              fullName: resume.content?.personalInfo?.fullName || "",
+              jobTitle: resume.content?.personalInfo?.jobTitle || "",
+              email: resume.content?.personalInfo?.email || "",
+              phone: resume.content?.personalInfo?.phone || "",
+              address: resume.content?.personalInfo?.address || "",
+              profileImage: resume.content?.personalInfo?.profileImage || "",
+              profileImageShape:
+                resume.content?.personalInfo?.profileImageShape || "circle",
+              visibility: {
+                showPhone: true,
+                showEmail: true,
+                showAddress: true,
+                showJobTitle: true,
+                showPhoto: !!resume.content?.personalInfo?.profileImage,
+                ...resume.content?.personalInfo?.visibility,
+              },
+            },
+            sections: resume.content?.sections || [],
+          },
+          activeTemplateId: resume.activeTemplateId || "standard",
+          layouts: mergedLayouts,
+        };
+
+        set((state) => ({
+          resumes: [...state.resumes, importedResume],
           activeResumeId: id,
         }));
       },
