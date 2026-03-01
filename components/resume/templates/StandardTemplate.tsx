@@ -171,7 +171,10 @@ export const StandardTemplate = ({
               : {}),
           }}
           onFocus={() => setFocusedItemId(item.id)}
-          onClick={() => setFocusedItemId(item.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFocusedItemId(item.id);
+          }}
         >
           {focusedItemId === item.id && !isTextSelected && pageLayout && (
             <FloatingToolbar
@@ -355,7 +358,10 @@ export const StandardTemplate = ({
               : {}),
           }}
           onFocus={() => setFocusedItemId("header")}
-          onClick={() => setFocusedItemId("header")}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFocusedItemId("header");
+          }}
         >
           {focusedItemId === "header" && !isTextSelected && pageLayout && (
             <FloatingToolbar
@@ -423,7 +429,7 @@ export const StandardTemplate = ({
                 actions.updatePersonalInfo("profileImage", val)
               }
               className={cn(
-                "h-32 w-32 border-4 border-gray-50 shadow-sm",
+                "h-32 w-32 border-4 border-gray-100 shadow-sm",
                 content.personalInfo.profileImageShape === "squircle"
                   ? "rounded-3xl"
                   : "rounded-full",

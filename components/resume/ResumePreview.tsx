@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useResumePagination, PageLayout } from "@/hooks/useResumePagination";
 import { StandardTemplate } from "./templates/StandardTemplate";
 import { ModernTemplate } from "./templates/ModernTemplate";
 import { cn } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 const ResumePreview = () => {
   const {
@@ -22,6 +23,21 @@ const ResumePreview = () => {
   } = useResumeStore();
 
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleDeselect = () => {
+    setFocusedItemId(null);
+    // Force blur any active contentEditable
+    if (
+      document.activeElement instanceof HTMLElement &&
+      document.activeElement.isContentEditable
+    ) {
+      document.activeElement.blur();
+    }
+  };
+
+  // Handle clicks completely outside the resume (Grey canvas, Sidebar, etc)
+  useClickOutside(containerRef, handleDeselect);
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
 
@@ -84,6 +100,7 @@ const ResumePreview = () => {
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "relative mb-20 flex flex-col items-center print:mb-0",
         fontVariables,
@@ -94,9 +111,8 @@ const ResumePreview = () => {
         fontSize: `${fontSize}rem`,
         ["--accent-color" as string]: templateStyles.accentColor,
       }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setFocusedItemId(null);
-      }}
+      // Handle clicks on empty space inside the resume pages
+      onClick={handleDeselect}
     >
       {/* Hidden Measurement Container - Renders full content to measure heights */}
       <div

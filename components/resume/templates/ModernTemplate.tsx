@@ -172,7 +172,10 @@ export const ModernTemplate = ({
               : {}),
           }}
           onFocus={() => setFocusedItemId(item.id)}
-          onClick={() => setFocusedItemId(item.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFocusedItemId(item.id);
+          }}
         >
           {focusedItemId === item.id && !isTextSelected && pageLayout && (
             <FloatingToolbar
@@ -351,7 +354,10 @@ export const ModernTemplate = ({
                 : {}),
             }}
             onFocus={() => setFocusedItemId("header")}
-            onClick={() => setFocusedItemId("header")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFocusedItemId("header");
+            }}
           >
             {focusedItemId === "header" && !isTextSelected && pageLayout && (
               <FloatingToolbar
