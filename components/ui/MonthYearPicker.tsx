@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DatePeriod, DateValue } from "@/types/resume";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface MonthYearPickerProps {
   initialDate?: DatePeriod | string;
@@ -35,6 +36,11 @@ export const MonthYearPicker = ({
 }: MonthYearPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"start" | "end">("start");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(containerRef, () => {
+    if (isOpen) setIsOpen(false);
+  });
 
   // Initialize state based on initialDate parsing if needed, but for simplicity we start empty or parse simple
   const [startDate, setStartDate] = useState<DateValue>(null);
@@ -129,7 +135,7 @@ export const MonthYearPicker = ({
   };
 
   return (
-    <div className={cn("relative inline-block", className)}>
+    <div ref={containerRef} className={cn("relative inline-block", className)}>
       {children ? (
         <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
           {children}

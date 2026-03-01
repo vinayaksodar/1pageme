@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Plus,
   Trash2,
@@ -17,6 +17,7 @@ import {
   PersonalInfoVisibility,
 } from "@/types/resume";
 import { SECTION_SCHEMAS } from "@/lib/resume-config";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface FloatingToolbarProps {
   sectionId: string;
@@ -51,6 +52,11 @@ const FloatingToolbar = ({
     updatePersonalInfoVisibility,
   } = useResumeStore();
   const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(settingsRef, () => {
+    if (showSettings) setShowSettings(false);
+  });
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   const profileImageShape =
@@ -123,7 +129,7 @@ const FloatingToolbar = ({
         </button>
       )}
 
-      <div className="relative">
+      <div className="relative" ref={settingsRef}>
         <button
           onClick={() => setShowSettings(!showSettings)}
           className={cn(

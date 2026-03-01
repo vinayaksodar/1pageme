@@ -35,8 +35,12 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 text-slate-900 backdrop-blur-sm">
-      <div className="animate-in fade-in zoom-in w-full max-w-2xl overflow-hidden rounded-3xl bg-white text-left shadow-2xl duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 text-slate-900 md:p-12">
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="animate-in fade-in zoom-in relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white text-left shadow-2xl duration-200">
         <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6">
           <div>
             <h2 className="text-xl font-black tracking-tight text-slate-900">
