@@ -14,6 +14,7 @@ A multi-document, template-based resume builder with real-time editing, drag-and
 - **PDF Export:** Clean, print-ready exports via `react-to-print`.
 - **AI-Powered Parsing:** Import existing resumes using an LLM-driven parsing engine.
 - **Backend Persistence:** Neon Postgres + Drizzle ORM APIs for authenticated resume storage.
+- **Login & Logout:** Inline controls on the Dashboard let you register or log in, which merges your local resumes with the remote Neon store and keeps them in sync.
 
 ## 🛠️ Tech Stack
 
@@ -99,6 +100,8 @@ A multi-document, template-based resume builder with real-time editing, drag-and
 
 Authentication is optional. Guests can use the app fully with local `localStorage` persistence.  
 If a user logs in, the app merges local resumes with server resumes and then syncs changes to Neon in the background.
+
+Dashboard now exposes a login/register button (dropdown modal) and shows the signed-in email once authenticated; hitting logout clears the session but keeps local data available.
 
 - `POST /api/auth/register` body: `{ "email": "...", "password": "..." }`
 - `POST /api/auth/login` body: `{ "email": "...", "password": "..." }`
