@@ -126,6 +126,12 @@ export const TemplateSection = ({
   if (!section || !config.isVisible) return null;
 
   const showMainHeader = pageLayout ? pageLayout.headers.has(section.id) : true;
+  const hasItemsOnPage = pageLayout
+    ? section.items.some((item) => pageLayout.items.has(item.id))
+    : true;
+
+  // In paginated mode, skip sections that have neither a header nor items on this page.
+  if (pageLayout && !showMainHeader && !hasItemsOnPage) return null;
 
   return (
     <div
