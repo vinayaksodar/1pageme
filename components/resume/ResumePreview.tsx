@@ -9,6 +9,7 @@ import { ModernTemplate } from "./templates/ModernTemplate";
 import { cn, mmToPx } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
 import { useClickOutside } from "@/hooks/useClickOutside";
+import { debounce } from "lodash";
 
 const ResumePreview = () => {
   const {
@@ -31,17 +32,16 @@ const ResumePreview = () => {
     const updateScale = () => {
       if (!containerRef.current) return;
 
-      // Calculate available width.
-      // On mobile, the sidebar might be absolute or hidden, but EditorLayout handles that.
-      // We use window.innerWidth as the ultimate constraint for "fit-to-screen".
-      const padding = window.innerWidth < 768 ? 32 : 96; // Matching p-4 vs p-12 (approx)
+      // Use documentElement.clientWidth as it represents the layout viewport width
+      // and is generally more stable than window.innerWidth during pinch-zoom on mobile.
+      const viewportWidth = document.documentElement.clientWidth;
+      const isMobile = viewportWidth < 768;
+      const padding = isMobile ? 32 : 96;
 
-      // If sidebar is open on desktop, it takes 288px (w-72)
-      // On mobile, we assumed it's closed (handled in EditorLayout)
       const sidebarWidth =
-        window.innerWidth >= 768 && document.querySelector(".w-72") ? 288 : 0;
+        !isMobile && document.querySelector(".w-72") ? 288 : 0;
 
-      const availableWidth = window.innerWidth - sidebarWidth - padding;
+      const availableWidth = viewportWidth - sidebarWidth - padding;
       const pageWidthPx = mmToPx(210);
 
       if (availableWidth < pageWidthPx) {
@@ -52,19 +52,25 @@ const ResumePreview = () => {
       }
     };
 
+    const debouncedUpdate = debounce(updateScale, 150);
     updateScale();
 
-    // Listen for resize and also use ResizeObserver on parent for good measure
     const parent = containerRef.current?.parentElement;
     if (parent) {
-      const ro = new ResizeObserver(() => updateScale());
+      const ro = new ResizeObserver(() => debouncedUpdate());
       ro.observe(parent);
-      ro.observe(document.body); // Also watch body for mobile viewport changes
-      return () => ro.disconnect();
+      ro.observe(document.body);
+      return () => {
+        ro.disconnect();
+        debouncedUpdate.cancel();
+      };
     }
 
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
+    window.addEventListener("resize", debouncedUpdate);
+    return () => {
+      window.removeEventListener("resize", debouncedUpdate);
+      debouncedUpdate.cancel();
+    };
   }, []);
 
   const handleDeselect = () => {
