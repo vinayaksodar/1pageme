@@ -6,7 +6,7 @@ import { useResumeStore } from "@/store/useResumeStore";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const { activeResumeId } = useResumeStore();
+  const { activeResumeId, initializeServerSync } = useResumeStore();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -14,6 +14,24 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    void initializeServerSync();
+
+    const onFocus = () => {
+      void initializeServerSync();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [mounted, initializeServerSync]);
 
   if (!mounted) {
     return (

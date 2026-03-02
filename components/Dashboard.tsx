@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
   Plus,
@@ -35,8 +35,21 @@ const formatDate = (timestamp: number) => {
 };
 
 const Dashboard = () => {
-  const { resumes, setActiveResume, deleteResume, duplicateResume } =
-    useResumeStore();
+  const {
+    resumes,
+    setActiveResume,
+    deleteResume,
+    duplicateResume,
+    currentUser,
+    initializeServerSync,
+    markLoggedOut,
+  } = useResumeStore();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   const {
     isImportModalOpen,
@@ -60,6 +73,51 @@ const Dashboard = () => {
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
 
+  const handleAuthSubmit = async () => {
+    setAuthError("");
+    setAuthLoading(true);
+    if (!authEmail || !authPassword) {
+      setAuthError("Email and password are required");
+      setAuthLoading(false);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/auth/${authMode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Unable to authenticate");
+      }
+
+      await initializeServerSync();
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthMode("login");
+      setAuthOpen(false);
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Unable to authenticate",
+      );
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    markLoggedOut();
+    setAuthError("");
+    setAuthOpen(false);
+  };
+
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-50 font-sans text-slate-900">
       {/* TOP BAR */}
@@ -80,6 +138,84 @@ const Dashboard = () => {
           >
             <Plus size={14} /> Create New
           </button>
+          <div className="relative">
+            {currentUser ? (
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2">
+                <span className="text-sm font-semibold text-slate-600">
+                  {currentUser.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl bg-red-500 px-3 py-1 text-[10px] font-black tracking-[0.1em] text-white uppercase transition hover:bg-red-600"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setAuthOpen((prev) => !prev)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition hover:border-blue-600 hover:text-blue-600"
+                >
+                  Login / Register
+                </button>
+                {authOpen && (
+                  <div className="absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                    <div className="flex flex-col gap-2">
+                      <input
+                        value={authEmail}
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                        ) => setAuthEmail(event.target.value)}
+                        type="email"
+                        placeholder="Email"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
+                      />
+                      <input
+                        value={authPassword}
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                        ) => setAuthPassword(event.target.value)}
+                        type="password"
+                        placeholder="Password"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAuthSubmit}
+                        disabled={authLoading}
+                        className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-black tracking-[0.1em] text-white uppercase transition hover:bg-blue-700 disabled:opacity-60"
+                      >
+                        {authLoading
+                          ? "Working..."
+                          : authMode === "login"
+                            ? "Login"
+                            : "Register"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAuthMode((prev) =>
+                            prev === "login" ? "register" : "login",
+                          )
+                        }
+                        className="text-xs font-semibold text-blue-600"
+                      >
+                        {authMode === "login"
+                          ? "Need an account? Register"
+                          : "Already registered? Login"}
+                      </button>
+                      {authError && (
+                        <p className="text-xs font-semibold text-red-500">
+                          {authError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </header>
 

@@ -22,10 +22,43 @@ import {
 } from "@/lib/resume-config";
 import { emptyBlock, createBlock } from "@/lib/utils";
 
+const SYNC_DEBOUNCE_MS = 1200;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncedResumeVersions = new Map<string, number>();
+let knownServerResumeIds = new Set<string>();
+const clearSyncCache = () => {
+  syncedResumeVersions = new Map();
+  knownServerResumeIds = new Set();
+};
+
+const mergeResumes = (
+  localResumes: ResumeData[],
+  serverResumes: ResumeData[],
+): ResumeData[] => {
+  const byId = new Map<string, ResumeData>();
+
+  for (const resume of serverResumes) {
+    byId.set(resume.id, resume);
+  }
+
+  for (const resume of localResumes) {
+    const serverVersion = byId.get(resume.id);
+    if (!serverVersion || resume.updatedAt >= serverVersion.updatedAt) {
+      byId.set(resume.id, resume);
+    }
+  }
+
+  return Array.from(byId.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+};
+
 export interface ResumeState {
   resumes: ResumeData[];
   activeResumeId: string | null;
   isTextSelected: boolean;
+  isAuthenticated: boolean;
+  isSyncing: boolean;
+  hasInitializedSync: boolean;
+  currentUser: { id: string; email: string } | null;
 
   // Actions
   createNewResume: (templateId?: TemplateId) => void;
@@ -70,14 +103,182 @@ export interface ResumeState {
   duplicateResume: (id: string) => void;
   importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => void;
   renameResume: (id: string, title: string) => void;
+  initializeServerSync: () => Promise<void>;
+  syncLocalToServer: () => Promise<void>;
+  scheduleServerSync: () => void;
+  markLoggedOut: () => void;
 }
 
 export const useResumeStore = create<ResumeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       resumes: [],
       activeResumeId: null,
       isTextSelected: false,
+      isAuthenticated: false,
+      isSyncing: false,
+      hasInitializedSync: false,
+      currentUser: null,
+
+      initializeServerSync: async () => {
+        if (get().isSyncing) return;
+
+        set({ isSyncing: true });
+        try {
+          const meResponse = await fetch("/api/auth/me", {
+            credentials: "include",
+          });
+
+          if (!meResponse.ok) {
+            set({
+              isAuthenticated: false,
+              currentUser: null,
+              hasInitializedSync: true,
+              isSyncing: false,
+            });
+            clearSyncCache();
+            return;
+          }
+
+          const mePayload = (await meResponse.json()) as {
+            user: { id: string; email: string } | null;
+          };
+
+          if (!mePayload.user) {
+            set({
+              isAuthenticated: false,
+              currentUser: null,
+              hasInitializedSync: true,
+              isSyncing: false,
+            });
+            clearSyncCache();
+            return;
+          }
+
+          const resumeResponse = await fetch("/api/resumes", {
+            credentials: "include",
+          });
+
+          if (!resumeResponse.ok) {
+            set({
+              isAuthenticated: true,
+              currentUser: mePayload.user,
+              hasInitializedSync: true,
+              isSyncing: false,
+            });
+            clearSyncCache();
+            return;
+          }
+
+          const payload = (await resumeResponse.json()) as {
+            resumes?: ResumeData[];
+          };
+          const serverResumes = Array.isArray(payload.resumes)
+            ? payload.resumes
+            : [];
+
+          serverResumes.forEach((resume) => {
+            knownServerResumeIds.add(resume.id);
+            syncedResumeVersions.set(resume.id, resume.updatedAt);
+          });
+
+          const localState = get();
+          const mergedResumes = mergeResumes(localState.resumes, serverResumes);
+          const activeResumeId = mergedResumes.some(
+            (r) => r.id === localState.activeResumeId,
+          )
+            ? localState.activeResumeId
+            : (mergedResumes[0]?.id ?? null);
+
+          set({
+            resumes: mergedResumes,
+            activeResumeId,
+            isAuthenticated: true,
+            currentUser: mePayload.user,
+            hasInitializedSync: true,
+            isSyncing: false,
+          });
+
+          await get().syncLocalToServer();
+        } catch {
+          set({
+            isAuthenticated: false,
+            currentUser: null,
+            hasInitializedSync: true,
+            isSyncing: false,
+          });
+          clearSyncCache();
+        }
+      },
+
+      syncLocalToServer: async () => {
+        const state = get();
+        if (!state.isAuthenticated) return;
+
+        const localIds = new Set(state.resumes.map((resume) => resume.id));
+
+        for (const resume of state.resumes) {
+          if (syncedResumeVersions.get(resume.id) === resume.updatedAt) {
+            continue;
+          }
+
+          const putResponse = await fetch(`/api/resumes/${resume.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ resume }),
+          });
+
+          if (putResponse.status === 404) {
+            const createResponse = await fetch("/api/resumes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ resume }),
+            });
+
+            if (!createResponse.ok && createResponse.status !== 409) continue;
+          } else if (!putResponse.ok) {
+            continue;
+          }
+
+          knownServerResumeIds.add(resume.id);
+          syncedResumeVersions.set(resume.id, resume.updatedAt);
+        }
+
+        const removedIds = Array.from(knownServerResumeIds).filter(
+          (resumeId) => !localIds.has(resumeId),
+        );
+
+        for (const resumeId of removedIds) {
+          const deleteResponse = await fetch(`/api/resumes/${resumeId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+
+          if (deleteResponse.ok || deleteResponse.status === 404) {
+            knownServerResumeIds.delete(resumeId);
+            syncedResumeVersions.delete(resumeId);
+          }
+        }
+      },
+
+      scheduleServerSync: () => {
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => {
+          void get().syncLocalToServer();
+        }, SYNC_DEBOUNCE_MS);
+      },
+
+      markLoggedOut: () => {
+        set({
+          isAuthenticated: false,
+          currentUser: null,
+          isSyncing: false,
+          hasInitializedSync: true,
+        });
+        clearSyncCache();
+      },
 
       createNewResume: (templateId?: TemplateId) => {
         const id = Math.random().toString(36).substr(2, 9);
@@ -86,16 +287,19 @@ export const useResumeStore = create<ResumeState>()(
           resumes: [...state.resumes, newResume],
           activeResumeId: id,
         }));
+        get().scheduleServerSync();
       },
 
-      renameResume: (id, title) =>
+      renameResume: (id, title) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
-            r.id === id ? { ...r, title } : r,
+            r.id === id ? { ...r, title, updatedAt: Date.now() } : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      duplicateResume: (id) =>
+      duplicateResume: (id) => {
         set((state) => {
           const resumeToDuplicate = state.resumes.find((r) => r.id === id);
           if (!resumeToDuplicate) return state;
@@ -114,7 +318,9 @@ export const useResumeStore = create<ResumeState>()(
             resumes: [...state.resumes, duplicatedResume],
             activeResumeId: newId,
           };
-        }),
+        });
+        get().scheduleServerSync();
+      },
 
       importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => {
         const id = Math.random().toString(36).substr(2, 9);
@@ -198,22 +404,25 @@ export const useResumeStore = create<ResumeState>()(
           resumes: [...state.resumes, importedResume],
           activeResumeId: id,
         }));
+        get().scheduleServerSync();
       },
 
-      deleteResume: (id) =>
+      deleteResume: (id) => {
         set((state) => ({
           resumes: state.resumes.filter((r) => r.id !== id),
           activeResumeId:
             state.activeResumeId === id
               ? state.resumes[0]?.id || null
               : state.activeResumeId,
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
       setActiveResume: (id) => set({ activeResumeId: id }),
 
       setIsTextSelected: (isSelected) => set({ isTextSelected: isSelected }),
 
-      updatePersonalInfo: (field, value) =>
+      updatePersonalInfo: (field, value) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -227,9 +436,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updatePersonalInfoVisibility: (visibility) =>
+      updatePersonalInfoVisibility: (visibility) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -249,9 +460,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updateSectionTitle: (sectionId, title) =>
+      updateSectionTitle: (sectionId, title) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -267,9 +480,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updateSectionItem: (sectionId, itemId, field, value) =>
+      updateSectionItem: (sectionId, itemId, field, value) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -292,9 +507,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updateItemVisibility: (sectionId, itemId, visibility) =>
+      updateItemVisibility: (sectionId, itemId, visibility) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -325,9 +542,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      addSectionItem: (sectionId) =>
+      addSectionItem: (sectionId) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -377,9 +596,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      removeSectionItem: (sectionId, itemId) =>
+      removeSectionItem: (sectionId, itemId) => {
         set((state) => ({
           resumes: state.resumes.map((r) => {
             if (r.id !== state.activeResumeId) return r;
@@ -401,9 +622,11 @@ export const useResumeStore = create<ResumeState>()(
               },
             };
           }),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      moveSectionItem: (sectionId, itemId, direction) =>
+      moveSectionItem: (sectionId, itemId, direction) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -434,9 +657,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      addSection: (type) =>
+      addSection: (type) => {
         set((state) => {
           const newSectionId = Math.random().toString(36).substr(2, 9);
 
@@ -504,9 +729,11 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           };
-        }),
+        });
+        get().scheduleServerSync();
+      },
 
-      removeSection: (id) =>
+      removeSection: (id) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -533,9 +760,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      reorderSections: (newOrder) =>
+      reorderSections: (newOrder) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -552,9 +781,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updateSectionConfig: (sectionId, config) =>
+      updateSectionConfig: (sectionId, config) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -573,9 +804,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      updateGlobalStyle: (field, value) =>
+      updateGlobalStyle: (field, value) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -595,9 +828,11 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
 
-      setTemplate: (templateId) =>
+      setTemplate: (templateId) => {
         set((state) => ({
           resumes: state.resumes.map((r) =>
             r.id === state.activeResumeId
@@ -608,11 +843,18 @@ export const useResumeStore = create<ResumeState>()(
                 }
               : r,
           ),
-        })),
+        }));
+        get().scheduleServerSync();
+      },
     }),
     {
       name: "resume-storage-v6",
       version: 9,
+      partialize: (state) => ({
+        resumes: state.resumes,
+        activeResumeId: state.activeResumeId,
+        isTextSelected: state.isTextSelected,
+      }),
       migrate: (persistedState: unknown, version: number) => {
         if (version < 7) {
           const state = persistedState as Record<string, unknown>;
