@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Link from "next/link";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
   Plus,
@@ -123,7 +124,9 @@ const Dashboard = () => {
       {/* TOP BAR */}
       <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
         <div className="flex items-center gap-5">
-          <Logo />
+          <Link href="/">
+            <Logo />
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <button
