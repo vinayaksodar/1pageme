@@ -18,7 +18,14 @@ export const isLikelyNativeResumeExport = (
   if (typeof resume.createdAt !== "number") return false;
   if (typeof resume.updatedAt !== "number") return false;
 
-  return ["standard", "academic", "modern", "minimal"].every(
+  const requiredTemplates = ["standard", "academic", "modern"];
+  const hasRequiredLayouts = requiredTemplates.every(
     (templateId) => templateId in layouts,
   );
+  if (!hasRequiredLayouts) return false;
+
+  // Allow legacy exported files that still have activeTemplateId = "minimal".
+  if (resume.activeTemplateId === "minimal") return "minimal" in layouts;
+
+  return requiredTemplates.includes(resume.activeTemplateId);
 };

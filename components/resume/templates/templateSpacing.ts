@@ -84,21 +84,6 @@ const MULTIPLIERS: Record<TemplateId, SpacingMultipliers> = {
     headerBottomPadding: 0.2,
     columnGap: 1.05,
   },
-  minimal: {
-    sectionGap: 1,
-    itemGap: 1,
-    sectionHeaderGap: 0.25,
-    continuedHeaderGap: 0.25,
-    itemMinorGap: 0.12,
-    itemSubtleGap: 0.1,
-    itemDescriptionGap: 0.2,
-    bulletRowGap: 0.2,
-    headerNameGap: 0.2,
-    headerContactTopGap: 0.5,
-    headerContactsRowGap: 0.2,
-    headerBottomPadding: 0.6,
-    columnGap: 1,
-  },
 };
 
 export const getTemplateSpacing = (

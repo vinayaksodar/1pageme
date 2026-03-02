@@ -5,7 +5,7 @@ A multi-document, template-based resume builder with real-time editing, drag-and
 ## 🚀 Features
 
 - **Real-time Editing:** See changes instantly with a focus-on-click editor.
-- **Multi-Template Support:** Switch between Standard, Modern, and Minimal layouts seamlessly.
+- **Multi-Template Support:** Switch between Standard, Modern, and Academic layouts seamlessly.
 - **Automatic Pagination:** Intelligently splits content across A4 pages with "continued" headers.
 - **Drag & Drop:** Reorder sections easily using `@dnd-kit`.
 - **Rich Text Formatting:** Bold, italic, underline, and link support within a structured data model.

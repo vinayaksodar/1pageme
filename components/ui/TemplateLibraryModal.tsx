@@ -34,13 +34,6 @@ const ALL_TEMPLATES: Template[] = [
     color: "bg-blue-600",
     secondary: "bg-blue-50",
   },
-  {
-    id: "minimal",
-    name: "Clean Minimal",
-    category: "Minimal",
-    color: "bg-white",
-    secondary: "bg-slate-50",
-  },
 ];
 
 interface TemplateLibraryModalProps {

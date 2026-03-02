@@ -19,7 +19,6 @@ import {
   getStandardLayout,
   getAcademicLayout,
   getModernLayout,
-  getMinimalLayout,
 } from "@/lib/resume-config";
 import { emptyBlock, createBlock } from "@/lib/utils";
 
@@ -142,7 +141,6 @@ export const useResumeStore = create<ResumeState>()(
           standard: getStandardLayout(sectionIds),
           academic: getAcademicLayout(sectionIds),
           modern: getModernLayout(sectionIds),
-          minimal: getMinimalLayout(sectionIds),
         };
 
         // Merge imported layouts with defaults to ensure all template IDs exist
@@ -614,7 +612,7 @@ export const useResumeStore = create<ResumeState>()(
     }),
     {
       name: "resume-storage-v6",
-      version: 8,
+      version: 9,
       migrate: (persistedState: unknown, version: number) => {
         if (version < 7) {
           const state = persistedState as Record<string, unknown>;
@@ -689,7 +687,6 @@ export const useResumeStore = create<ResumeState>()(
                 standard: getStandardLayout(sectionIds),
                 academic: getAcademicLayout(sectionIds),
                 modern: getModernLayout(sectionIds),
-                minimal: getMinimalLayout(sectionIds),
               };
 
               return {
@@ -721,16 +718,63 @@ export const useResumeStore = create<ResumeState>()(
                       ...(resume.layouts?.modern?.templateStyles || {}),
                     },
                   },
-                  minimal: {
-                    ...defaultLayouts.minimal,
-                    ...(resume.layouts?.minimal || {}),
+                },
+                activeTemplateId: resume.activeTemplateId || "standard",
+              };
+            });
+          }
+          return state;
+        }
+        if (version < 9) {
+          const state = persistedState as Record<string, unknown>;
+          if (state.resumes && Array.isArray(state.resumes)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            state.resumes = state.resumes.map((resume: any) => {
+              const sectionIds =
+                resume.content?.sections?.map(
+                  (section: Section) => section.id,
+                ) || [];
+
+              const defaultLayouts = {
+                standard: getStandardLayout(sectionIds),
+                academic: getAcademicLayout(sectionIds),
+                modern: getModernLayout(sectionIds),
+              };
+
+              return {
+                ...resume,
+                layouts: {
+                  ...defaultLayouts,
+                  ...resume.layouts,
+                  standard: {
+                    ...defaultLayouts.standard,
+                    ...(resume.layouts?.standard || {}),
                     templateStyles: {
-                      ...defaultLayouts.minimal.templateStyles,
-                      ...(resume.layouts?.minimal?.templateStyles || {}),
+                      ...defaultLayouts.standard.templateStyles,
+                      ...(resume.layouts?.standard?.templateStyles || {}),
+                    },
+                  },
+                  academic: {
+                    ...defaultLayouts.academic,
+                    ...(resume.layouts?.academic || {}),
+                    templateStyles: {
+                      ...defaultLayouts.academic.templateStyles,
+                      ...(resume.layouts?.academic?.templateStyles || {}),
+                    },
+                  },
+                  modern: {
+                    ...defaultLayouts.modern,
+                    ...(resume.layouts?.modern || {}),
+                    templateStyles: {
+                      ...defaultLayouts.modern.templateStyles,
+                      ...(resume.layouts?.modern?.templateStyles || {}),
                     },
                   },
                 },
-                activeTemplateId: resume.activeTemplateId || "standard",
+                activeTemplateId:
+                  resume.activeTemplateId === "minimal"
+                    ? "standard"
+                    : (resume.activeTemplateId ?? "standard"),
               };
             });
           }

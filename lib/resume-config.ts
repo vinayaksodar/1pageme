@@ -376,18 +376,6 @@ export const getModernLayout = (sectionIds: string[]): TemplateLayout => ({
   })),
 });
 
-export const getMinimalLayout = (sectionIds: string[]): TemplateLayout => ({
-  templateStyles: {
-    ...DEFAULT_STYLES,
-    layout: "one-column",
-  },
-  sections: sectionIds.map((id) => ({
-    id,
-    isVisible: true,
-    column: getDefaultSectionColumn(id),
-  })),
-});
-
 export const createInitialResume = (
   id: string,
   title: string,
@@ -439,7 +427,6 @@ export const createInitialResume = (
       standard: getStandardLayout(sectionIds),
       academic: getAcademicLayout(sectionIds),
       modern: getModernLayout(sectionIds),
-      minimal: getMinimalLayout(sectionIds),
     },
   };
 };
