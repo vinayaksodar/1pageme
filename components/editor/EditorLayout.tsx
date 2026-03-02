@@ -59,6 +59,20 @@ const EditorLayout = () => {
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   const resumeTitle = activeResume ? activeResume.title : "Resume";
 
+  // Handle mobile sidebar state
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const handlePrint = useReactToPrint({
     contentRef: contentRef,
     documentTitle: resumeTitle,
@@ -244,7 +258,7 @@ const EditorLayout = () => {
         </div>
 
         {/* Canvas Scroll Area */}
-        <div className="custom-scrollbar relative flex flex-1 justify-center overflow-auto scroll-smooth bg-slate-50/50 p-12">
+        <div className="custom-scrollbar relative flex flex-1 justify-center overflow-auto scroll-smooth bg-slate-50/50 p-4 md:p-12">
           <div
             ref={contentRef}
             className="hover:shadow-3xl relative mx-auto max-w-fit shadow-2xl transition-all duration-500"
@@ -287,6 +301,7 @@ const EditorLayout = () => {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        .custom-scrollbar { overscroll-behavior: contain; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         [contenteditable]:focus { outline: none; background: rgba(59, 130, 246, 0.05); }

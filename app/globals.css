@@ -6,6 +6,11 @@
   --foreground: #171717;
 }
 
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 /* Print Styles */
 @media print {
   @page {

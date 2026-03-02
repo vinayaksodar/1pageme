@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useResumePagination, PageLayout } from "@/hooks/useResumePagination";
 import { StandardTemplate } from "./templates/StandardTemplate";
 import { AcademicTemplate } from "./templates/AcademicTemplate";
 import { ModernTemplate } from "./templates/ModernTemplate";
-import { cn } from "@/lib/utils";
+import { cn, mmToPx } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
 import { useClickOutside } from "@/hooks/useClickOutside";
 
@@ -24,7 +24,48 @@ const ResumePreview = () => {
   } = useResumeStore();
 
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [containerScale, setContainerScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (!containerRef.current) return;
+
+      // Calculate available width.
+      // On mobile, the sidebar might be absolute or hidden, but EditorLayout handles that.
+      // We use window.innerWidth as the ultimate constraint for "fit-to-screen".
+      const padding = window.innerWidth < 768 ? 32 : 96; // Matching p-4 vs p-12 (approx)
+
+      // If sidebar is open on desktop, it takes 288px (w-72)
+      // On mobile, we assumed it's closed (handled in EditorLayout)
+      const sidebarWidth =
+        window.innerWidth >= 768 && document.querySelector(".w-72") ? 288 : 0;
+
+      const availableWidth = window.innerWidth - sidebarWidth - padding;
+      const pageWidthPx = mmToPx(210);
+
+      if (availableWidth < pageWidthPx) {
+        const newScale = availableWidth / pageWidthPx;
+        setContainerScale(Math.max(newScale, 0.1));
+      } else {
+        setContainerScale(1);
+      }
+    };
+
+    updateScale();
+
+    // Listen for resize and also use ResizeObserver on parent for good measure
+    const parent = containerRef.current?.parentElement;
+    if (parent) {
+      const ro = new ResizeObserver(() => updateScale());
+      ro.observe(parent);
+      ro.observe(document.body); // Also watch body for mobile viewport changes
+      return () => ro.disconnect();
+    }
+
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
 
   const handleDeselect = () => {
     setFocusedItemId(null);
@@ -102,27 +143,34 @@ const ResumePreview = () => {
     }
   };
 
+  const fontStyles = {
+    fontFamily: getFontFamily(fontFamily),
+    lineHeight: lineHeight,
+    fontSize: `${fontSize}rem`,
+    ["--accent-color" as string]: templateStyles.accentColor,
+  };
+
   return (
     <div
-      ref={containerRef}
-      className={cn(
-        "relative mb-20 flex flex-col items-center print:mb-0",
-        fontVariables,
-      )}
+      className="flex flex-col items-center"
       style={{
-        fontFamily: getFontFamily(fontFamily),
-        lineHeight: lineHeight,
-        fontSize: `${fontSize}rem`,
-        ["--accent-color" as string]: templateStyles.accentColor,
+        width:
+          containerScale < 1 ? `${mmToPx(210) * containerScale}px` : "auto",
+        height: "auto",
+        transition: "width 0.3s ease",
       }}
-      // Handle clicks on empty space inside the resume pages
-      onClick={handleDeselect}
     >
-      {/* Hidden Measurement Container - Renders full content to measure heights */}
+      {/* Hidden Measurement Container - Moved OUTSIDE scaled div to maintain measurement accuracy */}
       <div
         id="measurement-container"
-        className="pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0"
-        style={{ padding: `${pageMargins}rem` }}
+        className={cn(
+          "pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0",
+          fontVariables,
+        )}
+        style={{
+          ...fontStyles,
+          padding: `${pageMargins}rem`,
+        }}
       >
         <div
           style={{
@@ -135,39 +183,53 @@ const ResumePreview = () => {
         </div>
       </div>
 
-      {/* Visible Pages */}
-      {pages.map((page, index) => (
-        <div
-          key={index}
-          className={cn(
-            "relative h-[297mm] w-[210mm] bg-white shadow-2xl transition-all duration-300 print:min-h-0 print:min-w-full print:shadow-none",
-            index > 0 ? "mt-8 print:mt-0 print:break-before-page" : "",
-          )}
-          style={{ padding: `${pageMargins}rem` }}
-        >
-          {/* Visual Page Number */}
-          <div className="absolute top-2 right-[-40px] text-xs font-medium text-gray-400 print:hidden">
-            Page {index + 1}
-          </div>
-
+      <div
+        ref={containerRef}
+        className={cn(
+          "relative mb-20 flex flex-col items-center print:mb-0",
+          fontVariables,
+        )}
+        style={{
+          ...fontStyles,
+          transform: `scale(${containerScale})`,
+          transformOrigin: "top center",
+          width: "210mm",
+        }}
+        // Handle clicks on empty space inside the resume pages
+        onClick={handleDeselect}
+      >
+        {/* Visible Pages */}
+        {pages.map((page, index) => (
           <div
-            style={{
-              transform: `scale(${fontScale})`,
-              transformOrigin: "top left",
-              width: `${100 / fontScale}%`,
-            }}
+            key={index}
+            className={cn(
+              "relative h-[297mm] w-[210mm] bg-white shadow-2xl transition-all duration-300 print:min-h-0 print:min-w-full print:shadow-none",
+              index > 0 ? "mt-8 print:mt-0 print:break-before-page" : "",
+            )}
+            style={{ padding: `${pageMargins}rem` }}
           >
-            {renderTemplate(page)}
+            {/* Visual Page Number */}
+            <div className="absolute top-2 right-[-40px] text-xs font-medium text-gray-400 print:hidden">
+              Page {index + 1}
+            </div>
+
+            <div
+              style={{
+                transform: `scale(${fontScale})`,
+                transformOrigin: "top left",
+                width: `${100 / fontScale}%`,
+              }}
+            >
+              {renderTemplate(page)}
+            </div>
           </div>
+        ))}
 
-          {/* Page Break Visual (Bottom) - Optional, just margin is usually enough */}
-        </div>
-      ))}
-
-      {/* Fallback if no pages calculated yet (initial render) */}
-      {pages.length === 0 && (
-        <div className="h-[297mm] w-[210mm] animate-pulse bg-white shadow" />
-      )}
+        {/* Fallback if no pages calculated yet (initial render) */}
+        {pages.length === 0 && (
+          <div className="h-[297mm] w-[210mm] animate-pulse bg-white shadow" />
+        )}
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ResumeData } from "@/types/resume";
+import { mmToPx } from "@/lib/utils";
 
 const PAGE_MM_HEIGHT = 297;
 
@@ -8,33 +9,6 @@ export interface PageLayout {
   items: Set<string>;
   headers: Set<string>;
   continued: Set<string>;
-}
-
-/**
- * Convert millimeters to pixels using the browser's measurement when available.
- * Creates a 1mm element and uses its computed size. Falls back to 96 DPI conversion.
- */
-function mmToPx(mm: number) {
-  if (typeof document === "undefined") {
-    // fallback: 96 DPI -> 96 px per inch, 25.4 mm per inch
-    return (mm * 96) / 25.4;
-  }
-
-  // Create an element sized to 1mm and measure, then multiply.
-  const el = document.createElement("div");
-  el.style.width = "1mm";
-  el.style.height = "1mm";
-  el.style.position = "absolute";
-  el.style.visibility = "hidden";
-  el.style.top = "-9999px";
-  document.body.appendChild(el);
-
-  const rect = el.getBoundingClientRect();
-  // Use height as the 1mm measurement (consistent regardless of writing direction)
-  const pxPerMm = rect.height || 96 / 25.4;
-  document.body.removeChild(el);
-
-  return mm * pxPerMm;
 }
 
 export const useResumePagination = (
