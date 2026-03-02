@@ -19,8 +19,8 @@ import TemplateLibraryModal from "../ui/TemplateLibraryModal";
 import ImportModal from "../ui/ImportModal";
 import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";
-import { ResumeData } from "@/types/resume";
-import { isLikelyNativeResumeExport } from "@/lib/import-utils";
+import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
+import { useResumeTitleEditor } from "@/hooks/useResumeTitleEditor";
 
 const EditorLayout = () => {
   const {
@@ -28,23 +28,33 @@ const EditorLayout = () => {
     resumes,
     setActiveResume,
     setTemplate,
-    createNewResume,
     duplicateResume,
-    importResume,
-    renameResume,
   } = useResumeStore();
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isNewResumeModalOpen, setIsNewResumeModalOpen] = useState(false);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [tempTitle, setTempTitle] = useState("");
-  const [pendingImportData, setPendingImportData] =
-    useState<Partial<ResumeData> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const editInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const {
+    isImportModalOpen,
+    isTemplateModalOpen,
+    openImportModal,
+    closeImportModal,
+    openTemplateModal,
+    closeTemplateModal,
+    handleImport,
+    handleTemplateSelect,
+  } = useResumeCreateImportFlow();
+  const {
+    inputRef: editInputRef,
+    editingResumeId,
+    tempTitle,
+    setTempTitle,
+    startEditing,
+    saveTitle,
+    stopEditing,
+  } = useResumeTitleEditor();
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   const resumeTitle = activeResume ? activeResume.title : "Resume";
@@ -78,19 +88,11 @@ const EditorLayout = () => {
     setIsDropdownOpen(false);
   };
 
-  const startEditing = () => {
+  const startTitleEditing = () => {
     if (activeResume) {
-      setTempTitle(activeResume.title);
-      setIsEditingTitle(true);
+      startEditing(activeResume.id, activeResume.title);
       setIsDropdownOpen(false);
     }
-  };
-
-  const saveTitle = () => {
-    if (activeResumeId && tempTitle.trim()) {
-      renameResume(activeResumeId, tempTitle.trim());
-    }
-    setIsEditingTitle(false);
   };
 
   // Close dropdown when clicking outside
@@ -107,14 +109,6 @@ const EditorLayout = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Focus input when editing starts
-  useEffect(() => {
-    if (isEditingTitle && editInputRef.current) {
-      editInputRef.current.focus();
-      editInputRef.current.select();
-    }
-  }, [isEditingTitle]);
-
   if (!activeResume) return null;
 
   return (
@@ -125,7 +119,7 @@ const EditorLayout = () => {
           <Logo onClick={() => setActiveResume("")} />
           <div className="h-6 w-[1px] bg-slate-200"></div>
           <div className="relative flex flex-col" ref={dropdownRef}>
-            {isEditingTitle ? (
+            {editingResumeId === activeResume.id ? (
               <div className="flex items-center gap-2">
                 <input
                   ref={editInputRef}
@@ -135,7 +129,7 @@ const EditorLayout = () => {
                   onBlur={saveTitle}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") saveTitle();
-                    if (e.key === "Escape") setIsEditingTitle(false);
+                    if (e.key === "Escape") stopEditing();
                   }}
                   className="rounded border-none bg-slate-50 px-2 py-0.5 text-sm font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none"
                 />
@@ -151,7 +145,7 @@ const EditorLayout = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
-                  startEditing();
+                  startTitleEditing();
                 }}
                 className="group flex items-center gap-2 text-sm font-black text-slate-900"
               >
@@ -165,13 +159,14 @@ const EditorLayout = () => {
               <div className="animate-in fade-in zoom-in absolute top-full left-0 z-[100] mt-2 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl duration-200">
                 <div className="p-2">
                   <button
-                    onClick={startEditing}
+                    onClick={startTitleEditing}
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
                   >
                     <Edit2 size={16} /> Rename
                   </button>
                   <button
                     onClick={() => {
+                      openTemplateModal();
                       setIsNewResumeModalOpen(true);
                       setIsDropdownOpen(false);
                     }}
@@ -190,7 +185,7 @@ const EditorLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      setIsImportModalOpen(true);
+                      openImportModal();
                       setIsDropdownOpen(false);
                     }}
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
@@ -268,33 +263,24 @@ const EditorLayout = () => {
       />
 
       <TemplateLibraryModal
-        isOpen={isNewResumeModalOpen || !!pendingImportData}
+        isOpen={isTemplateModalOpen || isNewResumeModalOpen}
         onClose={() => {
+          closeTemplateModal();
           setIsNewResumeModalOpen(false);
-          setPendingImportData(null);
         }}
         currentTemplate="standard"
         onSelect={(templateId) => {
-          if (pendingImportData) {
-            importResume(pendingImportData, templateId);
-            setPendingImportData(null);
-          } else {
-            createNewResume(templateId);
-          }
+          handleTemplateSelect(templateId);
           setIsNewResumeModalOpen(false);
         }}
       />
 
       <ImportModal
         isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
+        onClose={closeImportModal}
         onImport={(resume) => {
-          if (isLikelyNativeResumeExport(resume)) {
-            importResume(resume);
-          } else {
-            setPendingImportData(resume);
-          }
-          setIsImportModalOpen(false);
+          handleImport(resume);
+          closeImportModal();
         }}
       />
 

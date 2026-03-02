@@ -15,7 +15,15 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <main className="h-screen w-screen overflow-hidden bg-slate-50">
+        <div className="flex h-full items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="h-screen w-screen overflow-hidden">

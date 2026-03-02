@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
   Plus,
@@ -7,17 +7,14 @@ import {
   Clock,
   Copy,
   Download,
-  ClipboardCopy,
-  X,
   Edit2,
   Check,
 } from "lucide-react";
-import { LLM_PROMPT } from "@/lib/prompts";
-import { ResumeData } from "@/types/resume";
-import { isLikelyNativeResumeExport } from "@/lib/import-utils";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
 import { Logo } from "./ui/Logo";
+import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
+import { useResumeTitleEditor } from "@/hooks/useResumeTitleEditor";
 
 const formatDate = (timestamp: number) => {
   const now = Date.now();
@@ -38,44 +35,30 @@ const formatDate = (timestamp: number) => {
 };
 
 const Dashboard = () => {
-  const {
-    resumes,
-    createNewResume,
-    setActiveResume,
-    deleteResume,
-    duplicateResume,
-    importResume,
-    renameResume,
-  } = useResumeStore();
+  const { resumes, setActiveResume, deleteResume, duplicateResume } =
+    useResumeStore();
 
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [pendingImportData, setPendingImportData] =
-    useState<Partial<ResumeData> | null>(null);
-  const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
-  const [tempTitle, setTempTitle] = useState("");
-  const editInputRef = useRef<HTMLInputElement>(null);
+  const {
+    isImportModalOpen,
+    isTemplateModalOpen,
+    openImportModal,
+    openTemplateModal,
+    closeImportModal,
+    closeTemplateModal,
+    handleImport,
+    handleTemplateSelect,
+  } = useResumeCreateImportFlow();
+  const {
+    inputRef: editInputRef,
+    editingResumeId,
+    tempTitle,
+    setTempTitle,
+    startEditing,
+    saveTitle,
+    stopEditing,
+  } = useResumeTitleEditor();
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
-
-  const startEditing = (resumeId: string, currentTitle: string) => {
-    setEditingResumeId(resumeId);
-    setTempTitle(currentTitle);
-  };
-
-  const saveTitle = () => {
-    if (editingResumeId && tempTitle.trim()) {
-      renameResume(editingResumeId, tempTitle.trim());
-    }
-    setEditingResumeId(null);
-  };
-
-  useEffect(() => {
-    if (editingResumeId && editInputRef.current) {
-      editInputRef.current.focus();
-      editInputRef.current.select();
-    }
-  }, [editingResumeId]);
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-50 font-sans text-slate-900">
@@ -86,13 +69,13 @@ const Dashboard = () => {
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setIsImportModalOpen(true)}
+            onClick={openImportModal}
             className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600 active:scale-95"
           >
             <Download size={14} /> Import from LLM
           </button>
           <button
-            onClick={() => setIsTemplateModalOpen(true)}
+            onClick={openTemplateModal}
             className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-6 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
           >
             <Plus size={14} /> Create New
@@ -130,7 +113,7 @@ const Dashboard = () => {
                           onBlur={saveTitle}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") saveTitle();
-                            if (e.key === "Escape") setEditingResumeId(null);
+                            if (e.key === "Escape") stopEditing();
                           }}
                           onClick={(e) => e.stopPropagation()}
                           className="w-full rounded-lg border-none bg-slate-50 px-2 py-1 text-xl font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none"
@@ -206,7 +189,7 @@ const Dashboard = () => {
 
             {resumes.length === 0 && (
               <div
-                onClick={() => setIsTemplateModalOpen(true)}
+                onClick={openTemplateModal}
                 className="col-span-full flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-20 text-slate-300 transition-all hover:border-blue-400 hover:bg-blue-50/30 hover:text-blue-500"
               >
                 <Plus size={48} className="mb-4 opacity-20" />
@@ -221,32 +204,15 @@ const Dashboard = () => {
 
       <ImportModal
         isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImport={(resume) => {
-          if (isLikelyNativeResumeExport(resume)) {
-            importResume(resume);
-          } else {
-            setPendingImportData(resume);
-            setIsTemplateModalOpen(true);
-          }
-        }}
+        onClose={closeImportModal}
+        onImport={handleImport}
       />
 
       <TemplateLibraryModal
         isOpen={isTemplateModalOpen}
-        onClose={() => {
-          setIsTemplateModalOpen(false);
-          setPendingImportData(null);
-        }}
+        onClose={closeTemplateModal}
         currentTemplate="standard"
-        onSelect={(templateId) => {
-          if (pendingImportData) {
-            importResume(pendingImportData, templateId);
-            setPendingImportData(null);
-          } else {
-            createNewResume(templateId);
-          }
-        }}
+        onSelect={handleTemplateSelect}
       />
 
       <style
