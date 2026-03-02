@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
-import { SectionType, TemplateStyles } from "@/types/resume";
+import { SectionType } from "@/types/resume";
 import {
   Layout,
   Settings,
@@ -298,6 +298,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 step={0.1}
                 suffix="rem"
                 onChange={(v) => updateGlobalStyle("sectionSpacing", v)}
+              />
+              <SliderControl
+                label="Item Spacing"
+                value={currentStyles.itemSpacing}
+                min={0.3}
+                max={3}
+                step={0.1}
+                suffix="rem"
+                onChange={(v) => updateGlobalStyle("itemSpacing", v)}
               />
               <SliderControl
                 label="Line Height"

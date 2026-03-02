@@ -8,6 +8,7 @@ import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { EditableImage } from "@/components/ui/EditableImage";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
+import { getTemplateSpacing } from "./templateSpacing";
 
 export const ModernTemplate = ({
   resume,
@@ -20,14 +21,8 @@ export const ModernTemplate = ({
   const { content, activeTemplateId, layouts } = resume;
   const layoutConfig = layouts[activeTemplateId];
 
-  const {
-    accentColor,
-    sectionSpacing,
-    itemSpacing,
-    layout,
-    columnWidths = [65, 35],
-    columnGap = 2.5,
-  } = templateStyles;
+  const { accentColor, layout, columnWidths = [65, 35] } = templateStyles;
+  const spacing = getTemplateSpacing("modern", templateStyles);
 
   const visibility = content.personalInfo.visibility || {
     showJobTitle: true,
@@ -46,7 +41,10 @@ export const ModernTemplate = ({
     const { visibility: itemVisibility } = item;
 
     const continuedHeader = (
-      <h3 className="mb-3 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+      <h3
+        className="flex items-center gap-4 text-xs font-black tracking-widest uppercase"
+        style={{ marginBottom: `${spacing.continuedHeaderGap}rem` }}
+      >
         <span style={{ color: accentColor }}>
           {section.title}{" "}
           <span className="ml-1 text-[10px] opacity-50">(CONT.)</span>
@@ -67,10 +65,10 @@ export const ModernTemplate = ({
         pageLayout={pageLayout}
         actions={actions}
         accentColor={accentColor}
-        itemSpacing={itemSpacing}
+        itemSpacing={spacing.itemGap}
         continuedHeader={continuedHeader}
       >
-        <div className="mb-1">
+        <div style={{ marginBottom: `${spacing.itemMinorGap}rem` }}>
           {itemVisibility.showTitle && (
             <PlainTextEditor
               value={item.title}
@@ -81,7 +79,10 @@ export const ModernTemplate = ({
               placeholder="Title"
             />
           )}
-          <div className="mt-0.5 flex items-center justify-between">
+          <div
+            className="flex items-center justify-between"
+            style={{ marginTop: `${spacing.itemSubtleGap}rem` }}
+          >
             {itemVisibility.showSubtitle && (
               <PlainTextEditor
                 value={item.subtitle || ""}
@@ -124,7 +125,8 @@ export const ModernTemplate = ({
             onChange={(val) =>
               actions.updateSectionItem(section.id, item.id, "description", val)
             }
-            className="mb-2 text-xs leading-snug text-gray-600 italic"
+            className="text-xs leading-snug text-gray-600 italic"
+            style={{ marginBottom: `${spacing.itemDescriptionGap}rem` }}
             placeholder="Description..."
           />
         )}
@@ -141,8 +143,13 @@ export const ModernTemplate = ({
               )
             }
             type="bullets"
-            className="list-disc space-y-1.5 text-xs text-gray-700"
-            style={{ "--accent-color": accentColor } as React.CSSProperties}
+            className="list-disc text-xs text-gray-700 [&>li+li]:mt-[var(--bullet-gap)]"
+            style={
+              {
+                "--accent-color": accentColor,
+                "--bullet-gap": `${spacing.bulletRowGap}rem`,
+              } as React.CSSProperties
+            }
           />
         )}
       </TemplateItem>
@@ -154,7 +161,10 @@ export const ModernTemplate = ({
     if (!section) return null;
 
     const header = (
-      <h3 className="mb-3 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+      <h3
+        className="flex items-center gap-4 text-xs font-black tracking-widest uppercase"
+        style={{ marginBottom: `${spacing.sectionHeaderGap}rem` }}
+      >
         <PlainTextEditor
           tagName="span"
           value={section.title}
@@ -171,7 +181,7 @@ export const ModernTemplate = ({
         section={section}
         config={config}
         pageLayout={pageLayout}
-        sectionSpacing={sectionSpacing}
+        sectionSpacing={spacing.sectionGap}
         header={header}
       >
         {section.items.map((item, index) =>
@@ -195,8 +205,8 @@ export const ModernTemplate = ({
             layout === "two-column"
               ? `${columnWidths[0]}fr ${columnWidths[1]}fr`
               : "1fr",
-          columnGap: `${columnGap}rem`,
-          rowGap: `${sectionSpacing}rem`,
+          columnGap: `${spacing.columnGap}rem`,
+          rowGap: `${spacing.sectionGap}rem`,
         }}
       >
         <TemplateHeader
@@ -214,7 +224,8 @@ export const ModernTemplate = ({
                 tagName="h1"
                 value={content.personalInfo.fullName}
                 onChange={(val) => actions.updatePersonalInfo("fullName", val)}
-                className="mb-4 text-6xl leading-[0.9] font-black tracking-tighter uppercase"
+                className="text-6xl leading-[0.9] font-black tracking-tighter uppercase"
+                style={{ marginBottom: `${spacing.headerNameGap}rem` }}
               />
               {visibility.showJobTitle && (
                 <PlainTextEditor
@@ -244,7 +255,10 @@ export const ModernTemplate = ({
                 />
               </div>
             )}
-            <div className="space-y-2 text-right text-[10px] font-bold tracking-widest text-gray-400 uppercase">
+            <div
+              className="flex flex-col text-right text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+              style={{ gap: `${spacing.headerContactsRowGap}rem` }}
+            >
               {visibility.showAddress && (
                 <PlainTextEditor
                   value={content.personalInfo.address}
