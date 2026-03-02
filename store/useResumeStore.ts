@@ -276,11 +276,25 @@ export const useResumeStore = create<ResumeState>()(
               knownServerResumeIds: newKnownServerResumeIds,
               syncedResumeVersions: newSyncedResumeVersions,
             });
+          } catch (error) {
+            console.error("Sync failed", error);
+            if (
+              error instanceof TypeError &&
+              error.message === "Failed to fetch"
+            ) {
+              toast.error(
+                "Network error: Sync paused until connection returns",
+                {
+                  id: "sync-error",
+                },
+              );
+            } else {
+              toast.error("Sync failed");
+            }
           } finally {
             set({ isSyncing: false });
           }
         },
-
         scheduleServerSync: () => {
           const { syncTimer } = get();
           if (syncTimer) clearTimeout(syncTimer);
