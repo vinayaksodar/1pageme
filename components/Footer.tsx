@@ -28,10 +28,12 @@ export const Footer = () => {
         <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-slate-50 pt-8 text-xs font-bold tracking-widest text-slate-300 uppercase md:flex-row md:gap-0">
           <p>© 2026 1PAGEME. ALL RIGHTS RESERVED.</p>
           <div className="flex gap-8">
-            <a href="#" className="transition hover:text-blue-600">
-              Twitter
-            </a>
-            <a href="#" className="transition hover:text-blue-600">
+            <a
+              href="https://github.com/vinayaksodar/1pageme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-blue-600"
+            >
               GitHub
             </a>
           </div>

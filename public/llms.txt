@@ -1,15 +1,17 @@
 # 1PageMe
 
-1PageMe is a modern, high-performance resume builder designed specifically for creating professional one-page resumes. It features an intelligent, layout-aware editor that handles formatting automatically.
+1PageMe is a **completely free and open-source**, modern, high-performance resume builder. It features an **advanced WYSIWYG (What You See Is What You Get) editor** that allows users to edit their resume directly on the page—just like Word or Google Docs—eliminating the frustration of filling out separate forms and switching between tabs to see a preview.
 
 ## Core Features
 
-- **Intelligent Layouts:** Templates designed to perfectly fit a single page.
+- **ATS-Friendly:** Templates designed to be easily parsed by Applicant Tracking Systems, ensuring your resume gets through to recruiters.
+- **Advanced WYSIWYG Editor:** Edit text directly on the resume template. No separate input boxes or preview windows—what you edit is exactly what you get.
+- **Intelligent Layouts:** Templates designed to perfectly fit a single page, with automated formatting.
 - **AI-Powered Import:** Effortlessly bring in existing resume data via LLM-assisted parsing.
 - **Dynamic Templates:** Modern, recruiter-tested designs including Standard, Modern, and Academic styles.
 - **Local-First & Sync:** Seamless synchronization between local storage and a Neon-powered database.
-- **Real-time Preview:** Instant visual feedback as you edit.
 - **PDF Export:** High-quality PDF generation for professional submission.
+- **100% Free & Open Source:** No hidden fees, no subscriptions, and fully transparent code.
 
 ## Tech Stack
 

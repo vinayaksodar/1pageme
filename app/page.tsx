@@ -23,16 +23,18 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex flex-col items-center text-center">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-blue-600 uppercase">
-              <Zap size={14} className="animate-pulse" /> The Future of Resumes
+              <Zap size={14} className="animate-pulse" /> Free & Open Source
             </div>
             <h1 className="mb-8 max-w-4xl text-5xl font-black tracking-tighter text-slate-900 md:text-7xl lg:text-8xl">
               Build your next <span className="text-blue-600">resume</span> in
               minutes.
             </h1>
             <p className="mb-12 max-w-2xl text-lg font-medium text-slate-500 md:text-xl">
-              Forget complex formatting. Our intelligent editor handles the
-              design so you can focus on your story. Ready to land your dream
-              job?
+              Stop filling in boxes. Edit your{" "}
+              <strong className="font-bold text-slate-900">ATS-friendly</strong>{" "}
+              resume directly on the page just like Word or Google Docs. Our
+              advanced WYSIWYG editor handles the design so you can focus on
+              your story.
             </p>
             <div className="flex flex-col items-center gap-4 sm:flex-row">
               <Link
@@ -45,12 +47,14 @@ export default function LandingPage() {
                   className="transition-transform group-hover:translate-x-1"
                 />
               </Link>
-              <Link
-                href="/blog"
+              <a
+                href="https://github.com/vinayaksodar/1pageme"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-2xl border border-slate-200 bg-white px-10 py-5 text-sm font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600"
               >
-                Read our Blog
-              </Link>
+                Star on GitHub
+              </a>
             </div>
           </div>
         </div>
@@ -79,16 +83,16 @@ export default function LandingPage() {
                   "Optimized templates that ensure your resume fits perfectly on a single page, every single time.",
               },
               {
+                icon: <Zap className="text-blue-600" size={32} />,
+                title: "Live WYSIWYG Editor",
+                description:
+                  "Stop filling in separate boxes. Edit your resume directly on the page, just like Word or Google Docs.",
+              },
+              {
                 icon: <Cpu className="text-blue-600" size={32} />,
                 title: "AI-Powered Import",
                 description:
                   "Import your existing details and let our system intelligently structure your professional history.",
-              },
-              {
-                icon: <Globe className="text-blue-600" size={32} />,
-                title: "Global Reach",
-                description:
-                  "Modern fonts and styles that are recognized and loved by recruiters worldwide across all industries.",
               },
             ].map((feature, index) => (
               <div
