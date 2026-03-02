@@ -80,7 +80,6 @@ const ResumePreview = () => {
   };
 
   const { fontFamily, lineHeight, fontSize, pageMargins } = templateStyles;
-  const fontScale = Math.min(Math.max(1 + (fontSize - 1) * 0.5, 0.7), 1.6);
 
   const getFontFamily = (family: string) => {
     switch (family) {
@@ -109,7 +108,7 @@ const ResumePreview = () => {
       style={{
         fontFamily: getFontFamily(fontFamily),
         lineHeight: lineHeight,
-        fontSize: "1rem",
+        fontSize: `${fontSize}rem`,
         ["--accent-color" as string]: templateStyles.accentColor,
       }}
       // Handle clicks on empty space inside the resume pages
@@ -121,9 +120,7 @@ const ResumePreview = () => {
         className="pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0"
         style={{ padding: `${pageMargins}rem` }}
       >
-        <div style={{ zoom: fontScale } as React.CSSProperties}>
-          {renderTemplate()}
-        </div>
+        {renderTemplate()}
       </div>
 
       {/* Visible Pages */}
@@ -141,9 +138,7 @@ const ResumePreview = () => {
             Page {index + 1}
           </div>
 
-          <div style={{ zoom: fontScale } as React.CSSProperties}>
-            {renderTemplate(page)}
-          </div>
+          {renderTemplate(page)}
 
           {/* Page Break Visual (Bottom) - Optional, just margin is usually enough */}
         </div>

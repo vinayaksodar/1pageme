@@ -133,6 +133,24 @@ export const useResumePagination = (
       }
     }
 
+    // In modern template, the header is inside a CSS grid row and the visible
+    // separation to the section rows comes from grid row-gap, not header margin.
+    // Include that gap in page-0 header height so pagination matches render.
+    if (resume.activeTemplateId === "modern") {
+      const headerWrapper = container.querySelector(
+        ".group\\/header",
+      ) as HTMLElement | null;
+      const gridParent = headerWrapper?.parentElement;
+      if (gridParent) {
+        const rowGap = parseFloat(
+          window.getComputedStyle(gridParent).rowGap || "0",
+        );
+        if (!Number.isNaN(rowGap) && rowGap > 0) {
+          mainHeaderTotal += rowGap;
+        }
+      }
+    }
+
     const newPages: PageLayout[] = [];
     const getPage = (idx: number) => {
       while (newPages.length <= idx) {
