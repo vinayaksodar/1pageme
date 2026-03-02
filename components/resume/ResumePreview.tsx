@@ -83,6 +83,7 @@ const ResumePreview = () => {
   };
 
   const { fontFamily, lineHeight, fontSize, pageMargins } = templateStyles;
+  const fontScale = Math.min(Math.max(1 + (fontSize - 1) * 0.5, 0.7), 1.6);
 
   const getFontFamily = (family: string) => {
     switch (family) {
@@ -123,7 +124,15 @@ const ResumePreview = () => {
         className="pointer-events-none absolute top-0 left-0 w-[210mm] opacity-0"
         style={{ padding: `${pageMargins}rem` }}
       >
-        {renderTemplate()}
+        <div
+          style={{
+            transform: `scale(${fontScale})`,
+            transformOrigin: "top left",
+            width: `${100 / fontScale}%`,
+          }}
+        >
+          {renderTemplate()}
+        </div>
       </div>
 
       {/* Visible Pages */}
@@ -141,7 +150,15 @@ const ResumePreview = () => {
             Page {index + 1}
           </div>
 
-          {renderTemplate(page)}
+          <div
+            style={{
+              transform: `scale(${fontScale})`,
+              transformOrigin: "top left",
+              width: `${100 / fontScale}%`,
+            }}
+          >
+            {renderTemplate(page)}
+          </div>
 
           {/* Page Break Visual (Bottom) - Optional, just margin is usually enough */}
         </div>

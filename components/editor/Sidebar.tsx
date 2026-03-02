@@ -96,6 +96,7 @@ const SliderControl = ({
   step,
   onChange,
   suffix = "",
+  formatValue,
 }: {
   label: string;
   value: number;
@@ -104,6 +105,7 @@ const SliderControl = ({
   step: number;
   onChange: (val: number) => void;
   suffix?: string;
+  formatValue?: (val: number) => string;
 }) => {
   const [localValue, setLocalValue] = React.useState(value);
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -130,8 +132,7 @@ const SliderControl = ({
           {label}
         </label>
         <span className="text-[10px] font-black text-slate-900">
-          {localValue}
-          {suffix}
+          {formatValue ? formatValue(localValue) : `${localValue}${suffix}`}
         </span>
       </div>
       <input
@@ -169,6 +170,29 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
 
   const currentTemplateId = activeResume.activeTemplateId;
   const currentStyles = activeResume.layouts[currentTemplateId].templateStyles;
+  const isTwoColumnLayout = currentStyles.layout === "two-column";
+  const mainColumnWidth = currentStyles.columnWidths.mainColumn;
+
+  const getToneLabel = (
+    value: number,
+    min: number,
+    max: number,
+    labels: [string, string, string],
+  ) => {
+    const normalized = (value - min) / (max - min);
+    if (normalized < 0.34) return labels[0];
+    if (normalized < 0.67) return labels[1];
+    return labels[2];
+  };
+
+  const handleMainColumnWidthChange = (nextMainWidth: number) => {
+    // Keep both columns readable while preserving a 100% total split.
+    const clampedMain = Math.max(55, Math.min(75, Math.round(nextMainWidth)));
+    updateGlobalStyle("columnWidths", {
+      mainColumn: clampedMain,
+      secondaryColumn: 100 - clampedMain,
+    });
+  };
 
   const handleAddSection = (type: SectionType) => {
     addSection(type);
@@ -279,6 +303,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 max={4}
                 step={0.1}
                 onChange={(v) => updateGlobalStyle("pageMargins", v)}
+                formatValue={(v) =>
+                  getToneLabel(v, 0.5, 4, ["Narrow", "Normal", "Wide"])
+                }
               />
               <SliderControl
                 label="Font Size"
@@ -287,6 +314,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 max={2.0}
                 step={0.01}
                 onChange={(v) => updateGlobalStyle("fontSize", v)}
+                formatValue={(v) =>
+                  getToneLabel(v, 0.5, 2.0, ["Small", "Normal", "Large"])
+                }
               />
               <SliderControl
                 label="Section Spacing"
@@ -295,6 +325,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 max={4}
                 step={0.1}
                 onChange={(v) => updateGlobalStyle("sectionSpacing", v)}
+                formatValue={(v) =>
+                  getToneLabel(v, 0.5, 4, ["Compact", "Balanced", "Spacious"])
+                }
               />
               <SliderControl
                 label="Item Spacing"
@@ -303,6 +336,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 max={3}
                 step={0.1}
                 onChange={(v) => updateGlobalStyle("itemSpacing", v)}
+                formatValue={(v) =>
+                  getToneLabel(v, 0.3, 3, ["Tight", "Normal", "Relaxed"])
+                }
               />
               <SliderControl
                 label="Line Height"
@@ -311,7 +347,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 max={2.5}
                 step={0.1}
                 onChange={(v) => updateGlobalStyle("lineHeight", v)}
+                formatValue={(v) =>
+                  getToneLabel(v, 1, 2.5, ["Tight", "Normal", "Airy"])
+                }
               />
+              {isTwoColumnLayout && (
+                <SliderControl
+                  label="Main Column Width"
+                  value={mainColumnWidth}
+                  min={55}
+                  max={75}
+                  step={1}
+                  suffix="%"
+                  onChange={handleMainColumnWidthChange}
+                />
+              )}
 
               <div className="mt-6 space-y-3">
                 <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
