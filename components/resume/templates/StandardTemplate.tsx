@@ -2,10 +2,11 @@
 
 import React from "react";
 import { Section, SectionItem, TemplateProps } from "@/types/resume";
-import { formatDatePeriod } from "@/lib/utils";
+import { cn, formatDatePeriod } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
+import { EditableImage } from "@/components/ui/EditableImage";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
 import { getTemplateSpacing } from "./templateSpacing";
 
@@ -217,7 +218,7 @@ export const StandardTemplate = ({
         className="border-b border-gray-100"
       >
         <header
-          className="mt-0 flex flex-1 justify-between gap-6"
+          className="mt-0 flex flex-1 items-start justify-between gap-6"
           style={{ paddingBottom: `${spacing.headerBottomPadding}rem` }}
         >
           <div className="flex-1">
@@ -280,6 +281,20 @@ export const StandardTemplate = ({
               )}
             </div>
           </div>
+          {visibility.showPhoto && (
+            <EditableImage
+              src={content.personalInfo.profileImage}
+              onChange={(val) =>
+                actions.updatePersonalInfo("profileImage", val)
+              }
+              className={cn(
+                "h-24 w-24 border-2 border-gray-200 shadow-sm",
+                content.personalInfo.profileImageShape === "squircle"
+                  ? "rounded-2xl"
+                  : "rounded-full",
+              )}
+            />
+          )}
         </header>
       </TemplateHeader>
 

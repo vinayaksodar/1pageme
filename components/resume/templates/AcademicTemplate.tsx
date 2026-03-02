@@ -2,10 +2,11 @@
 
 import React from "react";
 import { Section, SectionItem, TemplateProps } from "@/types/resume";
-import { formatDatePeriod } from "@/lib/utils";
+import { cn, formatDatePeriod } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
+import { EditableImage } from "@/components/ui/EditableImage";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
 import { getTemplateSpacing } from "./templateSpacing";
 
@@ -237,6 +238,22 @@ export const AcademicTemplate = ({
                 onChange={(val) => actions.updatePersonalInfo("jobTitle", val)}
                 className="text-2xl font-medium text-gray-500"
               />
+            )}
+            {visibility.showPhoto && (
+              <div className="mt-4 flex justify-center">
+                <EditableImage
+                  src={content.personalInfo.profileImage}
+                  onChange={(val) =>
+                    actions.updatePersonalInfo("profileImage", val)
+                  }
+                  className={cn(
+                    "h-24 w-24 border-2 border-gray-200 shadow-sm",
+                    content.personalInfo.profileImageShape === "squircle"
+                      ? "rounded-2xl"
+                      : "rounded-full",
+                  )}
+                />
+              </div>
             )}
             <div
               className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600"
