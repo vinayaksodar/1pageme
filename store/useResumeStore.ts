@@ -17,6 +17,7 @@ import {
   getInitialVisibility,
   createInitialResume,
   getStandardLayout,
+  getAcademicLayout,
   getModernLayout,
   getMinimalLayout,
 } from "@/lib/resume-config";
@@ -139,6 +140,7 @@ export const useResumeStore = create<ResumeState>()(
 
         const defaultLayouts = {
           standard: getStandardLayout(sectionIds),
+          academic: getAcademicLayout(sectionIds),
           modern: getModernLayout(sectionIds),
           minimal: getMinimalLayout(sectionIds),
         };
@@ -612,7 +614,7 @@ export const useResumeStore = create<ResumeState>()(
     }),
     {
       name: "resume-storage-v6",
-      version: 7,
+      version: 8,
       migrate: (persistedState: unknown, version: number) => {
         if (version < 7) {
           const state = persistedState as Record<string, unknown>;
@@ -670,6 +672,67 @@ export const useResumeStore = create<ResumeState>()(
                 })),
               },
             }));
+          }
+          return state;
+        }
+        if (version < 8) {
+          const state = persistedState as Record<string, unknown>;
+          if (state.resumes && Array.isArray(state.resumes)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            state.resumes = state.resumes.map((resume: any) => {
+              const sectionIds =
+                resume.content?.sections?.map(
+                  (section: Section) => section.id,
+                ) || [];
+
+              const defaultLayouts = {
+                standard: getStandardLayout(sectionIds),
+                academic: getAcademicLayout(sectionIds),
+                modern: getModernLayout(sectionIds),
+                minimal: getMinimalLayout(sectionIds),
+              };
+
+              return {
+                ...resume,
+                layouts: {
+                  ...defaultLayouts,
+                  ...resume.layouts,
+                  standard: {
+                    ...defaultLayouts.standard,
+                    ...(resume.layouts?.standard || {}),
+                    templateStyles: {
+                      ...defaultLayouts.standard.templateStyles,
+                      ...(resume.layouts?.standard?.templateStyles || {}),
+                    },
+                  },
+                  academic: {
+                    ...defaultLayouts.academic,
+                    ...(resume.layouts?.academic || {}),
+                    templateStyles: {
+                      ...defaultLayouts.academic.templateStyles,
+                      ...(resume.layouts?.academic?.templateStyles || {}),
+                    },
+                  },
+                  modern: {
+                    ...defaultLayouts.modern,
+                    ...(resume.layouts?.modern || {}),
+                    templateStyles: {
+                      ...defaultLayouts.modern.templateStyles,
+                      ...(resume.layouts?.modern?.templateStyles || {}),
+                    },
+                  },
+                  minimal: {
+                    ...defaultLayouts.minimal,
+                    ...(resume.layouts?.minimal || {}),
+                    templateStyles: {
+                      ...defaultLayouts.minimal.templateStyles,
+                      ...(resume.layouts?.minimal?.templateStyles || {}),
+                    },
+                  },
+                },
+                activeTemplateId: resume.activeTemplateId || "standard",
+              };
+            });
           }
           return state;
         }

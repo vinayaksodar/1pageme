@@ -92,7 +92,7 @@ export interface TemplateLayout {
   sections: SectionConfig[]; // The order of this array determines rendering order
 }
 
-export type TemplateId = "standard" | "modern" | "minimal";
+export type TemplateId = "standard" | "academic" | "modern" | "minimal";
 
 export interface PersonalInfoVisibility {
   showPhone: boolean;

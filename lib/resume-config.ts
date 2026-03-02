@@ -139,6 +139,24 @@ export const DEFAULT_STYLES: TemplateStyles = {
 export const getStandardLayout = (sectionIds: string[]): TemplateLayout => ({
   templateStyles: {
     ...DEFAULT_STYLES,
+    fontFamily: "Serif",
+    accentColor: "#111827",
+    lineHeight: 1,
+    layout: "one-column",
+  },
+  sections: sectionIds.map((id) => ({
+    id,
+    isVisible: true,
+    column: 1,
+  })),
+});
+
+export const getAcademicLayout = (sectionIds: string[]): TemplateLayout => ({
+  templateStyles: {
+    ...DEFAULT_STYLES,
+    fontFamily: "Serif",
+    accentColor: "#111827",
+    lineHeight: 1,
     layout: "one-column",
   },
   sections: sectionIds.map((id) => ({
@@ -193,6 +211,7 @@ export const createInitialResume = (
     activeTemplateId: templateId,
     layouts: {
       standard: getStandardLayout(sectionIds),
+      academic: getAcademicLayout(sectionIds),
       modern: getModernLayout(sectionIds),
       minimal: getMinimalLayout(sectionIds),
     },

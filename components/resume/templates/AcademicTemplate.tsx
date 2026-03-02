@@ -9,7 +9,7 @@ import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
 import { getTemplateSpacing } from "./templateSpacing";
 
-export const StandardTemplate = ({
+export const AcademicTemplate = ({
   resume,
   focusedItemId,
   setFocusedItemId,
@@ -20,7 +20,7 @@ export const StandardTemplate = ({
   const { content, activeTemplateId, layouts } = resume;
   const layout = layouts[activeTemplateId];
   const { accentColor } = templateStyles;
-  const spacing = getTemplateSpacing("standard", templateStyles);
+  const spacing = getTemplateSpacing("academic", templateStyles);
 
   const visibility = content.personalInfo.visibility || {
     showJobTitle: true,
@@ -40,7 +40,7 @@ export const StandardTemplate = ({
 
     const continuedHeader = (
       <div
-        className="flex items-center justify-between border-b-2 pb-1"
+        className="flex items-center justify-center border-b-2 pb-1"
         style={{
           borderColor: "#1f2937",
           marginBottom: `${spacing.continuedHeaderGap}rem`,
@@ -174,7 +174,7 @@ export const StandardTemplate = ({
 
     const header = (
       <div
-        className="flex items-center justify-between border-b-2 pb-1"
+        className="flex items-center justify-center border-b-2 pb-1"
         style={{
           borderColor: "#1f2937",
           marginBottom: `${spacing.sectionHeaderGap}rem`,
@@ -184,7 +184,7 @@ export const StandardTemplate = ({
           tagName="h3"
           value={section.title}
           onChange={(val) => actions.updateSectionTitle(section.id, val)}
-          className="inline-block text-sm font-bold tracking-wider text-gray-800 uppercase"
+          className="inline-block text-center text-sm font-bold tracking-wider text-gray-800 uppercase"
         />
       </div>
     );
@@ -217,10 +217,10 @@ export const StandardTemplate = ({
         className="border-b border-gray-100"
       >
         <header
-          className="mt-0 flex flex-1 justify-between gap-6"
+          className="mt-0 flex flex-1 justify-center gap-6"
           style={{ paddingBottom: `${spacing.headerBottomPadding}rem` }}
         >
-          <div className="flex-1">
+          <div className="w-full text-center">
             <PlainTextEditor
               tagName="h1"
               value={content.personalInfo.fullName}
@@ -239,7 +239,7 @@ export const StandardTemplate = ({
               />
             )}
             <div
-              className="flex items-center gap-2 text-sm font-medium text-gray-600"
+              className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600"
               style={{
                 marginTop: `${spacing.headerContactTopGap}rem`,
               }}

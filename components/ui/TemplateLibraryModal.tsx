@@ -15,9 +15,16 @@ interface Template {
 const ALL_TEMPLATES: Template[] = [
   {
     id: "standard",
-    name: "Standard Professional",
+    name: "Standard",
     category: "Professional",
     color: "bg-slate-900",
+    secondary: "bg-stone-50",
+  },
+  {
+    id: "academic",
+    name: "Academic Centered",
+    category: "Professional",
+    color: "bg-slate-700",
     secondary: "bg-stone-50",
   },
   {

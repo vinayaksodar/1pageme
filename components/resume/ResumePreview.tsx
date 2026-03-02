@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useResumePagination, PageLayout } from "@/hooks/useResumePagination";
 import { StandardTemplate } from "./templates/StandardTemplate";
+import { AcademicTemplate } from "./templates/AcademicTemplate";
 import { ModernTemplate } from "./templates/ModernTemplate";
 import { cn } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
@@ -73,6 +74,8 @@ const ResumePreview = () => {
     switch (activeResume.activeTemplateId) {
       case "modern":
         return <ModernTemplate {...templateProps} pageLayout={pageLayout} />;
+      case "academic":
+        return <AcademicTemplate {...templateProps} pageLayout={pageLayout} />;
       case "standard":
       default:
         return <StandardTemplate {...templateProps} pageLayout={pageLayout} />;
