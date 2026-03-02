@@ -77,13 +77,18 @@ export interface TemplateStyles {
   itemSpacing: number; // in rem
   lineHeight: number;
   layout: "one-column" | "two-column";
-  columnWidths: [number, number]; // percentages
+  columnWidths: {
+    mainColumn: number;
+    secondaryColumn: number;
+  }; // percentages
   columnGap: number; // in rem
 }
 
+export type SectionColumn = "mainColumn" | "secondaryColumn";
+
 export interface SectionConfig {
   id: string;
-  column: number;
+  column: SectionColumn;
   isVisible: boolean;
 }
 

@@ -58,7 +58,8 @@ const SortableItem = ({
   } = useResumeStore();
 
   const toggleColumn = () => {
-    const newColumn = (config.column || 1) === 1 ? 2 : 1;
+    const newColumn =
+      config.column === "mainColumn" ? "secondaryColumn" : "mainColumn";
     updateSectionConfig(section.id, { column: newColumn });
   };
 
@@ -103,7 +104,9 @@ const SortableItem = ({
         </p>
         {isTwoColumn && (
           <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
-            {config.column === 1 ? "Main Content" : "Sidebar"}
+            {config.column === "mainColumn"
+              ? "Main Column"
+              : "Secondary Column"}
           </span>
         )}
       </div>

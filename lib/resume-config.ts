@@ -4,9 +4,9 @@ import {
   SectionItem,
   TemplateStyles,
   TemplateLayout,
-  Section,
   ResumeData,
   TemplateId,
+  SectionColumn,
 } from "@/types/resume";
 import { INITIAL_PERSONAL_INFO, INITIAL_SECTIONS } from "./initial-data";
 
@@ -132,9 +132,17 @@ export const DEFAULT_STYLES: TemplateStyles = {
   itemSpacing: 1, // 1rem
   lineHeight: 1.5,
   layout: "one-column",
-  columnWidths: [65, 35],
+  columnWidths: {
+    mainColumn: 65,
+    secondaryColumn: 35,
+  },
   columnGap: 2.5, // in rem
 };
+
+const getDefaultSectionColumn = (sectionId: string): SectionColumn =>
+  sectionId === "education" || sectionId === "skills"
+    ? "secondaryColumn"
+    : "mainColumn";
 
 export const getStandardLayout = (sectionIds: string[]): TemplateLayout => ({
   templateStyles: {
@@ -147,7 +155,7 @@ export const getStandardLayout = (sectionIds: string[]): TemplateLayout => ({
   sections: sectionIds.map((id) => ({
     id,
     isVisible: true,
-    column: 1,
+    column: getDefaultSectionColumn(id),
   })),
 });
 
@@ -162,7 +170,7 @@ export const getAcademicLayout = (sectionIds: string[]): TemplateLayout => ({
   sections: sectionIds.map((id) => ({
     id,
     isVisible: true,
-    column: 1,
+    column: getDefaultSectionColumn(id),
   })),
 });
 
@@ -174,7 +182,7 @@ export const getModernLayout = (sectionIds: string[]): TemplateLayout => ({
   sections: sectionIds.map((id) => ({
     id,
     isVisible: true,
-    column: id === "education" || id === "skills" ? 2 : 1,
+    column: getDefaultSectionColumn(id),
   })),
 });
 
@@ -186,7 +194,7 @@ export const getMinimalLayout = (sectionIds: string[]): TemplateLayout => ({
   sections: sectionIds.map((id) => ({
     id,
     isVisible: true,
-    column: 1,
+    column: getDefaultSectionColumn(id),
   })),
 });
 

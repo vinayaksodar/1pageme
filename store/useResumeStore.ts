@@ -128,11 +128,11 @@ export const useResumeStore = create<ResumeState>()(
           if (!Array.isArray(sections)) return [];
           return sections.map((s: SectionConfig | string) => {
             if (typeof s === "string") {
-              return { id: s, column: 1, isVisible: true };
+              return { id: s, column: "mainColumn" as const, isVisible: true };
             }
             return {
               id: s.id,
-              column: s.column || 1,
+              column: s.column || "mainColumn",
               isVisible: s.isVisible !== undefined ? s.isVisible : true,
             };
           });
@@ -494,7 +494,7 @@ export const useResumeStore = create<ResumeState>()(
                             {
                               id: newSectionId,
                               isVisible: true,
-                              column: 1,
+                              column: "mainColumn",
                             },
                           ],
                         };

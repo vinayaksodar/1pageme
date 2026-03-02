@@ -262,9 +262,11 @@ export const useResumePagination = (
 
     if (isDualColumn) {
       const column1Sections = layout.sections.filter(
-        (s) => s.column === 1 || !s.column,
+        (s) => s.column === "mainColumn" || !s.column,
       );
-      const column2Sections = layout.sections.filter((s) => s.column === 2);
+      const column2Sections = layout.sections.filter(
+        (s) => s.column === "secondaryColumn",
+      );
       processColumn(column1Sections);
       processColumn(column2Sections);
     } else {

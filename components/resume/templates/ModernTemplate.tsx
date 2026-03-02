@@ -21,7 +21,11 @@ export const ModernTemplate = ({
   const { content, activeTemplateId, layouts } = resume;
   const layoutConfig = layouts[activeTemplateId];
 
-  const { accentColor, layout, columnWidths = [65, 35] } = templateStyles;
+  const {
+    accentColor,
+    layout,
+    columnWidths = { mainColumn: 65, secondaryColumn: 35 },
+  } = templateStyles;
   const spacing = getTemplateSpacing("modern", templateStyles);
 
   const visibility = content.personalInfo.visibility || {
@@ -192,9 +196,11 @@ export const ModernTemplate = ({
   };
 
   const mainSections = layoutConfig.sections.filter(
-    (s) => s.column === 1 || !s.column,
+    (s) => s.column === "mainColumn" || !s.column,
   );
-  const sideSections = layoutConfig.sections.filter((s) => s.column === 2);
+  const sideSections = layoutConfig.sections.filter(
+    (s) => s.column === "secondaryColumn",
+  );
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -203,7 +209,7 @@ export const ModernTemplate = ({
         style={{
           gridTemplateColumns:
             layout === "two-column"
-              ? `${columnWidths[0]}fr ${columnWidths[1]}fr`
+              ? `${columnWidths.mainColumn}fr ${columnWidths.secondaryColumn}fr`
               : "1fr",
           columnGap: `${spacing.columnGap}rem`,
           rowGap: `${spacing.sectionGap}rem`,
