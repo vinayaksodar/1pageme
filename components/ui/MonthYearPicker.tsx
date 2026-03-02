@@ -113,14 +113,25 @@ export const MonthYearPicker = ({
   const handleMonthClick = (month: string) => {
     if (mode === "start") {
       setStartDate({ month, year: viewYear });
-      setMode("end"); // Auto-advance to end date
     } else {
       setEndDate({ month, year: viewYear });
     }
   };
 
+  const handleYearOnlyClick = () => {
+    if (mode === "start") {
+      setStartDate({ year: viewYear });
+    } else {
+      setEndDate({ year: viewYear });
+    }
+  };
+
   const handlePresentClick = () => {
     setEndDate("Present");
+  };
+
+  const handleClearEndDate = () => {
+    setEndDate(null);
   };
 
   const handleApply = () => {
@@ -131,7 +142,8 @@ export const MonthYearPicker = ({
   const renderValue = (val: DateValue) => {
     if (!val) return <span className="text-gray-400 italic">Select</span>;
     if (val === "Present") return "Present";
-    return `${val.month} ${val.year}`;
+    if (val.month) return `${val.month} ${val.year}`;
+    return `${val.year}`;
   };
 
   return (
@@ -227,6 +239,27 @@ export const MonthYearPicker = ({
 
           {/* Footer Actions */}
           <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
+            <button
+              onClick={handleYearOnlyClick}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
+            >
+              Use year only ({viewYear})
+            </button>
+
+            {mode === "end" && (
+              <button
+                onClick={handleClearEndDate}
+                className={cn(
+                  "flex w-full items-center justify-center gap-2 rounded-lg border py-2 text-xs font-bold transition-colors",
+                  endDate === null
+                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50",
+                )}
+              >
+                {endDate === null && <Check size={12} />} No end date
+              </button>
+            )}
+
             {mode === "end" && (
               <button
                 onClick={handlePresentClick}

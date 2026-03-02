@@ -51,7 +51,7 @@ export interface ItemVisibility {
   showLogo: boolean;
 }
 
-export type DateValue = { month: string; year: number } | "Present" | null;
+export type DateValue = { year: number; month?: string } | "Present" | null;
 
 export interface DatePeriod {
   startDate: DateValue;

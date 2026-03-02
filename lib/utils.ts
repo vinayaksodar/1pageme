@@ -207,24 +207,18 @@ export function formatDatePeriod(period?: DatePeriod | string | null): string {
   if (!period) return "";
   if (typeof period === "string") return period;
 
+  const formatDateValue = (value: DatePeriod["startDate"]): string => {
+    if (!value) return "";
+    if (value === "Present") return "Present";
+    return value.month ? `${value.month} ${value.year}` : `${value.year}`;
+  };
+
   let result = "";
-  if (
-    period.startDate &&
-    typeof period.startDate === "object" &&
-    period.startDate.month
-  ) {
-    result += `${period.startDate.month} ${period.startDate.year}`;
-  } else if (period.startDate === "Present") {
-    result += "Present";
-  }
+  result += formatDateValue(period.startDate);
 
   if (period.endDate) {
     if (result) result += " - ";
-    if (period.endDate === "Present") {
-      result += "Present";
-    } else if (typeof period.endDate === "object" && period.endDate.month) {
-      result += `${period.endDate.month} ${period.endDate.year}`;
-    }
+    result += formatDateValue(period.endDate);
   }
 
   return result;
