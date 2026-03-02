@@ -102,6 +102,36 @@ export interface PersonalInfoVisibility {
   showPhoto: boolean;
 }
 
+export interface TemplateActions {
+  updatePersonalInfo: (field: string, value: string) => void;
+  updatePersonalInfoVisibility: (
+    visibility: Partial<PersonalInfoVisibility>,
+  ) => void;
+  updateSectionTitle: (sectionId: string, title: string) => void;
+  updateSectionItem: (
+    sectionId: string,
+    itemId: string,
+    field: keyof SectionItem,
+    value: SectionItem[keyof SectionItem],
+  ) => void;
+  addSectionItem: (sectionId: string) => void;
+  removeSectionItem: (sectionId: string, itemId: string) => void;
+  moveSectionItem: (
+    sectionId: string,
+    itemId: string,
+    direction: "up" | "down",
+  ) => void;
+}
+
+export interface TemplateProps {
+  resume: ResumeData;
+  focusedItemId: string | null;
+  setFocusedItemId: (id: string | null) => void;
+  pageLayout?: import("@/hooks/useResumePagination").PageLayout;
+  actions: TemplateActions;
+  templateStyles: TemplateStyles;
+}
+
 export interface ResumeData {
   id: string;
   title: string;
