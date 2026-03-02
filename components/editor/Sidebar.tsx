@@ -278,7 +278,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 min={0.5}
                 max={4}
                 step={0.1}
-                suffix="rem"
                 onChange={(v) => updateGlobalStyle("pageMargins", v)}
               />
               <SliderControl
@@ -287,7 +286,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 min={0.5}
                 max={2.0}
                 step={0.01}
-                suffix="rem"
                 onChange={(v) => updateGlobalStyle("fontSize", v)}
               />
               <SliderControl
@@ -296,7 +294,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 min={0.5}
                 max={4}
                 step={0.1}
-                suffix="rem"
                 onChange={(v) => updateGlobalStyle("sectionSpacing", v)}
               />
               <SliderControl
@@ -305,7 +302,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 min={0.3}
                 max={3}
                 step={0.1}
-                suffix="rem"
                 onChange={(v) => updateGlobalStyle("itemSpacing", v)}
               />
               <SliderControl

@@ -32,7 +32,6 @@ export type TemplateSpacing = {
   columnGap: number;
 };
 
-const DEFAULT_FONT_SIZE = 1;
 const DEFAULT_LINE_HEIGHT = 1.5;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -91,9 +90,7 @@ export const getTemplateSpacing = (
   styles: TemplateStyles,
 ): TemplateSpacing => {
   const multipliers = MULTIPLIERS[templateId];
-  const typographyScale =
-    (styles.fontSize / DEFAULT_FONT_SIZE) *
-    (styles.lineHeight / DEFAULT_LINE_HEIGHT);
+  const typographyScale = styles.lineHeight / DEFAULT_LINE_HEIGHT;
 
   const baseSectionGap = styles.sectionSpacing * typographyScale;
   const baseItemGap = styles.itemSpacing * typographyScale;
