@@ -4,7 +4,6 @@ export const LLM_PROMPT = `I want you to act as a resume parser. I will provide 
 - TextNode: { type: "text", text: string }
 - Block: { id: string, content: TextNode[] }
 - SectionType: "summary" | "experience" | "education" | "projects" | "skills" | "certifications" | "languages" | "volunteering" | "awards" | "publications" | "patents" | "courses" | "references" | "leadership" | "professional-affiliations" | "conferences" | "achievements" | "interests" | "custom"
-- SectionConfig: { id: string, column: "mainColumn" | "secondaryColumn", isVisible: boolean }
 
 ### TARGET JSON STRUCTURE
 {
@@ -37,21 +36,6 @@ export const LLM_PROMPT = `I want you to act as a resume parser. I will provide 
         ]
       }
     ]
-  },
-  "activeTemplateId": "standard",
-  "layouts": {
-    "standard": {
-      "templateStyles": { "fontFamily": "Inter", "fontSize": 1, "accentColor": "#3b82f6", "pageMargins": 2, "sectionSpacing": 2, "itemSpacing": 1, "lineHeight": 1.5, "layout": "one-column", "columnWidths": { "mainColumn": 65, "secondaryColumn": 35 }, "columnGap": 0 },
-      "sections": [ { "id": "section-id-from-above", "column": "mainColumn", "isVisible": true } ]
-    },
-    "modern": {
-      "templateStyles": { "fontFamily": "Inter", "fontSize": 1, "accentColor": "#3b82f6", "pageMargins": 2, "sectionSpacing": 2, "itemSpacing": 1, "lineHeight": 1.5, "layout": "two-column", "columnWidths": { "mainColumn": 65, "secondaryColumn": 35 }, "columnGap": 2.5 },
-      "sections": [ { "id": "section-id-from-above", "column": "mainColumn", "isVisible": true } ]
-    },
-    "minimal": {
-      "templateStyles": { "fontFamily": "Inter", "fontSize": 1, "accentColor": "#3b82f6", "pageMargins": 2, "sectionSpacing": 2, "itemSpacing": 1, "lineHeight": 1.5, "layout": "one-column", "columnWidths": { "mainColumn": 65, "secondaryColumn": 35 }, "columnGap": 0 },
-      "sections": [ { "id": "section-id-from-above", "column": "mainColumn", "isVisible": true } ]
-    }
   }
 }
 
@@ -63,6 +47,7 @@ STRICT REQUIREMENTS:
 - Do NOT omit any entries.
 - Do NOT infer missing data.
 - Preserve exact wording.
+- Do NOT generate UI defaults like layouts, template styles, or accent colors.
 - If a section contains N items, the output must contain exactly N items.
 
 Before returning the final JSON:

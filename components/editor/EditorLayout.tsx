@@ -21,6 +21,7 @@ import ImportModal from "../ui/ImportModal";
 import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";
 import { ResumeData } from "@/types/resume";
+import { isLikelyNativeResumeExport } from "@/lib/import-utils";
 
 const EditorLayout = () => {
   const {
@@ -40,9 +41,8 @@ const EditorLayout = () => {
   const [isNewResumeModalOpen, setIsNewResumeModalOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState("");
-  const [pendingImportData, setPendingImportData] = useState<ResumeData | null>(
-    null,
-  );
+  const [pendingImportData, setPendingImportData] =
+    useState<Partial<ResumeData> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -260,7 +260,11 @@ const EditorLayout = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={(resume) => {
-          setPendingImportData(resume);
+          if (isLikelyNativeResumeExport(resume)) {
+            importResume(resume);
+          } else {
+            setPendingImportData(resume);
+          }
           setIsImportModalOpen(false);
         }}
       />

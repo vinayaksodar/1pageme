@@ -69,7 +69,7 @@ export interface ResumeState {
   ) => void;
   setTemplate: (templateId: TemplateId) => void;
   duplicateResume: (id: string) => void;
-  importResume: (resume: ResumeData, templateId?: TemplateId) => void;
+  importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => void;
   renameResume: (id: string, title: string) => void;
 }
 

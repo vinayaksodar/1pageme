@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { LLM_PROMPT } from "@/lib/prompts";
 import { ResumeData } from "@/types/resume";
+import { isLikelyNativeResumeExport } from "@/lib/import-utils";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
 import { Logo } from "./ui/Logo";
@@ -49,9 +50,8 @@ const Dashboard = () => {
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [pendingImportData, setPendingImportData] = useState<ResumeData | null>(
-    null,
-  );
+  const [pendingImportData, setPendingImportData] =
+    useState<Partial<ResumeData> | null>(null);
   const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -223,8 +223,12 @@ const Dashboard = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={(resume) => {
-          setPendingImportData(resume);
-          setIsTemplateModalOpen(true);
+          if (isLikelyNativeResumeExport(resume)) {
+            importResume(resume);
+          } else {
+            setPendingImportData(resume);
+            setIsTemplateModalOpen(true);
+          }
         }}
       />
 

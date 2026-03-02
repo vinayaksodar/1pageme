@@ -8,7 +8,7 @@ import { ResumeData } from "@/types/resume";
 interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (resume: ResumeData) => void;
+  onImport: (resume: Partial<ResumeData>) => void;
 }
 
 const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
@@ -19,7 +19,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
 
   const handleImport = () => {
     try {
-      const parsed = JSON.parse(jsonInput) as ResumeData;
+      const parsed = JSON.parse(jsonInput) as Partial<ResumeData>;
       onImport(parsed);
       onClose();
       setJsonInput("");
