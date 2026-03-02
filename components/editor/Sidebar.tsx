@@ -27,6 +27,23 @@ const AVAILABLE_SECTIONS: {
   { type: "education", label: "Education", icon: Type },
   { type: "skills", label: "Skills & Expertise", icon: Settings },
   { type: "projects", label: "Projects", icon: Layout },
+  { type: "certifications", label: "Certifications", icon: Layers },
+  { type: "languages", label: "Languages", icon: Type },
+  { type: "volunteering", label: "Volunteer Experience", icon: Layout },
+  { type: "awards", label: "Awards & Honors", icon: Sparkles },
+  { type: "publications", label: "Publications", icon: FileText },
+  { type: "patents", label: "Patents", icon: FileText },
+  { type: "courses", label: "Courses", icon: Type },
+  { type: "references", label: "References", icon: Layers },
+  { type: "leadership", label: "Leadership", icon: Layout },
+  {
+    type: "professional-affiliations",
+    label: "Professional Affiliations",
+    icon: Layers,
+  },
+  { type: "conferences", label: "Conferences & Talks", icon: Layout },
+  { type: "achievements", label: "Achievements", icon: Sparkles },
+  { type: "interests", label: "Interests", icon: Settings },
   { type: "custom", label: "Custom Section", icon: Sparkles },
 ];
 

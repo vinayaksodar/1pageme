@@ -3,7 +3,7 @@ export const LLM_PROMPT = `I want you to act as a resume parser. I will provide 
 ### TYPE DEFINITIONS
 - TextNode: { type: "text", text: string }
 - Block: { id: string, content: TextNode[] }
-- SectionType: "summary" | "experience" | "education" | "projects" | "skills" | "custom"
+- SectionType: "summary" | "experience" | "education" | "projects" | "skills" | "certifications" | "languages" | "volunteering" | "awards" | "publications" | "patents" | "courses" | "references" | "leadership" | "professional-affiliations" | "conferences" | "achievements" | "interests" | "custom"
 - SectionConfig: { id: string, column: "mainColumn" | "secondaryColumn", isVisible: boolean }
 
 ### TARGET JSON STRUCTURE

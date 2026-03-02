@@ -4,6 +4,19 @@ export type SectionType =
   | "education"
   | "projects"
   | "skills"
+  | "certifications"
+  | "languages"
+  | "volunteering"
+  | "awards"
+  | "publications"
+  | "patents"
+  | "courses"
+  | "references"
+  | "leadership"
+  | "professional-affiliations"
+  | "conferences"
+  | "achievements"
+  | "interests"
   | "custom";
 
 // Structured Text Types

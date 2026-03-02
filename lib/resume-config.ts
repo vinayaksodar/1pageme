@@ -88,6 +88,190 @@ export const SECTION_SCHEMAS: Record<
     fields: ["showTitle", "showDescription", "showBullets"],
     defaults: { title: "Skill Category", bullets: ["Skill 1", "Skill 2"] },
   },
+  certifications: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDatePeriod",
+      "showDescription",
+      "showLink",
+    ],
+    defaults: {
+      title: "Certification Name",
+      subtitle: "Issuing Organization",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Credential ID: XXXXX",
+      link: "https://",
+    },
+  },
+  languages: {
+    fields: ["showTitle", "showSubtitle"],
+    defaults: { title: "Language", subtitle: "Proficiency" },
+  },
+  volunteering: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDescription",
+      "showBullets",
+      "showLocation",
+      "showDatePeriod",
+    ],
+    defaults: {
+      title: "Volunteer Role",
+      subtitle: "Organization",
+      location: "City, State",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2023 },
+        endDate: { month: "Dec", year: 2023 },
+      },
+    },
+  },
+  awards: {
+    fields: ["showTitle", "showSubtitle", "showDatePeriod", "showDescription"],
+    defaults: {
+      title: "Award Name",
+      subtitle: "Awarding Organization",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Brief context or impact...",
+    },
+  },
+  publications: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDatePeriod",
+      "showDescription",
+      "showLink",
+    ],
+    defaults: {
+      title: "Publication Title",
+      subtitle: "Journal / Conference",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Authors, volume(issue), pages",
+      link: "https://doi.org/",
+    },
+  },
+  patents: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDatePeriod",
+      "showDescription",
+      "showLink",
+    ],
+    defaults: {
+      title: "Patent Title",
+      subtitle: "Patent Number",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Short summary of invention...",
+      link: "https://",
+    },
+  },
+  courses: {
+    fields: ["showTitle", "showSubtitle", "showDatePeriod", "showDescription"],
+    defaults: {
+      title: "Course Name",
+      subtitle: "Provider / Institution",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Relevant topics covered...",
+    },
+  },
+  references: {
+    fields: ["showTitle", "showSubtitle", "showDescription", "showLink"],
+    defaults: {
+      title: "Reference Name",
+      subtitle: "Role, Company",
+      description: "Email | Phone",
+      link: "https://linkedin.com/in/",
+    },
+  },
+  leadership: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDescription",
+      "showBullets",
+      "showLocation",
+      "showDatePeriod",
+    ],
+    defaults: {
+      title: "Leadership Role",
+      subtitle: "Organization",
+      location: "City, State",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2023 },
+        endDate: { month: "Dec", year: 2023 },
+      },
+    },
+  },
+  "professional-affiliations": {
+    fields: ["showTitle", "showSubtitle", "showDatePeriod", "showDescription"],
+    defaults: {
+      title: "Association Name",
+      subtitle: "Membership Level / Role",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2022 },
+        endDate: "Present",
+      },
+      description: "Relevant committees or contributions...",
+    },
+  },
+  conferences: {
+    fields: [
+      "showTitle",
+      "showSubtitle",
+      "showDatePeriod",
+      "showLocation",
+      "showDescription",
+      "showLink",
+    ],
+    defaults: {
+      title: "Talk / Session Title",
+      subtitle: "Conference Name",
+      location: "City, Country",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Brief topic or contribution...",
+      link: "https://",
+    },
+  },
+  achievements: {
+    fields: ["showTitle", "showSubtitle", "showDatePeriod", "showDescription"],
+    defaults: {
+      title: "Achievement",
+      subtitle: "Context",
+      datePeriod: {
+        startDate: { month: "Jan", year: 2024 },
+        endDate: null,
+      },
+      description: "Outcome and measurable impact...",
+    },
+  },
+  interests: {
+    fields: ["showTitle", "showDescription", "showBullets"],
+    defaults: {
+      title: "Interest Area",
+      bullets: ["Interest 1", "Interest 2"],
+    },
+  },
   custom: {
     fields: [
       "showTitle",
@@ -140,7 +324,13 @@ export const DEFAULT_STYLES: TemplateStyles = {
 };
 
 const getDefaultSectionColumn = (sectionId: string): SectionColumn =>
-  sectionId === "education" || sectionId === "skills"
+  sectionId === "education" ||
+  sectionId === "skills" ||
+  sectionId === "certifications" ||
+  sectionId === "languages" ||
+  sectionId === "courses" ||
+  sectionId === "professional-affiliations" ||
+  sectionId === "interests"
     ? "secondaryColumn"
     : "mainColumn";
 
@@ -204,6 +394,34 @@ export const createInitialResume = (
   templateId: TemplateId = "standard",
 ): ResumeData => {
   const initialSections = structuredClone(INITIAL_SECTIONS);
+  const preferredOrder: SectionType[] = [
+    "summary",
+    "experience",
+    "leadership",
+    "projects",
+    "education",
+    "certifications",
+    "skills",
+    "languages",
+    "publications",
+    "patents",
+    "awards",
+    "achievements",
+    "volunteering",
+    "professional-affiliations",
+    "conferences",
+    "courses",
+    "interests",
+    "references",
+    "custom",
+  ];
+  const rank = new Map(preferredOrder.map((type, index) => [type, index]));
+  initialSections.sort((a, b) => {
+    const aRank = rank.get(a.type) ?? Number.MAX_SAFE_INTEGER;
+    const bRank = rank.get(b.type) ?? Number.MAX_SAFE_INTEGER;
+    return aRank - bRank;
+  });
+
   const sectionIds = initialSections.map((s) => s.id);
   const now = Date.now();
 
