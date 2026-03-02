@@ -206,7 +206,23 @@ export const useResumeStore = create<ResumeState>()(
             await get().syncLocalToServer();
           } catch (error) {
             console.error("Failed to initialize server sync", error);
-            toast.error("Sync failed");
+            if (
+              error instanceof TypeError &&
+              error.message === "Failed to fetch"
+            ) {
+              toast.error(
+                "Network error: Sync paused until connection returns",
+                {
+                  id: "sync-error",
+                },
+              );
+            } else {
+              // Only show general sync error if we actually have some data to sync
+              // or if the error isn't just a normal auth failure (which we handle above)
+              if (get().resumes.length > 0) {
+                toast.error("Sync failed");
+              }
+            }
             set({
               hasInitializedSync: true,
               isSyncing: false,
