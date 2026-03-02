@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, Zap, Layers, Cpu, Globe } from "lucide-react";
+import { ArrowRight, Zap, Layers, Cpu, Globe, Star } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -51,8 +51,12 @@ export default function LandingPage() {
                 href="https://github.com/vinayaksodar/1pageme"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-2xl border border-slate-200 bg-white px-10 py-5 text-sm font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-10 py-5 text-sm font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600 active:scale-95"
               >
+                <Star
+                  size={18}
+                  className="transition-colors group-hover:fill-blue-600 group-hover:text-blue-600"
+                />
                 Star on GitHub
               </a>
             </div>
