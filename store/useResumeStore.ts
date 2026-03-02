@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   ResumeData,
+  Section,
   SectionType,
   SectionItem,
   ItemVisibility,
@@ -9,7 +10,6 @@ import {
   TemplateStyles,
   TemplateId,
   TemplateLayout,
-  Section,
   PersonalInfoVisibility,
 } from "@/types/resume";
 import {
@@ -21,6 +21,7 @@ import {
   getModernLayout,
 } from "@/lib/resume-config";
 import { emptyBlock, createBlock } from "@/lib/utils";
+import { buildImportedResume, mergeResumes } from "./resumeUtils";
 
 const SYNC_DEBOUNCE_MS = 1200;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
@@ -31,25 +32,8 @@ const clearSyncCache = () => {
   knownServerResumeIds = new Set();
 };
 
-const mergeResumes = (
-  localResumes: ResumeData[],
-  serverResumes: ResumeData[],
-): ResumeData[] => {
-  const byId = new Map<string, ResumeData>();
-
-  for (const resume of serverResumes) {
-    byId.set(resume.id, resume);
-  }
-
-  for (const resume of localResumes) {
-    const serverVersion = byId.get(resume.id);
-    if (!serverVersion || resume.updatedAt >= serverVersion.updatedAt) {
-      byId.set(resume.id, resume);
-    }
-  }
-
-  return Array.from(byId.values()).sort((a, b) => b.updatedAt - a.updatedAt);
-};
+const generateId = () =>
+  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).substr(2, 9);
 
 export interface ResumeState {
   resumes: ResumeData[];
@@ -213,53 +197,59 @@ export const useResumeStore = create<ResumeState>()(
 
       syncLocalToServer: async () => {
         const state = get();
-        if (!state.isAuthenticated) return;
+        if (!state.isAuthenticated || state.isSyncing) return;
 
-        const localIds = new Set(state.resumes.map((resume) => resume.id));
+        set({ isSyncing: true });
 
-        for (const resume of state.resumes) {
-          if (syncedResumeVersions.get(resume.id) === resume.updatedAt) {
-            continue;
-          }
+        try {
+          const localIds = new Set(state.resumes.map((resume) => resume.id));
 
-          const putResponse = await fetch(`/api/resumes/${resume.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ resume }),
-          });
+          for (const resume of state.resumes) {
+            if (syncedResumeVersions.get(resume.id) === resume.updatedAt) {
+              continue;
+            }
 
-          if (putResponse.status === 404) {
-            const createResponse = await fetch("/api/resumes", {
-              method: "POST",
+            const putResponse = await fetch(`/api/resumes/${resume.id}`, {
+              method: "PUT",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
               body: JSON.stringify({ resume }),
             });
 
-            if (!createResponse.ok && createResponse.status !== 409) continue;
-          } else if (!putResponse.ok) {
-            continue;
+            if (putResponse.status === 404) {
+              const createResponse = await fetch("/api/resumes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ resume }),
+              });
+
+              if (!createResponse.ok && createResponse.status !== 409) continue;
+            } else if (!putResponse.ok) {
+              continue;
+            }
+
+            knownServerResumeIds.add(resume.id);
+            syncedResumeVersions.set(resume.id, resume.updatedAt);
           }
 
-          knownServerResumeIds.add(resume.id);
-          syncedResumeVersions.set(resume.id, resume.updatedAt);
-        }
+          const removedIds = Array.from(knownServerResumeIds).filter(
+            (resumeId) => !localIds.has(resumeId),
+          );
 
-        const removedIds = Array.from(knownServerResumeIds).filter(
-          (resumeId) => !localIds.has(resumeId),
-        );
+          for (const resumeId of removedIds) {
+            const deleteResponse = await fetch(`/api/resumes/${resumeId}`, {
+              method: "DELETE",
+              credentials: "include",
+            });
 
-        for (const resumeId of removedIds) {
-          const deleteResponse = await fetch(`/api/resumes/${resumeId}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-
-          if (deleteResponse.ok || deleteResponse.status === 404) {
-            knownServerResumeIds.delete(resumeId);
-            syncedResumeVersions.delete(resumeId);
+            if (deleteResponse.ok || deleteResponse.status === 404) {
+              knownServerResumeIds.delete(resumeId);
+              syncedResumeVersions.delete(resumeId);
+            }
           }
+        } finally {
+          set({ isSyncing: false });
         }
       },
 
@@ -281,7 +271,7 @@ export const useResumeStore = create<ResumeState>()(
       },
 
       createNewResume: (templateId?: TemplateId) => {
-        const id = Math.random().toString(36).substr(2, 9);
+        const id = generateId();
         const newResume = createInitialResume(id, "New Resume", templateId);
         set((state) => ({
           resumes: [...state.resumes, newResume],
@@ -304,7 +294,7 @@ export const useResumeStore = create<ResumeState>()(
           const resumeToDuplicate = state.resumes.find((r) => r.id === id);
           if (!resumeToDuplicate) return state;
 
-          const newId = Math.random().toString(36).substr(2, 9);
+          const newId = generateId();
           const now = Date.now();
           const duplicatedResume: ResumeData = {
             ...structuredClone(resumeToDuplicate),
@@ -323,82 +313,12 @@ export const useResumeStore = create<ResumeState>()(
       },
 
       importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => {
-        const id = Math.random().toString(36).substr(2, 9);
-        const sectionIds =
-          resume.content?.sections?.map((s: Section) => s.id) || [];
-        const now = Date.now();
-
-        // Helper to ensure section config is valid
-        const ensureSectionConfig = (sections: SectionConfig[] | string[]) => {
-          if (!Array.isArray(sections)) return [];
-          return sections.map((s: SectionConfig | string) => {
-            if (typeof s === "string") {
-              return { id: s, column: "mainColumn" as const, isVisible: true };
-            }
-            return {
-              id: s.id,
-              column: s.column || "mainColumn",
-              isVisible: s.isVisible !== undefined ? s.isVisible : true,
-            };
-          });
-        };
-
-        const defaultLayouts = {
-          standard: getStandardLayout(sectionIds),
-          academic: getAcademicLayout(sectionIds),
-          modern: getModernLayout(sectionIds),
-        };
-
-        // Merge imported layouts with defaults to ensure all template IDs exist
-        const mergedLayouts = { ...defaultLayouts };
-        if (resume.layouts) {
-          Object.keys(resume.layouts).forEach((key) => {
-            const templateIdKey = key as TemplateId;
-            const importedLayout = resume.layouts?.[templateIdKey];
-            if (mergedLayouts[templateIdKey] && importedLayout) {
-              mergedLayouts[templateIdKey] = {
-                templateStyles: {
-                  ...mergedLayouts[templateIdKey].templateStyles,
-                  ...importedLayout.templateStyles,
-                },
-                sections: ensureSectionConfig(
-                  (importedLayout.sections as SectionConfig[]) ||
-                    defaultLayouts[templateIdKey].sections,
-                ),
-              };
-            }
-          });
-        }
-
-        const importedResume: ResumeData = {
+        const id = generateId();
+        const importedResume = buildImportedResume({
+          resume,
           id,
-          title: resume.title || "Imported Resume",
-          createdAt: resume.createdAt || now,
-          updatedAt: now,
-          content: {
-            personalInfo: {
-              fullName: resume.content?.personalInfo?.fullName || "",
-              jobTitle: resume.content?.personalInfo?.jobTitle || "",
-              email: resume.content?.personalInfo?.email || "",
-              phone: resume.content?.personalInfo?.phone || "",
-              address: resume.content?.personalInfo?.address || "",
-              profileImage: resume.content?.personalInfo?.profileImage || "",
-              profileImageShape:
-                resume.content?.personalInfo?.profileImageShape || "circle",
-              visibility: {
-                showPhone: true,
-                showEmail: true,
-                showAddress: true,
-                showJobTitle: true,
-                showPhoto: !!resume.content?.personalInfo?.profileImage,
-                ...resume.content?.personalInfo?.visibility,
-              },
-            },
-            sections: resume.content?.sections || [],
-          },
-          activeTemplateId: templateId || resume.activeTemplateId || "standard",
-          layouts: mergedLayouts,
-        };
+          templateId,
+        });
 
         set((state) => ({
           resumes: [...state.resumes, importedResume],
@@ -566,7 +486,7 @@ export const useResumeStore = create<ResumeState>()(
                       } = defaults;
 
                       const newItem: SectionItem = {
-                        id: Math.random().toString(36).substr(2, 9),
+                        id: generateId(),
                         title: "New Item",
                         subtitle: "",
                         description: defaultDescription
@@ -663,7 +583,7 @@ export const useResumeStore = create<ResumeState>()(
 
       addSection: (type) => {
         set((state) => {
-          const newSectionId = Math.random().toString(36).substr(2, 9);
+          const newSectionId = generateId();
 
           const { defaults } = SECTION_SCHEMAS[type];
           const {
@@ -673,7 +593,7 @@ export const useResumeStore = create<ResumeState>()(
           } = defaults;
 
           const initialItem: SectionItem = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: generateId(),
             title: "New Item",
             subtitle: "",
             description: defaultDescription
@@ -882,7 +802,7 @@ export const useResumeStore = create<ResumeState>()(
                     ) {
                       description = [
                         {
-                          id: Math.random().toString(36).substr(2, 9),
+                          id: generateId(),
                           content: description,
                         },
                       ];
@@ -898,7 +818,7 @@ export const useResumeStore = create<ResumeState>()(
                     ) {
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       bullets = bullets.map((b: any) => ({
-                        id: Math.random().toString(36).substr(2, 9),
+                        id: generateId(),
                         content: b,
                       }));
                     }
