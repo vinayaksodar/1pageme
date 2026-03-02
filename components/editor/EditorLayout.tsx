@@ -8,7 +8,6 @@ import {
   Download,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
   Plus,
   Copy,
   FileDown,
@@ -54,6 +53,30 @@ const EditorLayout = () => {
     contentRef: contentRef,
     documentTitle: resumeTitle,
   });
+
+  const handleExportJson = () => {
+    if (!activeResume) return;
+
+    const sanitizedTitle = activeResume.title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const fileName = `${sanitizedTitle || "resume"}.json`;
+
+    const json = JSON.stringify(activeResume, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    setIsDropdownOpen(false);
+  };
 
   const startEditing = () => {
     if (activeResume) {
@@ -173,6 +196,12 @@ const EditorLayout = () => {
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
                   >
                     <FileDown size={16} /> Import from LLM
+                  </button>
+                  <button
+                    onClick={handleExportJson}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
+                  >
+                    <Download size={16} /> Export JSON
                   </button>
                 </div>
               </div>
