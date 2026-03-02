@@ -46,7 +46,7 @@ export const ModernTemplate = ({
     const { visibility: itemVisibility } = item;
 
     const continuedHeader = (
-      <h3 className="mb-6 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+      <h3 className="mb-3 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
         <span style={{ color: accentColor }}>
           {section.title}{" "}
           <span className="ml-1 text-[10px] opacity-50">(CONT.)</span>
@@ -154,7 +154,7 @@ export const ModernTemplate = ({
     if (!section) return null;
 
     const header = (
-      <h3 className="mb-6 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+      <h3 className="mb-3 flex items-center gap-4 text-xs font-black tracking-widest uppercase">
         <PlainTextEditor
           tagName="span"
           value={section.title}
@@ -204,7 +204,7 @@ export const ModernTemplate = ({
           setFocusedItemId={setFocusedItemId}
           pageLayout={pageLayout}
           accentColor={accentColor}
-          sectionSpacing={sectionSpacing}
+          sectionSpacing={0}
           visibility={visibility}
           className="col-span-full"
         >

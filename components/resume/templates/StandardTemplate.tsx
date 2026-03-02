@@ -39,7 +39,7 @@ export const StandardTemplate = ({
 
     const continuedHeader = (
       <div
-        className="mb-4 flex items-center justify-between border-b-2 pb-1"
+        className="mb-2 flex items-center justify-between border-b-2 pb-1"
         style={{
           borderColor: accentColor,
         }}
@@ -164,7 +164,7 @@ export const StandardTemplate = ({
 
     const header = (
       <div
-        className="mb-4 flex items-center justify-between border-b-2 pb-1"
+        className="mb-2 flex items-center justify-between border-b-2 pb-1"
         style={{ borderColor: accentColor }}
       >
         <PlainTextEditor
