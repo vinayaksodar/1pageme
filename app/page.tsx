@@ -2,6 +2,13 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ArrowRight, Zap, Layers, Cpu, Globe } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "1PageMe | Fast & Professional Resume Builder",
+  description:
+    "Create a stunning resume in minutes. Intelligent layout formatting and AI-powered imports designed to get you hired.",
+};
 
 export default function LandingPage() {
   return (
@@ -19,8 +26,8 @@ export default function LandingPage() {
               <Zap size={14} className="animate-pulse" /> The Future of Resumes
             </div>
             <h1 className="mb-8 max-w-4xl text-5xl font-black tracking-tighter text-slate-900 md:text-7xl lg:text-8xl">
-              Build your next <span className="text-blue-600">one-page</span>{" "}
-              resume in minutes.
+              Build your next <span className="text-blue-600">resume</span> in
+              minutes.
             </h1>
             <p className="mb-12 max-w-2xl text-lg font-medium text-slate-500 md:text-xl">
               Forget complex formatting. Our intelligent editor handles the

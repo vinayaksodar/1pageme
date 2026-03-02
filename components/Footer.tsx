@@ -9,7 +9,8 @@ export const Footer = () => {
           <div className="flex flex-col items-center gap-4 md:items-start">
             <Logo />
             <p className="max-w-[240px] text-center text-sm font-medium text-slate-400 md:text-left">
-              The fastest way to build a professional one-page resume.
+              The fastest way to build a professional, recruiter-approved
+              resume.
             </p>
           </div>
           <div className="flex gap-12 text-sm font-semibold text-slate-600">

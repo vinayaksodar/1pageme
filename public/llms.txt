@@ -1,0 +1,42 @@
+# 1PageMe
+
+1PageMe is a modern, high-performance resume builder designed specifically for creating professional one-page resumes. It features an intelligent, layout-aware editor that handles formatting automatically.
+
+## Core Features
+
+- **Intelligent Layouts:** Templates designed to perfectly fit a single page.
+- **AI-Powered Import:** Effortlessly bring in existing resume data via LLM-assisted parsing.
+- **Dynamic Templates:** Modern, recruiter-tested designs including Standard, Modern, and Academic styles.
+- **Local-First & Sync:** Seamless synchronization between local storage and a Neon-powered database.
+- **Real-time Preview:** Instant visual feedback as you edit.
+- **PDF Export:** High-quality PDF generation for professional submission.
+
+## Tech Stack
+
+- **Framework:** Next.js (App Router)
+- **Styling:** TailwindCSS 4 with @tailwindcss/typography
+- **State Management:** Zustand
+- **Database:** Neon (PostgreSQL) with Drizzle ORM
+- **Authentication:** Custom JWT-based session management
+- **Components:** Lucide React (icons), React Hot Toast (notifications)
+
+## Key Routes
+
+- `/`: SEO-optimized landing page.
+- `/blog`: Career advice and resume writing tips.
+- `/app`: The core resume builder and dashboard.
+- `/api/resumes`: RESTful endpoints for resume persistence.
+- `/api/auth`: Authentication and session management.
+
+## Project Structure
+
+- `app/`: Next.js application routes and layouts.
+- `components/`: Reusable UI components, layout managers, and resume templates.
+- `store/`: Zustand stores for local and server state sync.
+- `lib/`: Utility functions, database clients, and validation logic.
+- `types/`: TypeScript definitions for the core resume schema.
+- `hooks/`: Specialized React hooks for application logic.
+
+## Design Philosophy
+
+The application prioritizes **speed**, **simplicity**, and **visual impact**. It avoids complex formatting controls, instead using intelligent defaults and spacing logic to ensure every resume looks great regardless of content volume.
