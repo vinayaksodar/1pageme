@@ -170,6 +170,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
 
   const currentTemplateId = activeResume.activeTemplateId;
   const currentStyles = activeResume.layouts[currentTemplateId].templateStyles;
+  const currentTemplateLabel =
+    currentTemplateId.charAt(0).toUpperCase() + currentTemplateId.slice(1);
   const isTwoColumnLayout = currentStyles.layout === "two-column";
   const mainColumnWidth = currentStyles.columnWidths.mainColumn;
 
@@ -213,23 +215,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
             onToggle={() => togglePanel("config")}
             statusText={currentTemplateId}
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-                <div className="flex min-w-0 flex-col">
-                  <span className="mb-1 text-[10px] leading-none font-bold tracking-widest text-slate-400 uppercase">
-                    Theme
-                  </span>
-                  <span className="truncate pr-2 text-xs font-black text-slate-900 capitalize">
-                    {currentTemplateId}
-                  </span>
-                </div>
-                <button
-                  onClick={onOpenLibrary}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[9px] font-black tracking-tighter text-blue-600 uppercase shadow-sm transition-colors hover:bg-blue-50"
-                >
-                  Change
-                </button>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex min-w-0 flex-col">
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  Current
+                </span>
+                <span className="truncate pr-2 text-sm font-bold text-slate-900">
+                  {currentTemplateLabel}
+                </span>
               </div>
+              <button
+                onClick={onOpenLibrary}
+                className="rounded-md px-2 py-1 text-[10px] font-bold tracking-wider text-blue-600 uppercase transition-colors hover:bg-blue-50"
+              >
+                Browse
+              </button>
             </div>
           </CollapsiblePanel>
 
@@ -247,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                 <div className="relative">
                   <button
                     onClick={() => setShowFontMenu(!showFontMenu)}
-                    className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black tracking-widest text-slate-900 uppercase shadow-sm transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none"
+                    className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-transparent px-3 py-2 text-xs font-black tracking-widest text-slate-900 uppercase transition-colors hover:border-slate-300 hover:bg-slate-50 focus:border-blue-500 focus:outline-none"
                   >
                     <span>{currentStyles.fontFamily}</span>
                     <div className="text-slate-400">
@@ -267,7 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                         className="fixed inset-0 z-[55]"
                         onClick={() => setShowFontMenu(false)}
                       />
-                      <div className="animate-in zoom-in-95 absolute top-full left-0 z-[60] mt-2 w-full rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl">
+                      <div className="absolute top-full left-0 z-[60] mt-1 w-full rounded-md border border-slate-200 bg-white p-1">
                         {fonts.map((f) => (
                           <button
                             key={f}
@@ -276,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
                               setShowFontMenu(false);
                             }}
                             className={cn(
-                              "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
+                              "flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-bold transition-colors",
                               currentStyles.fontFamily === f
                                 ? "bg-blue-50 text-blue-600"
                                 : "text-slate-600 hover:bg-slate-50",
