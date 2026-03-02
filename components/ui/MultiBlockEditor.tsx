@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn, blocksToHtml, htmlToBlocks } from "@/lib/utils";
 import { ExternalLink, Trash2, Edit2 } from "lucide-react";
 import TextSelectionToolbar from "./TextSelectionToolbar";
@@ -153,8 +154,8 @@ const MultiBlockEditor = ({
         url: anchor.href,
         element: anchor,
         position: {
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + rect.width / 2 + window.scrollX,
+          top: rect.bottom + 8,
+          left: rect.left + rect.width / 2,
         },
       });
     } else {
@@ -163,13 +164,27 @@ const MultiBlockEditor = ({
   };
 
   const handleSelect = () => {
+    const editor = contentEditableRef.current;
     const selection = window.getSelection();
+    if (!editor || !selection || selection.toString().length === 0) {
+      setToolbarPosition(null);
+      setIsTextSelected(false);
+      return;
+    }
+
+    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      setToolbarPosition(null);
+      setIsTextSelected(false);
+      return;
+    }
+
     if (selection && selection.toString().length > 0) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       setToolbarPosition({
-        top: rect.top + window.scrollY,
-        left: rect.left + rect.width / 2 + window.scrollX,
+        top: rect.top,
+        left: rect.left + rect.width / 2,
       });
       setIsTextSelected(true);
     } else {
@@ -224,45 +239,53 @@ const MultiBlockEditor = ({
 
   return (
     <>
-      {toolbarPosition && <TextSelectionToolbar position={toolbarPosition} />}
+      {toolbarPosition &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <TextSelectionToolbar position={toolbarPosition} />,
+          document.body,
+        )}
 
-      {activeLinkInfo && (
-        <div
-          className="fixed z-[130] flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
-          style={{
-            top: activeLinkInfo.position.top,
-            left: activeLinkInfo.position.left,
-            transform: "translateX(-50%)",
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <a
-            href={activeLinkInfo.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex max-w-[200px] items-center gap-1 truncate text-xs text-blue-600 hover:underline"
+      {activeLinkInfo &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed z-[130] flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
+            style={{
+              top: activeLinkInfo.position.top,
+              left: activeLinkInfo.position.left,
+              transform: "translateX(-50%)",
+            }}
+            onMouseDown={(e) => e.preventDefault()}
           >
-            <ExternalLink size={12} />
-            {activeLinkInfo.url}
-          </a>
+            <a
+              href={activeLinkInfo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex max-w-[200px] items-center gap-1 truncate text-xs text-blue-600 hover:underline"
+            >
+              <ExternalLink size={12} />
+              {activeLinkInfo.url}
+            </a>
 
-          <div className="h-4 w-[1px] bg-gray-200" />
+            <div className="h-4 w-[1px] bg-gray-200" />
 
-          <button
-            onClick={editLink}
-            className="rounded p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-500"
-          >
-            <Edit2 size={14} />
-          </button>
+            <button
+              onClick={editLink}
+              className="rounded p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-500"
+            >
+              <Edit2 size={14} />
+            </button>
 
-          <button
-            onClick={removeLink}
-            className="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      )}
+            <button
+              onClick={removeLink}
+              className="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>,
+          document.body,
+        )}
 
       <ContainerTag
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
