@@ -121,7 +121,15 @@ const MultiBlockEditor = ({
     processChange();
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+    const nextTarget = e.relatedTarget;
+    if (
+      nextTarget instanceof HTMLElement &&
+      nextTarget.closest('[data-editor-overlay="true"]')
+    ) {
+      return;
+    }
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
@@ -250,6 +258,7 @@ const MultiBlockEditor = ({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            data-editor-overlay="true"
             className="fixed z-[130] flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
             style={{
               top: activeLinkInfo.position.top,

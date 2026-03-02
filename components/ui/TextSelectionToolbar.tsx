@@ -12,19 +12,34 @@ const TextSelectionToolbar = ({ position }: TextSelectionToolbarProps) => {
     document.execCommand(command, false, value);
   };
 
-  const handleLink = () => {
+  const handleLink = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const selection = window.getSelection();
+    const savedRange =
+      selection && selection.rangeCount > 0
+        ? selection.getRangeAt(0).cloneRange()
+        : null;
+
     const url = window.prompt("Enter the URL:");
-    if (url) {
-      // Ensure the URL is absolute by checking for a protocol
-      const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(url)
-        ? url
-        : `https://${url}`;
-      applyFormat("createLink", absoluteUrl);
-    }
+    if (!url || !savedRange || !selection) return;
+
+    // Restore the original selection after prompt.
+    selection.removeAllRanges();
+    selection.addRange(savedRange);
+
+    // Ensure the URL is absolute by checking for a protocol.
+    const absoluteUrl = /^(?:[a-z+]+:)?\/\//i.test(url)
+      ? url
+      : `https://${url}`;
+
+    applyFormat("createLink", absoluteUrl);
   };
 
   return (
     <div
+      data-editor-overlay="true"
       className="no-print animate-in fade-in zoom-in fixed z-[100] flex items-center rounded-lg border border-gray-200 bg-white p-1 text-gray-900 shadow-2xl duration-150"
       style={{
         top: position.top - 50,
@@ -35,35 +50,47 @@ const TextSelectionToolbar = ({ position }: TextSelectionToolbarProps) => {
     >
       <div className="flex items-center px-1">
         <button
-          onClick={() => applyFormat("bold")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("bold");
+          }}
           className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
           title="Bold"
         >
           <Bold size={14} />
         </button>
         <button
-          onClick={() => applyFormat("underline")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("underline");
+          }}
           className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
           title="Underline"
         >
           <Underline size={14} />
         </button>
         <button
-          onClick={() => applyFormat("italic")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("italic");
+          }}
           className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
           title="Italic"
         >
           <Italic size={14} />
         </button>
         <button
-          onClick={() => applyFormat("strikeThrough")}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("strikeThrough");
+          }}
           className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
           title="Strikethrough"
         >
           <Strikethrough size={14} />
         </button>
         <button
-          onClick={handleLink}
+          onMouseDown={handleLink}
           className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
           title="Add Link"
         >
