@@ -60,7 +60,7 @@ const FloatingToolbar = ({
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
   const profileImageShape =
-    activeResume?.content.personalInfo.profileImageShape || "circle";
+    activeResume?.content?.personalInfo.profileImageShape || "circle";
 
   const allOptions = [
     { id: "showTitle", label: "Title" },

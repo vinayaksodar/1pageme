@@ -90,7 +90,7 @@ const ResumePreview = () => {
   const activeResume = resumes.find((r) => r.id === activeResumeId);
 
   const templateStyles =
-    activeResume?.layouts[activeResume.activeTemplateId].templateStyles;
+    activeResume?.layouts?.[activeResume.activeTemplateId]?.templateStyles;
 
   // Pagination Logic
   const pages = useResumePagination(
@@ -99,7 +99,7 @@ const ResumePreview = () => {
     (templateStyles?.pageMargins ?? 2) * 16, // Convert rem to px
   );
 
-  if (!activeResume || !templateStyles) return null;
+  if (!activeResume || !templateStyles || !activeResume.content) return null;
 
   const templateProps = {
     resume: activeResume,

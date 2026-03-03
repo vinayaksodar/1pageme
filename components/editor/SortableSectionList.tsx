@@ -64,11 +64,15 @@ const SortableItem = ({
   };
 
   const activeResume = resumes.find((r) => r.id === activeResumeId);
-  const sectionConfigs =
-    activeResume?.layouts[activeResume.activeTemplateId].sections || [];
-  const isTwoColumn =
-    activeResume?.layouts[activeResume.activeTemplateId].templateStyles
-      .layout === "two-column";
+
+  if (!activeResume || !activeResume.layouts || !activeResume.content)
+    return null;
+
+  const currentLayout = activeResume.layouts[activeResume.activeTemplateId];
+  if (!currentLayout) return null;
+
+  const sectionConfigs = currentLayout.sections || [];
+  const isTwoColumn = currentLayout.templateStyles.layout === "two-column";
 
   const moveSection = (direction: number) => {
     const newConfigs = [...sectionConfigs];
@@ -169,7 +173,7 @@ export const SortableSectionList = () => {
   const activeResume = resumes.find((r) => r.id === activeResumeId);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    if (!activeResume) return;
+    if (!activeResume || !activeResume.layouts) return;
     const { active, over } = event;
     const sectionConfigs =
       activeResume.layouts[activeResume.activeTemplateId].sections;
@@ -183,7 +187,8 @@ export const SortableSectionList = () => {
     }
   };
 
-  if (!activeResume) return null;
+  if (!activeResume || !activeResume.content || !activeResume.layouts)
+    return null;
 
   const sections = activeResume.content.sections;
   const layout = activeResume.layouts[activeResume.activeTemplateId];

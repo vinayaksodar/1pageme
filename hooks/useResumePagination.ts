@@ -138,6 +138,7 @@ export const useResumePagination = (
       return newPages[idx];
     };
 
+    if (!resume.layouts || !resume.content) return;
     const layout = resume.layouts[resume.activeTemplateId];
     if (!layout) return;
 
@@ -151,7 +152,9 @@ export const useResumePagination = (
       }
 
       sections.forEach((config) => {
-        const section = resume.content.sections.find((s) => s.id === config.id);
+        const section = resume.content!.sections.find(
+          (s) => s.id === config.id,
+        );
         if (!section || !config.isVisible || section.items.length === 0) return;
 
         const headerDims = headerMeasurements.get(section.id) ?? {

@@ -180,13 +180,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenLibrary }) => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFontMenu, setShowFontMenu] = useState(false);
 
-  if (!activeResume) return null;
+  if (!activeResume || !activeResume.layouts || !activeResume.content)
+    return null;
+
+  const currentTemplateId = activeResume.activeTemplateId;
+  const currentStyles = activeResume.layouts[currentTemplateId]?.templateStyles;
+
+  if (!currentStyles) return null;
 
   const togglePanel = (id: keyof typeof openPanels) =>
     setOpenPanels((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const currentTemplateId = activeResume.activeTemplateId;
-  const currentStyles = activeResume.layouts[currentTemplateId].templateStyles;
   const currentTemplateLabel =
     currentTemplateId.charAt(0).toUpperCase() + currentTemplateId.slice(1);
   const isTwoColumnLayout = currentStyles.layout === "two-column";

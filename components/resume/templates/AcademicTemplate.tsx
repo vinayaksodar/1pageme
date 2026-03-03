@@ -19,6 +19,7 @@ export const AcademicTemplate = ({
   templateStyles,
 }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
+  if (!content || !layouts) return null;
   const layout = layouts[activeTemplateId];
   const { accentColor } = templateStyles;
   const spacing = getTemplateSpacing("academic", templateStyles);

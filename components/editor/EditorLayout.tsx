@@ -158,6 +158,19 @@ const EditorLayout = () => {
 
   if (!activeResume) return null;
 
+  if (!activeResume.content || !activeResume.layouts) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+          <p className="text-sm font-black tracking-widest text-slate-400 uppercase">
+            Loading Resume...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-100 font-sans">
       {/* TOP BAR */}

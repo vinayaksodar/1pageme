@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ resume: row.payload });
+    return NextResponse.json({ resume: row });
   } catch {
     return NextResponse.json(
       { error: "Unable to fetch resume" },
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ resume: updated.payload });
+    return NextResponse.json({ resume: updated });
   } catch {
     return NextResponse.json(
       { error: "Unable to update resume" },

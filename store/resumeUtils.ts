@@ -16,14 +16,36 @@ export const mergeResumes = (
 ): ResumeData[] => {
   const byId = new Map<string, ResumeData>();
 
+  // Add all server resumes first (metadata only or full)
   for (const resume of serverResumes) {
     byId.set(resume.id, resume);
   }
 
-  for (const resume of localResumes) {
-    const serverVersion = byId.get(resume.id);
-    if (!serverVersion || resume.updatedAt >= serverVersion.updatedAt) {
-      byId.set(resume.id, resume);
+  // Merge in local resumes
+  for (const local of localResumes) {
+    const serverVersion = byId.get(local.id);
+
+    if (!serverVersion) {
+      // Not on server yet (e.g. guest created it), keep local
+      byId.set(local.id, local);
+      continue;
+    }
+
+    // Server is newer, but if it's only metadata and we have local content,
+    // keep local content for now (fetchFullResume will eventually refresh it)
+    if (serverVersion.updatedAt > local.updatedAt) {
+      if (!serverVersion.content && local.content) {
+        byId.set(local.id, {
+          ...serverVersion,
+          content: local.content,
+          layouts: local.layouts,
+        });
+      } else {
+        byId.set(local.id, serverVersion);
+      }
+    } else {
+      // Local is newer or same as server. Keep local as it has the content.
+      byId.set(local.id, local);
     }
   }
 

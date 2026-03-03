@@ -19,6 +19,7 @@ export const ModernTemplate = ({
   templateStyles,
 }: TemplateProps) => {
   const { content, activeTemplateId, layouts } = resume;
+  if (!content || !layouts) return null;
   const layoutConfig = layouts[activeTemplateId];
 
   const {

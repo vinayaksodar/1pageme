@@ -150,24 +150,29 @@ export interface TemplateProps {
   templateStyles: TemplateStyles;
 }
 
-export interface ResumeData {
+export interface ResumeMetadata {
   id: string;
   title: string;
   updatedAt: number;
   createdAt: number;
-  content: {
-    personalInfo: {
-      fullName: string;
-      email: string;
-      phone: string;
-      address: string;
-      jobTitle?: string;
-      profileImage?: string;
-      profileImageShape?: "circle" | "squircle";
-      visibility: PersonalInfoVisibility;
-    };
-    sections: Section[];
-  };
   activeTemplateId: TemplateId;
+}
+
+export interface ResumeContent {
+  personalInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    jobTitle?: string;
+    profileImage?: string;
+    profileImageShape?: "circle" | "squircle";
+    visibility: PersonalInfoVisibility;
+  };
+  sections: Section[];
+}
+
+export interface ResumeData extends ResumeMetadata {
+  content: ResumeContent;
   layouts: Record<TemplateId, TemplateLayout>;
 }

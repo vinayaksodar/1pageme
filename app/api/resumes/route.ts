@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rows = await listResumesByOwner(ownerId);
-    return NextResponse.json({ resumes: rows.map((row) => row.payload) });
+    const resumes = await listResumesByOwner(ownerId);
+    return NextResponse.json({ resumes });
   } catch {
     return NextResponse.json(
       { error: "Unable to fetch resumes" },
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await createResume(ownerId, resume);
-    return NextResponse.json({ resume: created.payload }, { status: 201 });
+    return NextResponse.json({ resume: created }, { status: 201 });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       return NextResponse.json(

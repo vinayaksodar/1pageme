@@ -30,7 +30,7 @@ export const resumes = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
-    payload: jsonb("payload").$type<ResumeData>().notNull(),
+    activeTemplateId: text("active_template_id").notNull().default("standard"),
     createdAt: bigint("created_at", { mode: "number" }).notNull(),
     updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
   },
@@ -40,7 +40,17 @@ export const resumes = pgTable(
   }),
 );
 
+export const resumeContents = pgTable("resume_contents", {
+  id: text("id")
+    .primaryKey()
+    .references(() => resumes.id, { onDelete: "cascade" }),
+  content: jsonb("content").$type<ResumeData["content"]>().notNull(),
+  layouts: jsonb("layouts").$type<ResumeData["layouts"]>().notNull(),
+});
+
 export type ResumeRow = typeof resumes.$inferSelect;
 export type NewResumeRow = typeof resumes.$inferInsert;
+export type ResumeContentRow = typeof resumeContents.$inferSelect;
+export type NewResumeContentRow = typeof resumeContents.$inferInsert;
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;

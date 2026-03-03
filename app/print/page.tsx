@@ -40,14 +40,14 @@ const PrintRendererPage = () => {
 
   // Pagination Logic
   const templateStyles =
-    resume?.layouts[resume.activeTemplateId].templateStyles;
+    resume?.layouts?.[resume.activeTemplateId]?.templateStyles;
   const pages = useResumePagination(
     resume || undefined,
     "measurement-container",
     (templateStyles?.pageMargins ?? 2) * 16,
   );
 
-  if (!resume || !templateStyles) {
+  if (!resume || !templateStyles || !resume.content || !resume.layouts) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
@@ -56,7 +56,7 @@ const PrintRendererPage = () => {
   }
 
   const templateProps = {
-    resume,
+    resume: resume as ResumeData,
     focusedItemId: null,
     setFocusedItemId: () => {},
     actions: {
