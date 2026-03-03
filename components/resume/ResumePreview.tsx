@@ -212,7 +212,10 @@ const ResumePreview = () => {
               "relative h-[297mm] w-[210mm] bg-white shadow-2xl transition-all duration-300 print:min-h-0 print:min-w-full print:shadow-none",
               index > 0 ? "mt-8 print:mt-0 print:break-before-page" : "",
             )}
-            style={{ padding: `${pageMargins}rem` }}
+            style={{
+              padding: `${pageMargins}rem`,
+              zIndex: pages.length - index,
+            }}
           >
             {/* Visual Page Number */}
             <div className="absolute top-2 right-[-40px] text-xs font-medium text-gray-400 print:hidden">
