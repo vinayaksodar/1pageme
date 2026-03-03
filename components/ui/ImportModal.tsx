@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Download, ClipboardCopy, X } from "lucide-react";
 import { LLM_PROMPT } from "@/lib/prompts";
 import { ResumeData } from "@/types/resume";
+import toast from "react-hot-toast";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
 
   const copyPrompt = () => {
     navigator.clipboard.writeText(LLM_PROMPT);
-    alert("Prompt copied to clipboard!");
+    toast.success("Prompt copied to clipboard!");
   };
 
   return (

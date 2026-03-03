@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { Section, SectionConfig } from "@/types/resume";
+import ConfirmModal from "../ui/ConfirmModal";
+import { useState } from "react";
 
 // Individual Sortable Item
 const SortableItem = ({
@@ -40,6 +42,7 @@ const SortableItem = ({
   index: number;
   total: number;
 }) => {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -89,75 +92,78 @@ const SortableItem = ({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="group mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition-all hover:bg-white hover:shadow-sm"
-    >
+    <>
       <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab text-slate-300 transition-colors hover:text-slate-500"
+        ref={setNodeRef}
+        style={style}
+        className="group mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition-all hover:bg-white hover:shadow-sm"
       >
-        <GripVertical size={14} />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-black tracking-wider text-slate-700 uppercase">
-          {section.title || section.type}
-        </p>
-        {isTwoColumn && (
-          <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
-            {config.column === "mainColumn"
-              ? "Main Column"
-              : "Secondary Column"}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-1 transition-opacity">
-        <button
-          onClick={() => moveSection(-1)}
-          disabled={index === 0}
-          className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
-          title="Move Up"
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-slate-300 transition-colors hover:text-slate-500"
         >
-          <ArrowUp size={12} />
-        </button>
-        <button
-          onClick={() => moveSection(1)}
-          disabled={index === total - 1}
-          className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
-          title="Move Down"
-        >
-          <ArrowDown size={12} />
-        </button>
-        {isTwoColumn && (
+          <GripVertical size={14} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[10px] font-black tracking-wider text-slate-700 uppercase">
+            {section.title || section.type}
+          </p>
+          {isTwoColumn && (
+            <span className="text-[8px] font-bold tracking-tighter text-blue-500 uppercase">
+              {config.column === "mainColumn"
+                ? "Main Column"
+                : "Secondary Column"}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 transition-opacity">
           <button
-            onClick={toggleColumn}
-            className="p-1 text-slate-400 transition-colors hover:text-blue-600"
-            title="Move column"
+            onClick={() => moveSection(-1)}
+            disabled={index === 0}
+            className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
+            title="Move Up"
           >
-            <ArrowRightLeft size={12} />
+            <ArrowUp size={12} />
           </button>
-        )}
-        <button
-          onClick={() => {
-            if (
-              window.confirm(
-                `Are you sure you want to delete the "${section.title || section.type}" section?`,
-              )
-            ) {
-              removeSection(section.id);
-            }
-          }}
-          className="p-1 text-slate-400 transition-colors hover:text-red-500"
-          title="Delete Section"
-        >
-          <Trash2 size={12} />
-        </button>
+          <button
+            onClick={() => moveSection(1)}
+            disabled={index === total - 1}
+            className="p-1 text-slate-400 transition-colors hover:text-blue-600 disabled:opacity-20"
+            title="Move Down"
+          >
+            <ArrowDown size={12} />
+          </button>
+          {isTwoColumn && (
+            <button
+              onClick={toggleColumn}
+              className="p-1 text-slate-400 transition-colors hover:text-blue-600"
+              title="Move column"
+            >
+              <ArrowRightLeft size={12} />
+            </button>
+          )}
+          <button
+            onClick={() => setIsConfirmOpen(true)}
+            className="p-1 text-slate-400 transition-colors hover:text-red-500"
+            title="Delete Section"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
       </div>
-    </div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => removeSection(section.id)}
+        title="Delete Section"
+        message={`Are you sure you want to delete the "${section.title || section.type}" section? This action cannot be undone.`}
+        confirmText="Delete"
+      />
+    </>
   );
 };
 export const SortableSectionList = () => {

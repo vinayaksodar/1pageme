@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
+import ConfirmModal from "./ui/ConfirmModal";
 import { Logo } from "./ui/Logo";
 import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
 import { useResumeTitleEditor } from "@/hooks/useResumeTitleEditor";
@@ -52,6 +53,9 @@ const Dashboard = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [resumeToDelete, setResumeToDelete] = useState<string | null>(null);
+
   const {
     isImportModalOpen,
     isTemplateModalOpen,
@@ -73,6 +77,18 @@ const Dashboard = () => {
   } = useResumeTitleEditor();
 
   const sortedResumes = [...resumes].sort((a, b) => b.updatedAt - a.updatedAt);
+
+  const handleDeleteClick = (id: string) => {
+    setResumeToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (resumeToDelete) {
+      deleteResume(resumeToDelete);
+      setResumeToDelete(null);
+    }
+  };
 
   const handleAuthSubmit = async () => {
     setAuthError("");
@@ -314,13 +330,7 @@ const Dashboard = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (
-                          confirm(
-                            "Are you sure you want to delete this resume?",
-                          )
-                        ) {
-                          deleteResume(resume.id);
-                        }
+                        handleDeleteClick(resume.id);
                       }}
                       title="Delete"
                       className="p-1 text-slate-300 transition-colors hover:text-red-500"
@@ -346,6 +356,18 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setResumeToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Resume"
+        message="Are you sure you want to delete this resume? This action cannot be undone."
+        confirmText="Delete"
+      />
 
       <ImportModal
         isOpen={isImportModalOpen}
