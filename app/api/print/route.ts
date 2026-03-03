@@ -1,50 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
-import chromium from "@sparticuz/chromium-min";
-import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+import puppeteer, { Browser } from "puppeteer-core";
 import { ResumeData } from "@/types/resume";
 
-let cachedExecutablePath: string | null = null;
+// Reuse the browser instance between warm starts in production
+let browser: Browser | null = null;
+
+const viewport = {
+  deviceScaleFactor: 1,
+  hasTouch: false,
+  height: 1080,
+  isLandscape: true,
+  isMobile: false,
+  width: 1920,
+};
 
 async function getBrowser() {
-  const isProduction =
-    !!process.env.VERCEL || process.env.NODE_ENV === "production";
+  const isProduction = !!process.env.VERCEL;
+
+  if (browser && browser.isConnected()) {
+    return browser;
+  }
 
   if (isProduction) {
-    if (!cachedExecutablePath) {
-      cachedExecutablePath = await chromium.executablePath(
-        process.env.CHROMIUM_PACK_URL ||
-          "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar",
-      );
-    }
+    // If you don't need webGL, this skips the extraction of the bin/swiftshader.tar.br file, improving performance
+    chromium.setGraphicsMode = false;
 
-    return puppeteer.launch({
-      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
-      defaultViewport: {
-        width: 1920,
-        height: 1080,
-      },
-      executablePath: cachedExecutablePath,
-      headless: true,
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: viewport,
+      executablePath: await chromium.executablePath(),
+      headless: "shell",
     });
   } else {
     // Local development (macOS/Windows/Linux)
-    // We attempt to find a local Chrome installation
-    const localExecutablePath =
-      process.platform === "darwin"
-        ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        : undefined; // Puppeteer-core will need an explicit path if not found
-
-    return puppeteer.launch({
+    // In local dev, we use 'channel: chrome' which auto-finds your browser
+    browser = await puppeteer.launch({
       args: ["--hide-scrollbars", "--disable-web-security"],
-      defaultViewport: {
-        width: 1920,
-        height: 1080,
-      },
-      executablePath: localExecutablePath,
+      defaultViewport: viewport,
+      // For Macs, this is generally cleaner than hardcoded paths
+      ...(process.platform === "darwin" ? { channel: "chrome" } : {}),
       headless: true,
     });
   }
+
+  return browser;
 }
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -57,55 +59,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const browser = await getBrowser();
-    const page = await browser.newPage();
+    const currentBrowser = await getBrowser();
+    const page = await currentBrowser.newPage();
 
-    // Navigate to the print page first so we have the right origin
-    const baseUrl = new URL(request.url).origin;
-    const printUrl = `${baseUrl}/print`;
+    try {
+      // Navigate to the print page first so we have the right origin
+      const baseUrl = new URL(request.url).origin;
+      const printUrl = `${baseUrl}/print`;
 
-    // We navigate to the page first, then inject the data
-    await page.goto(printUrl, {
-      waitUntil: "networkidle0",
-    });
+      // We navigate to the page first, then inject the data
+      await page.goto(printUrl, {
+        waitUntil: "networkidle0",
+      });
 
-    // Inject the resume data into the window
-    await page.evaluate((data) => {
-      window.__RESUME_DATA__ = data;
-    }, resume);
+      // Inject the resume data into the window
+      await page.evaluate((data) => {
+        window.__RESUME_DATA__ = data;
+      }, resume);
 
-    // Wait for our custom "ready" indicator
-    await page.waitForSelector("#pdf-ready", { timeout: 10000 });
+      // Wait for our custom "ready" indicator
+      await page.waitForSelector("#pdf-ready", { timeout: 10000 });
 
-    // Explicitly wait for all fonts to be ready
-    await page.evaluate(() => document.fonts.ready);
+      // Explicitly wait for all fonts to be ready
+      await page.evaluate(() => document.fonts.ready);
 
-    // Additional wait for layout to stabilize after font load
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      // Additional wait for layout to stabilize after font load
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: {
-        top: "0mm",
-        right: "0mm",
-        bottom: "0mm",
-        left: "0mm",
-      },
-    });
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: {
+          top: "0mm",
+          right: "0mm",
+          bottom: "0mm",
+          left: "0mm",
+        },
+      });
 
-    await browser.close();
+      const fileName = resume.title
+        ? `${resume.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`
+        : "resume.pdf";
 
-    const fileName = resume.title
-      ? `${resume.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`
-      : "resume.pdf";
+      return new NextResponse(pdf as unknown as BodyInit, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+        },
+      });
+    } finally {
+      // Always close the page to prevent memory leaks
+      await page.close();
 
-    return new NextResponse(pdf as unknown as BodyInit, {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-      },
-    });
+      // We don't want headless Chrome instances left running locally
+      if (!process.env.VERCEL && currentBrowser.isConnected()) {
+        await currentBrowser.close();
+        browser = null;
+      }
+    }
   } catch (error) {
     console.error("PDF generation failed:", error);
     return NextResponse.json(
