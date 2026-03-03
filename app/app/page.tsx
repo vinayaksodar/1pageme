@@ -17,20 +17,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!mounted) return;
-
     void initializeServerSync();
-
-    const onFocus = () => {
-      void initializeServerSync();
-    };
-
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-    };
   }, [mounted, initializeServerSync]);
 
   if (!mounted) {

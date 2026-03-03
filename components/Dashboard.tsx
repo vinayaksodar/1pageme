@@ -10,10 +10,13 @@ import {
   Upload,
   Edit2,
   Check,
+  User,
+  LogOut,
 } from "lucide-react";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
 import ConfirmModal from "./ui/ConfirmModal";
+import AuthModal from "./ui/AuthModal";
 import { Logo } from "./ui/Logo";
 import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
 import { useResumeTitleEditor } from "@/hooks/useResumeTitleEditor";
@@ -43,15 +46,10 @@ const Dashboard = () => {
     deleteResume,
     duplicateResume,
     currentUser,
-    initializeServerSync,
     markLoggedOut,
   } = useResumeStore();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [resumeToDelete, setResumeToDelete] = useState<string | null>(null);
@@ -90,39 +88,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleAuthSubmit = async () => {
-    setAuthError("");
-    setAuthLoading(true);
-    if (!authEmail || !authPassword) {
-      setAuthError("Email and password are required");
-      setAuthLoading(false);
-      return;
-    }
-    try {
-      const response = await fetch(`/api/auth/${authMode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: authEmail, password: authPassword }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error ?? "Unable to authenticate");
-      }
-
-      await initializeServerSync();
-      setAuthEmail("");
-      setAuthPassword("");
-      setAuthMode("login");
-      setAuthOpen(false);
-    } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Unable to authenticate",
-      );
-    } finally {
-      setAuthLoading(false);
-    }
+  const openAuth = (mode: "login" | "register") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
   };
 
   const handleLogout = async () => {
@@ -131,8 +99,6 @@ const Dashboard = () => {
       credentials: "include",
     });
     markLoggedOut();
-    setAuthError("");
-    setAuthOpen(false);
   };
 
   return (
@@ -162,83 +128,40 @@ const Dashboard = () => {
             <Plus size={14} />
             <span className="hidden sm:inline">Create New</span>
           </button>
-          <div className="relative">
+          <div className="mx-2 h-8 w-px bg-slate-200" />
+          <div className="flex items-center">
             {currentUser ? (
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 sm:gap-3 sm:p-2">
-                <span className="max-w-[100px] truncate text-xs font-semibold text-slate-600 sm:max-w-none sm:text-sm">
-                  {currentUser.email}
-                </span>
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 sm:gap-3 sm:p-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm sm:h-9 sm:w-9">
+                  <User size={18} />
+                </div>
+                <div className="hidden flex-col sm:flex">
+                  <span className="max-w-[120px] truncate text-xs font-bold text-slate-900">
+                    {currentUser.email}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-fit items-center gap-1 text-[9px] font-black tracking-widest text-slate-400 uppercase transition hover:text-red-500"
+                  >
+                    Logout
+                  </button>
+                </div>
                 <button
                   onClick={handleLogout}
-                  className="rounded-xl bg-red-500 px-2 py-1 text-[10px] font-black tracking-[0.1em] text-white uppercase transition hover:bg-red-600 sm:px-3"
+                  className="p-1 text-slate-400 transition hover:text-red-500 sm:hidden"
                 >
-                  Logout
+                  <LogOut size={18} />
                 </button>
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setAuthOpen((prev) => !prev)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition hover:border-blue-600 hover:text-blue-600 sm:px-4"
+                  onClick={() => openAuth("login")}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition hover:border-blue-600 hover:text-blue-600 active:scale-95"
                 >
-                  <span className="sm:hidden">Login</span>
-                  <span className="hidden sm:inline">Login / Register</span>
+                  Login / Register
                 </button>
-                {authOpen && (
-                  <div className="absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
-                    <div className="flex flex-col gap-2">
-                      <input
-                        value={authEmail}
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>,
-                        ) => setAuthEmail(event.target.value)}
-                        type="email"
-                        placeholder="Email"
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-                      />
-                      <input
-                        value={authPassword}
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>,
-                        ) => setAuthPassword(event.target.value)}
-                        type="password"
-                        placeholder="Password"
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAuthSubmit}
-                        disabled={authLoading}
-                        className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-black tracking-[0.1em] text-white uppercase transition hover:bg-blue-700 disabled:opacity-60"
-                      >
-                        {authLoading
-                          ? "Working..."
-                          : authMode === "login"
-                            ? "Login"
-                            : "Register"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAuthMode((prev) =>
-                            prev === "login" ? "register" : "login",
-                          )
-                        }
-                        className="text-xs font-semibold text-blue-600"
-                      >
-                        {authMode === "login"
-                          ? "Need an account? Register"
-                          : "Already registered? Login"}
-                      </button>
-                      {authError && (
-                        <p className="text-xs font-semibold text-red-500">
-                          {authError}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -380,6 +303,12 @@ const Dashboard = () => {
         onClose={closeTemplateModal}
         currentTemplate="standard"
         onSelect={handleTemplateSelect}
+      />
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        initialMode={authMode}
       />
 
       <style

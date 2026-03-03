@@ -117,6 +117,11 @@ export const useResumeStore = create<ResumeState>()(
 
         initializeServerSync: async (force = false) => {
           const state = get();
+
+          // If already successfully initialized and not forced, skip
+          if (!force && state.hasInitializedSync && state.isAuthenticated)
+            return;
+
           // If we already tried and failed, don't spam unless forced (e.g. login attempt)
           if (!force && state.authAttempted && !state.isAuthenticated) return;
           if (state.isSyncing) return;
@@ -214,8 +219,6 @@ export const useResumeStore = create<ResumeState>()(
             if (activeResumeId) {
               await get().fetchFullResume(activeResumeId);
             }
-
-            await get().syncLocalToServer();
           } catch (error) {
             console.error("Failed to initialize server sync", error);
             set({
@@ -257,23 +260,33 @@ export const useResumeStore = create<ResumeState>()(
           const state = get();
           if (!state.isAuthenticated || state.isSyncing) return;
 
+          // Quick check: Are there any resumes that actually need syncing?
+          const resumesToSync = state.resumes.filter((resume) => {
+            if (!resume.content || !resume.layouts) return false;
+            const lastSynced = state.syncedResumeVersions.get(resume.id);
+            return lastSynced !== resume.updatedAt;
+          });
+
+          const localIds = new Set(state.resumes.map((r) => r.id));
+          const removedIds = Array.from(state.knownServerResumeIds).filter(
+            (id) => !localIds.has(id),
+          );
+
+          if (resumesToSync.length === 0 && removedIds.length === 0) {
+            return;
+          }
+
+          console.log(
+            `[SYNC] Starting push for ${resumesToSync.length} updates and ${removedIds.length} deletions`,
+          );
           set({ isSyncing: true });
 
           try {
-            const localIds = new Set(state.resumes.map((resume) => resume.id));
-            const newKnownServerResumeIds = new Set(state.knownServerResumeIds);
-            const newSyncedResumeVersions = new Map(state.syncedResumeVersions);
+            const nextKnownIds = new Set(state.knownServerResumeIds);
+            const nextSyncedVersions = new Map(state.syncedResumeVersions);
 
-            for (const resume of state.resumes) {
-              // Only sync if it's fully loaded locally
-              if (!resume.content || !resume.layouts) continue;
-
-              if (
-                state.syncedResumeVersions.get(resume.id) === resume.updatedAt
-              ) {
-                continue;
-              }
-
+            // Handle Updates/Creates
+            for (const resume of resumesToSync) {
               const putResponse = await fetch(`/api/resumes/${resume.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -289,20 +302,17 @@ export const useResumeStore = create<ResumeState>()(
                   body: JSON.stringify({ resume }),
                 });
 
-                if (!createResponse.ok && createResponse.status !== 409)
-                  continue;
-              } else if (!putResponse.ok) {
-                continue;
+                if (createResponse.ok || createResponse.status === 409) {
+                  nextKnownIds.add(resume.id);
+                  nextSyncedVersions.set(resume.id, resume.updatedAt);
+                }
+              } else if (putResponse.ok) {
+                nextKnownIds.add(resume.id);
+                nextSyncedVersions.set(resume.id, resume.updatedAt);
               }
-
-              newKnownServerResumeIds.add(resume.id);
-              newSyncedResumeVersions.set(resume.id, resume.updatedAt);
             }
 
-            const removedIds = Array.from(state.knownServerResumeIds).filter(
-              (resumeId) => !localIds.has(resumeId),
-            );
-
+            // Handle Deletions
             for (const resumeId of removedIds) {
               const deleteResponse = await fetch(`/api/resumes/${resumeId}`, {
                 method: "DELETE",
@@ -310,17 +320,19 @@ export const useResumeStore = create<ResumeState>()(
               });
 
               if (deleteResponse.ok || deleteResponse.status === 404) {
-                newKnownServerResumeIds.delete(resumeId);
-                newSyncedResumeVersions.delete(resumeId);
+                nextKnownIds.delete(resumeId);
+                nextSyncedVersions.delete(resumeId);
               }
             }
 
+            // Batch all state updates at once
             set({
-              knownServerResumeIds: newKnownServerResumeIds,
-              syncedResumeVersions: newSyncedResumeVersions,
+              knownServerResumeIds: nextKnownIds,
+              syncedResumeVersions: nextSyncedVersions,
             });
+            console.log("[SYNC] Push completed");
           } catch (error) {
-            console.error("Sync failed", error);
+            console.error("[SYNC] Push failed:", error);
           } finally {
             set({ isSyncing: false });
           }
@@ -426,6 +438,18 @@ export const useResumeStore = create<ResumeState>()(
         setIsTextSelected: (isSelected) => set({ isTextSelected: isSelected }),
 
         updatePersonalInfo: (field, value) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          if (
+            !activeResume ||
+            activeResume.content?.personalInfo[
+              field as keyof typeof activeResume.content.personalInfo
+            ] === value
+          )
+            return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -447,6 +471,21 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updatePersonalInfoVisibility: (visibility) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          if (!activeResume) return;
+
+          const currentVisibility =
+            activeResume.content?.personalInfo.visibility;
+          const isChanged = Object.entries(visibility).some(
+            ([key, val]) =>
+              currentVisibility?.[key as keyof typeof currentVisibility] !==
+              val,
+          );
+          if (!isChanged) return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -471,6 +510,15 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updateSectionTitle: (sectionId, title) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          const section = activeResume?.content?.sections.find(
+            (s) => s.id === sectionId,
+          );
+          if (!section || section.title === title) return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -491,6 +539,16 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updateSectionItem: (sectionId, itemId, field, value) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          const section = activeResume?.content?.sections.find(
+            (s) => s.id === sectionId,
+          );
+          const item = section?.items.find((i) => i.id === itemId);
+          if (!item || item[field as keyof typeof item] === value) return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -518,6 +576,22 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updateItemVisibility: (sectionId, itemId, visibility) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          const section = activeResume?.content?.sections.find(
+            (s) => s.id === sectionId,
+          );
+          const item = section?.items.find((i) => i.id === itemId);
+          if (!item) return;
+
+          const isChanged = Object.entries(visibility).some(
+            ([key, val]) =>
+              item.visibility[key as keyof typeof item.visibility] !== val,
+          );
+          if (!isChanged) return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -792,6 +866,23 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updateSectionConfig: (sectionId, config) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          if (!activeResume || !activeResume.layouts) return;
+
+          const currentConfig = activeResume.layouts[
+            activeResume.activeTemplateId
+          ].sections.find((s) => s.id === sectionId);
+          if (!currentConfig) return;
+
+          const isChanged = Object.entries(config).some(
+            ([key, val]) =>
+              currentConfig[key as keyof typeof currentConfig] !== val,
+          );
+          if (!isChanged) return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -815,6 +906,25 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         updateGlobalStyle: (field, value) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          if (!activeResume || !activeResume.layouts) return;
+
+          const currentStyles =
+            activeResume.layouts[activeResume.activeTemplateId].templateStyles;
+          // Deep compare for columnWidths
+          if (field === "columnWidths") {
+            const currentVal = JSON.stringify(currentStyles[field]);
+            const newVal = JSON.stringify(value);
+            if (currentVal === newVal) return;
+          } else if (
+            currentStyles[field as keyof typeof currentStyles] === value
+          ) {
+            return;
+          }
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId
@@ -839,6 +949,13 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         setTemplate: (templateId) => {
+          const state = get();
+          const activeResume = state.resumes.find(
+            (r) => r.id === state.activeResumeId,
+          );
+          if (!activeResume || activeResume.activeTemplateId === templateId)
+            return;
+
           set((state) => ({
             resumes: state.resumes.map((r) =>
               r.id === state.activeResumeId

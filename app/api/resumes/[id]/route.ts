@@ -60,13 +60,19 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const updated = await updateResume(id, ownerId, resume);
     if (!updated) {
+      console.log(`[RESUMES:PUT] Resume ${id} not found for owner ${ownerId}`);
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
+    console.log(`[RESUMES:PUT] Successfully updated resume ${id}`);
     return NextResponse.json({ resume: updated });
-  } catch {
+  } catch (error) {
+    console.error("[RESUMES:PUT] Error updating resume:", error);
     return NextResponse.json(
-      { error: "Unable to update resume" },
+      {
+        error: "Unable to update resume",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }

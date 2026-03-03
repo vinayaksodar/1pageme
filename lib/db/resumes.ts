@@ -46,38 +46,38 @@ export const getResumeByIdForOwner = async (
 
 export const createResume = async (ownerId: string, resume: ResumeData) => {
   const db = getDb();
-  return await db.transaction(async (tx) => {
-    const [createdMeta] = await tx
-      .insert(resumes)
-      .values({
-        id: resume.id,
-        ownerId,
-        title: resume.title,
-        activeTemplateId: resume.activeTemplateId || "standard",
-        createdAt: resume.createdAt,
-        updatedAt: resume.updatedAt,
-      })
-      .returning();
 
-    const [createdContent] = await tx
-      .insert(resumeContents)
-      .values({
-        id: resume.id,
-        content: resume.content,
-        layouts: resume.layouts,
-      })
-      .returning();
+  // Sequential updates because neon-http doesn't support transactions
+  const [createdMeta] = await db
+    .insert(resumes)
+    .values({
+      id: resume.id,
+      ownerId,
+      title: resume.title,
+      activeTemplateId: resume.activeTemplateId || "standard",
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt,
+    })
+    .returning();
 
-    return {
-      id: createdMeta.id,
-      title: createdMeta.title,
-      activeTemplateId: createdMeta.activeTemplateId,
-      createdAt: createdMeta.createdAt,
-      updatedAt: createdMeta.updatedAt,
-      content: createdContent.content,
-      layouts: createdContent.layouts,
-    };
-  });
+  const [createdContent] = await db
+    .insert(resumeContents)
+    .values({
+      id: resume.id,
+      content: resume.content,
+      layouts: resume.layouts,
+    })
+    .returning();
+
+  return {
+    id: createdMeta.id,
+    title: createdMeta.title,
+    activeTemplateId: createdMeta.activeTemplateId,
+    createdAt: createdMeta.createdAt,
+    updatedAt: createdMeta.updatedAt,
+    content: createdContent.content,
+    layouts: createdContent.layouts,
+  };
 };
 
 export const updateResume = async (
@@ -86,51 +86,50 @@ export const updateResume = async (
   resume: ResumeData,
 ) => {
   const db = getDb();
-  return await db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ id: resumes.id })
-      .from(resumes)
-      .where(and(eq(resumes.id, id), eq(resumes.ownerId, ownerId)))
-      .limit(1);
 
-    if (!existing) return null;
+  const [existing] = await db
+    .select({ id: resumes.id })
+    .from(resumes)
+    .where(and(eq(resumes.id, id), eq(resumes.ownerId, ownerId)))
+    .limit(1);
 
-    const [updatedMeta] = await tx
-      .update(resumes)
-      .set({
-        title: resume.title,
-        activeTemplateId: resume.activeTemplateId || "standard",
-        updatedAt: resume.updatedAt,
-      })
-      .where(eq(resumes.id, id))
-      .returning();
+  if (!existing) return null;
 
-    const [updatedContent] = await tx
-      .insert(resumeContents)
-      .values({
-        id: resume.id,
+  const [updatedMeta] = await db
+    .update(resumes)
+    .set({
+      title: resume.title,
+      activeTemplateId: resume.activeTemplateId || "standard",
+      updatedAt: resume.updatedAt,
+    })
+    .where(eq(resumes.id, id))
+    .returning();
+
+  const [updatedContent] = await db
+    .insert(resumeContents)
+    .values({
+      id: resume.id,
+      content: resume.content,
+      layouts: resume.layouts,
+    })
+    .onConflictDoUpdate({
+      target: resumeContents.id,
+      set: {
         content: resume.content,
         layouts: resume.layouts,
-      })
-      .onConflictDoUpdate({
-        target: resumeContents.id,
-        set: {
-          content: resume.content,
-          layouts: resume.layouts,
-        },
-      })
-      .returning();
+      },
+    })
+    .returning();
 
-    return {
-      id: updatedMeta.id,
-      title: updatedMeta.title,
-      activeTemplateId: updatedMeta.activeTemplateId,
-      createdAt: updatedMeta.createdAt,
-      updatedAt: updatedMeta.updatedAt,
-      content: updatedContent.content,
-      layouts: updatedContent.layouts,
-    };
-  });
+  return {
+    id: updatedMeta.id,
+    title: updatedMeta.title,
+    activeTemplateId: updatedMeta.activeTemplateId,
+    createdAt: updatedMeta.createdAt,
+    updatedAt: updatedMeta.updatedAt,
+    content: updatedContent.content,
+    layouts: updatedContent.layouts,
+  };
 };
 
 export const deleteResume = async (id: string, ownerId: string) => {

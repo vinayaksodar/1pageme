@@ -15,9 +15,20 @@ export async function POST(request: Request) {
       typeof body?.email === "string" ? normalizeEmail(body.email) : "";
     const password = typeof body?.password === "string" ? body.password : "";
 
-    if (!isValidEmail(email) || !password) {
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
+
+    if (!isValidEmail(email)) {
       return NextResponse.json(
-        { error: "Email or password is invalid" },
+        { error: "Invalid email address" },
+        { status: 400 },
+      );
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { error: "Password is required" },
         { status: 400 },
       );
     }
