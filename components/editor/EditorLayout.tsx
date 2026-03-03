@@ -3,7 +3,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ResumePreview from "../resume/ResumePreview";
-import { useReactToPrint } from "react-to-print";
 import {
   Download,
   ChevronDown,
@@ -13,6 +12,7 @@ import {
   FileDown,
   Edit2,
   Check,
+  Loader2,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "../ui/TemplateLibraryModal";
@@ -73,10 +73,43 @@ const EditorLayout = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const handlePrint = useReactToPrint({
-    contentRef: contentRef,
-    documentTitle: resumeTitle,
-  });
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handlePrint = async () => {
+    if (!activeResume) return;
+
+    setIsDownloading(true);
+    const toastId = "downloading-resume";
+    const toast = (await import("react-hot-toast")).default;
+    toast.loading("Generating PDF...", { id: toastId });
+
+    try {
+      const response = await fetch("/api/print", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: activeResume }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate PDF");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${activeResume.title || "resume"}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      toast.success("Resume downloaded!", { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to download resume", { id: toastId });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleExportJson = () => {
     if (!activeResume) return;
@@ -220,9 +253,15 @@ const EditorLayout = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => handlePrint()}
-            className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-7 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
+            disabled={isDownloading}
+            className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-7 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-blue-400"
           >
-            <Download size={14} /> Download
+            {isDownloading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Download size={14} />
+            )}
+            {isDownloading ? "Generating..." : "Download"}
           </button>
         </div>
       </header>
