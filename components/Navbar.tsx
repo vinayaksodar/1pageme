@@ -13,7 +13,7 @@ export const Navbar = () => {
         <Link href="/" className="transition-opacity hover:opacity-90">
           <Logo />
         </Link>
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 sm:gap-8">
           <Link
             href="/blog"
             className="text-sm font-semibold text-slate-600 transition hover:text-blue-600"
@@ -22,9 +22,14 @@ export const Navbar = () => {
           </Link>
           <Link
             href={currentUser ? "/app" : "/app"}
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-blue-100 transition hover:bg-blue-700 active:scale-95"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-blue-100 transition hover:bg-blue-700 active:scale-95 sm:px-6 sm:py-2.5"
           >
-            {currentUser ? "Go to Dashboard" : "Get Started"}
+            <span className="sm:hidden">
+              {currentUser ? "Dashboard" : "Start"}
+            </span>
+            <span className="hidden sm:inline">
+              {currentUser ? "Go to Dashboard" : "Get Started"}
+            </span>
           </Link>
         </div>
       </div>

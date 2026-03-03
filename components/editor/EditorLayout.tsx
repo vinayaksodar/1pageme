@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   Plus,
   Copy,
-  FileDown,
+  FileUp,
   Edit2,
   Check,
   Loader2,
@@ -174,10 +174,10 @@ const EditorLayout = () => {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-100 font-sans">
       {/* TOP BAR */}
-      <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-        <div className="flex items-center gap-5">
+      <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+        <div className="flex items-center gap-3 sm:gap-5">
           <Logo onClick={() => setActiveResume("")} />
-          <div className="h-6 w-[1px] bg-slate-200"></div>
+          <div className="hidden h-6 w-[1px] bg-slate-200 sm:block"></div>
           <div className="relative flex flex-col" ref={dropdownRef}>
             {editingResumeId === activeResume.id ? (
               <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ const EditorLayout = () => {
                     if (e.key === "Enter") saveTitle();
                     if (e.key === "Escape") stopEditing();
                   }}
-                  className="rounded border-none bg-slate-50 px-2 py-0.5 text-sm font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none"
+                  className="w-24 rounded border-none bg-slate-50 px-2 py-0.5 text-xs font-black text-slate-900 ring-2 ring-blue-600 focus:outline-none sm:w-auto sm:text-sm"
                 />
                 <button
                   onClick={saveTitle}
@@ -207,10 +207,12 @@ const EditorLayout = () => {
                   e.stopPropagation();
                   startTitleEditing();
                 }}
-                className="group flex items-center gap-2 text-sm font-black text-slate-900"
+                className="group flex items-center gap-1.5 text-xs font-black text-slate-900 sm:gap-2 sm:text-sm"
               >
-                {resumeTitle}{" "}
-                <ChevronDown size={14} className="text-slate-300" />
+                <span className="max-w-[100px] truncate sm:max-w-[200px] md:max-w-[300px]">
+                  {resumeTitle}
+                </span>
+                <ChevronDown size={14} className="shrink-0 text-slate-300" />
               </button>
             )}
 
@@ -250,7 +252,7 @@ const EditorLayout = () => {
                     }}
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-black tracking-widest text-slate-600 uppercase transition-colors hover:bg-slate-50 hover:text-blue-600"
                   >
-                    <FileDown size={16} /> Import from LLM
+                    <FileUp size={16} /> Import
                   </button>
                   <button
                     onClick={handleExportJson}

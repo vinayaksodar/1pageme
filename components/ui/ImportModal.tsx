@@ -44,7 +44,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
         <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6">
           <div>
             <h2 className="text-xl font-black tracking-tight text-slate-900">
-              Import from LLM
+              Import
             </h2>
             <p className="text-sm font-medium text-slate-500">
               Follow the steps to import your resume.
@@ -120,7 +120,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
               disabled={!jsonInput.trim()}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-xs font-black tracking-widest text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
             >
-              <Download size={14} /> Import Resume
+              <Download size={14} /> Import
             </button>
           </div>
         </div>

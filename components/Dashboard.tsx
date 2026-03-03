@@ -7,7 +7,7 @@ import {
   Trash2,
   Clock,
   Copy,
-  Download,
+  Upload,
   Edit2,
   Check,
 } from "lucide-react";
@@ -128,28 +128,33 @@ const Dashboard = () => {
             <Logo />
           </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={openImportModal}
-            className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600 active:scale-95"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition-all hover:border-blue-600 hover:text-blue-600 active:scale-95 sm:gap-2.5 sm:px-6 sm:py-2.5"
+            title="Import"
           >
-            <Download size={14} /> Import from LLM
+            <Upload size={14} />
+            <span className="hidden md:inline">Import</span>
+            <span className="hidden sm:inline md:hidden">Import</span>
           </button>
           <button
             onClick={openTemplateModal}
-            className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-6 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95 sm:gap-2.5 sm:px-6 sm:py-2.5"
+            title="Create New"
           >
-            <Plus size={14} /> Create New
+            <Plus size={14} />
+            <span className="hidden sm:inline">Create New</span>
           </button>
           <div className="relative">
             {currentUser ? (
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2">
-                <span className="text-sm font-semibold text-slate-600">
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 sm:gap-3 sm:p-2">
+                <span className="max-w-[100px] truncate text-xs font-semibold text-slate-600 sm:max-w-none sm:text-sm">
                   {currentUser.email}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="rounded-xl bg-red-500 px-3 py-1 text-[10px] font-black tracking-[0.1em] text-white uppercase transition hover:bg-red-600"
+                  className="rounded-xl bg-red-500 px-2 py-1 text-[10px] font-black tracking-[0.1em] text-white uppercase transition hover:bg-red-600 sm:px-3"
                 >
                   Logout
                 </button>
@@ -158,9 +163,10 @@ const Dashboard = () => {
               <>
                 <button
                   onClick={() => setAuthOpen((prev) => !prev)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition hover:border-blue-600 hover:text-blue-600"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black tracking-[0.1em] text-slate-600 uppercase transition hover:border-blue-600 hover:text-blue-600 sm:px-4"
                 >
-                  Login / Register
+                  <span className="sm:hidden">Login</span>
+                  <span className="hidden sm:inline">Login / Register</span>
                 </button>
                 {authOpen && (
                   <div className="absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
