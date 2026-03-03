@@ -30,7 +30,6 @@ export interface ResumeState {
   activeResumeId: string | null;
   isTextSelected: boolean;
   isAuthenticated: boolean;
-  isSyncing: boolean;
   hasInitializedSync: boolean;
   authAttempted: boolean; // Flag to prevent repeated /api/auth/me calls for guests
   currentUser: { id: string; email: string } | null;
@@ -84,8 +83,9 @@ export interface ResumeState {
   importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => void;
   renameResume: (id: string, title: string) => void;
   initializeServerSync: (force?: boolean) => Promise<void>;
-  syncLocalToServer: () => Promise<void>;
-  scheduleServerSync: () => void;
+  syncResume: (id: string) => Promise<void>;
+  syncDelete: (id: string) => Promise<void>;
+  scheduleServerSync: (id: string) => void;
   markLoggedOut: () => void;
   fetchFullResume: (id: string) => Promise<void>;
 }
@@ -105,7 +105,6 @@ export const useResumeStore = create<ResumeState>()(
         activeResumeId: null,
         isTextSelected: false,
         isAuthenticated: false,
-        isSyncing: false,
         hasInitializedSync: false,
         authAttempted: false,
         currentUser: null,
@@ -124,9 +123,7 @@ export const useResumeStore = create<ResumeState>()(
 
           // If we already tried and failed, don't spam unless forced (e.g. login attempt)
           if (!force && state.authAttempted && !state.isAuthenticated) return;
-          if (state.isSyncing) return;
 
-          set({ isSyncing: true });
           try {
             const meResponse = await fetch("/api/auth/me", {
               credentials: "include",
@@ -137,7 +134,6 @@ export const useResumeStore = create<ResumeState>()(
                 isAuthenticated: false,
                 currentUser: null,
                 hasInitializedSync: true,
-                isSyncing: false,
                 authAttempted: true,
               });
               resetSyncState();
@@ -153,7 +149,6 @@ export const useResumeStore = create<ResumeState>()(
                 isAuthenticated: false,
                 currentUser: null,
                 hasInitializedSync: true,
-                isSyncing: false,
                 authAttempted: true,
               });
               resetSyncState();
@@ -169,7 +164,6 @@ export const useResumeStore = create<ResumeState>()(
                 isAuthenticated: true,
                 currentUser: mePayload.user,
                 hasInitializedSync: true,
-                isSyncing: false,
                 authAttempted: true,
               });
               resetSyncState();
@@ -209,7 +203,6 @@ export const useResumeStore = create<ResumeState>()(
               isAuthenticated: true,
               currentUser: mePayload.user,
               hasInitializedSync: true,
-              isSyncing: false,
               authAttempted: true,
               knownServerResumeIds: newKnownServerResumeIds,
               syncedResumeVersions: newSyncedResumeVersions,
@@ -219,11 +212,23 @@ export const useResumeStore = create<ResumeState>()(
             if (activeResumeId) {
               await get().fetchFullResume(activeResumeId);
             }
+
+            // TRIGGER SYNC FOR OUT-OF-SYNC RESUMES
+            // After merging, some local resumes might be newer than the server ones.
+            // We need to push these changes to the server.
+            mergedResumes.forEach((resume) => {
+              const lastSyncedVersion = newSyncedResumeVersions.get(resume.id);
+              if (lastSyncedVersion !== resume.updatedAt) {
+                console.log(
+                  `[SYNC] Resume ${resume.id} is out of sync, triggering update...`,
+                );
+                void get().syncResume(resume.id);
+              }
+            });
           } catch (error) {
             console.error("Failed to initialize server sync", error);
             set({
               hasInitializedSync: true,
-              isSyncing: false,
               authAttempted: true,
             });
           }
@@ -256,37 +261,33 @@ export const useResumeStore = create<ResumeState>()(
           }
         },
 
-        syncLocalToServer: async () => {
+        syncResume: async (id: string) => {
           const state = get();
-          if (!state.isAuthenticated || state.isSyncing) return;
+          if (!state.isAuthenticated) return;
 
-          // Quick check: Are there any resumes that actually need syncing?
-          const resumesToSync = state.resumes.filter((resume) => {
-            if (!resume.content || !resume.layouts) return false;
-            const lastSynced = state.syncedResumeVersions.get(resume.id);
-            return lastSynced !== resume.updatedAt;
-          });
+          const resume = state.resumes.find((r) => r.id === id);
+          if (!resume) return;
 
-          const localIds = new Set(state.resumes.map((r) => r.id));
-          const removedIds = Array.from(state.knownServerResumeIds).filter(
-            (id) => !localIds.has(id),
-          );
-
-          if (resumesToSync.length === 0 && removedIds.length === 0) {
+          // Check if this resume actually needs syncing (avoid redundant calls)
+          if (state.syncedResumeVersions.get(id) === resume.updatedAt) {
             return;
           }
 
-          console.log(
-            `[SYNC] Starting push for ${resumesToSync.length} updates and ${removedIds.length} deletions`,
-          );
-          set({ isSyncing: true });
+          // If we don't have content (e.g. rename on dashboard), fetch it first
+          // because the API expects the full resume data.
+          if (!resume.content || !resume.layouts) {
+            await get().fetchFullResume(id);
+            // Re-get resume after fetch
+            const updatedResume = get().resumes.find((r) => r.id === id);
+            if (!updatedResume?.content) return;
+            // Recursively call to sync now that we have content
+            return get().syncResume(id);
+          }
+
+          const isKnown = state.knownServerResumeIds.has(id);
 
           try {
-            const nextKnownIds = new Set(state.knownServerResumeIds);
-            const nextSyncedVersions = new Map(state.syncedResumeVersions);
-
-            // Handle Updates/Creates
-            for (const resume of resumesToSync) {
+            if (isKnown) {
               const putResponse = await fetch(`/api/resumes/${resume.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -294,7 +295,16 @@ export const useResumeStore = create<ResumeState>()(
                 body: JSON.stringify({ resume }),
               });
 
-              if (putResponse.status === 404) {
+              if (putResponse.ok) {
+                set((state) => {
+                  const nextSyncedVersions = new Map(
+                    state.syncedResumeVersions,
+                  );
+                  nextSyncedVersions.set(resume.id, resume.updatedAt);
+                  return { syncedResumeVersions: nextSyncedVersions };
+                });
+              } else if (putResponse.status === 404) {
+                // If it was supposed to be known but server says 404, fallback to POST
                 const createResponse = await fetch("/api/resumes", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -303,45 +313,82 @@ export const useResumeStore = create<ResumeState>()(
                 });
 
                 if (createResponse.ok || createResponse.status === 409) {
-                  nextKnownIds.add(resume.id);
-                  nextSyncedVersions.set(resume.id, resume.updatedAt);
+                  set((state) => {
+                    const nextKnownIds = new Set(state.knownServerResumeIds);
+                    const nextSyncedVersions = new Map(
+                      state.syncedResumeVersions,
+                    );
+                    nextKnownIds.add(resume.id);
+                    nextSyncedVersions.set(resume.id, resume.updatedAt);
+                    return {
+                      knownServerResumeIds: nextKnownIds,
+                      syncedResumeVersions: nextSyncedVersions,
+                    };
+                  });
                 }
-              } else if (putResponse.ok) {
-                nextKnownIds.add(resume.id);
-                nextSyncedVersions.set(resume.id, resume.updatedAt);
               }
-            }
-
-            // Handle Deletions
-            for (const resumeId of removedIds) {
-              const deleteResponse = await fetch(`/api/resumes/${resumeId}`, {
-                method: "DELETE",
+            } else {
+              const createResponse = await fetch("/api/resumes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
+                body: JSON.stringify({ resume }),
               });
 
-              if (deleteResponse.ok || deleteResponse.status === 404) {
-                nextKnownIds.delete(resumeId);
-                nextSyncedVersions.delete(resumeId);
+              if (createResponse.ok || createResponse.status === 409) {
+                set((state) => {
+                  const nextKnownIds = new Set(state.knownServerResumeIds);
+                  const nextSyncedVersions = new Map(
+                    state.syncedResumeVersions,
+                  );
+                  nextKnownIds.add(resume.id);
+                  nextSyncedVersions.set(resume.id, resume.updatedAt);
+                  return {
+                    knownServerResumeIds: nextKnownIds,
+                    syncedResumeVersions: nextSyncedVersions,
+                  };
+                });
               }
             }
-
-            // Batch all state updates at once
-            set({
-              knownServerResumeIds: nextKnownIds,
-              syncedResumeVersions: nextSyncedVersions,
-            });
-            console.log("[SYNC] Push completed");
           } catch (error) {
-            console.error("[SYNC] Push failed:", error);
-          } finally {
-            set({ isSyncing: false });
+            console.error(`[SYNC] Failed to sync resume ${id}:`, error);
           }
         },
-        scheduleServerSync: () => {
+
+        syncDelete: async (id: string) => {
+          const state = get();
+          if (!state.isAuthenticated || !state.knownServerResumeIds.has(id)) {
+            return;
+          }
+
+          try {
+            const deleteResponse = await fetch(`/api/resumes/${id}`, {
+              method: "DELETE",
+              credentials: "include",
+            });
+
+            if (deleteResponse.ok || deleteResponse.status === 404) {
+              set((state) => {
+                const nextKnownIds = new Set(state.knownServerResumeIds);
+                const nextSyncedVersions = new Map(state.syncedResumeVersions);
+                nextKnownIds.delete(id);
+                nextSyncedVersions.delete(id);
+                return {
+                  knownServerResumeIds: nextKnownIds,
+                  syncedResumeVersions: nextSyncedVersions,
+                };
+              });
+            }
+          } catch (error) {
+            console.error(`[SYNC] Failed to delete resume ${id}:`, error);
+          }
+        },
+
+        scheduleServerSync: (id: string) => {
           const { syncTimer } = get();
           if (syncTimer) clearTimeout(syncTimer);
           const newTimer = setTimeout(() => {
-            void get().syncLocalToServer();
+            void get().syncResume(id);
           }, SYNC_DEBOUNCE_MS);
           set({ syncTimer: newTimer });
         },
@@ -350,7 +397,7 @@ export const useResumeStore = create<ResumeState>()(
           set({
             isAuthenticated: false,
             currentUser: null,
-            isSyncing: false,
+
             hasInitializedSync: true,
             authAttempted: true,
           });
@@ -364,7 +411,7 @@ export const useResumeStore = create<ResumeState>()(
             resumes: [...state.resumes, newResume],
             activeResumeId: id,
           }));
-          get().scheduleServerSync();
+          void get().syncResume(id);
         },
 
         renameResume: (id, title) => {
@@ -373,7 +420,7 @@ export const useResumeStore = create<ResumeState>()(
               r.id === id ? { ...r, title, updatedAt: Date.now() } : r,
             ),
           }));
-          get().scheduleServerSync();
+          void get().syncResume(id);
         },
 
         duplicateResume: (id) => {
@@ -396,7 +443,11 @@ export const useResumeStore = create<ResumeState>()(
               activeResumeId: newId,
             };
           });
-          get().scheduleServerSync();
+          const newState = get();
+          const newResume = newState.resumes.find(
+            (r) => r.id !== id && r.title.includes("Copy"),
+          );
+          if (newResume) void get().syncResume(newResume.id);
         },
 
         importResume: (
@@ -414,7 +465,7 @@ export const useResumeStore = create<ResumeState>()(
             resumes: [...state.resumes, importedResume],
             activeResumeId: id,
           }));
-          get().scheduleServerSync();
+          void get().syncResume(id);
         },
 
         deleteResume: (id) => {
@@ -425,7 +476,7 @@ export const useResumeStore = create<ResumeState>()(
                 ? state.resumes[0]?.id || null
                 : state.activeResumeId,
           }));
-          get().scheduleServerSync();
+          void get().syncDelete(id);
         },
 
         setActiveResume: (id) => {
@@ -467,7 +518,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updatePersonalInfoVisibility: (visibility) => {
@@ -506,7 +558,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updateSectionTitle: (sectionId, title) => {
@@ -535,7 +588,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updateSectionItem: (sectionId, itemId, field, value) => {
@@ -572,7 +626,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updateItemVisibility: (sectionId, itemId, visibility) => {
@@ -623,7 +678,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         addSectionItem: (sectionId) => {
@@ -677,7 +733,9 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         removeSectionItem: (sectionId, itemId) => {
@@ -703,7 +761,9 @@ export const useResumeStore = create<ResumeState>()(
               };
             }),
           }));
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         moveSectionItem: (sectionId, itemId, direction) => {
@@ -738,7 +798,9 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         addSection: (type) => {
@@ -810,7 +872,9 @@ export const useResumeStore = create<ResumeState>()(
               ),
             };
           });
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         removeSection: (id) => {
@@ -841,7 +905,9 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         reorderSections: (newOrder) => {
@@ -862,7 +928,9 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          const state = get();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updateSectionConfig: (sectionId, config) => {
@@ -902,7 +970,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         updateGlobalStyle: (field, value) => {
@@ -945,7 +1014,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
 
         setTemplate: (templateId) => {
@@ -967,7 +1037,8 @@ export const useResumeStore = create<ResumeState>()(
                 : r,
             ),
           }));
-          get().scheduleServerSync();
+          if (state.activeResumeId)
+            get().scheduleServerSync(state.activeResumeId);
         },
       };
     },

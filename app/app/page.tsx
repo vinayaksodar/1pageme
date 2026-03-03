@@ -18,6 +18,17 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!mounted) return;
     void initializeServerSync();
+
+    // Re-sync when internet connection is restored
+    const handleOnline = () => {
+      console.log(
+        "[SYNC] Internet connection restored, re-initializing sync...",
+      );
+      void initializeServerSync(true);
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, [mounted, initializeServerSync]);
 
   if (!mounted) {
