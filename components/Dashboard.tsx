@@ -104,6 +104,7 @@ const Dashboard = () => {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [resumeToDelete, setResumeToDelete] = useState<string | null>(null);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const {
     isImportModalOpen,
@@ -187,14 +188,14 @@ const Dashboard = () => {
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 p-1.5 sm:gap-3 sm:p-2">
                 <div className="hidden flex-col sm:flex">
                   <button
-                    onClick={handleLogout}
+                    onClick={() => setLogoutConfirmOpen(true)}
                     className="flex w-fit items-center gap-1 text-[9px] font-black tracking-widest text-slate-500 uppercase transition hover:text-red-500"
                   >
                     Logout
                   </button>
                 </div>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setLogoutConfirmOpen(true)}
                   className="p-1 text-slate-400 transition hover:text-red-500 sm:hidden"
                 >
                   <LogOut size={18} />
@@ -337,6 +338,15 @@ const Dashboard = () => {
         title="Delete Resume"
         message="Are you sure you want to delete this resume? This action cannot be undone."
         confirmText="Delete"
+      />
+
+      <ConfirmModal
+        isOpen={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={handleLogout}
+        title="Logout"
+        message="Are you sure you want to logout? This will clear all your local data."
+        confirmText="Logout"
       />
 
       <ImportModal
