@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import chromium from "@sparticuz/chromium";
 import puppeteer, { Browser } from "puppeteer-core";
 import { ResumeData } from "@/types/resume";
+import path from "node:path";
+import fs from "node:fs";
 
 // Reuse the browser instance between warm starts in production
 let browser: Browser | null = null;
@@ -26,10 +28,30 @@ async function getBrowser() {
     // If you don't need webGL, this skips the extraction of the bin/swiftshader.tar.br file, improving performance
     chromium.setGraphicsMode = false;
 
+    // Find the correct path for the chromium binaries
+    let executablePath = "";
+    try {
+      // Try to find it in the expected location for Vercel
+      const binPath = path.join(
+        process.cwd(),
+        "node_modules/@sparticuz/chromium/bin",
+      );
+      if (fs.existsSync(binPath)) {
+        executablePath = await chromium.executablePath(binPath);
+      } else {
+        // Fallback to default which might work if not bundled
+        executablePath = await chromium.executablePath();
+      }
+    } catch (e) {
+      console.error("Error resolving executable path:", e);
+      // Last resort fallback
+      executablePath = await chromium.executablePath();
+    }
+
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: viewport,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: "shell",
     });
   } else {
