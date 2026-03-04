@@ -5,7 +5,7 @@ import { StoreSlice } from "../types";
 
 export interface ResumeSlice {
   createNewResume: (templateId?: TemplateId) => void;
-  deleteResume: (id: string) => void;
+  deleteResume: (id: string) => Promise<void>;
   setActiveResume: (id: string) => void;
   duplicateResume: (id: string) => void;
   importResume: (resume: Partial<ResumeData>, templateId?: TemplateId) => void;
@@ -26,7 +26,15 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
     void get().syncResume(id);
   },
 
-  deleteResume: (id) => {
+  deleteResume: async (id) => {
+    const state = get();
+    const isKnown = state.isAuthenticated && state.knownServerResumeIds.has(id);
+
+    if (isKnown) {
+      const success = await get().syncDelete(id);
+      if (!success) return;
+    }
+
     set((state) => ({
       resumes: state.resumes.filter((r) => r.id !== id),
       activeResumeId:
@@ -34,7 +42,10 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
           ? state.resumes[0]?.id || null
           : state.activeResumeId,
     }));
-    void get().syncDelete(id);
+
+    if (!isKnown && state.isAuthenticated) {
+      void get().syncDelete(id);
+    }
   },
 
   setActiveResume: (id) => {

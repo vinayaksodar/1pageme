@@ -70,7 +70,7 @@ export interface ResumeState {
   renameResume: (id: string, title: string) => void;
   initializeServerSync: (force?: boolean) => Promise<void>;
   syncResume: (id: string) => Promise<void>;
-  syncDelete: (id: string) => Promise<void>;
+  syncDelete: (id: string) => Promise<boolean>;
   scheduleServerSync: (id: string) => void;
   markLoggedOut: () => void;
   setSessionExpired: (isExpired: boolean) => void;

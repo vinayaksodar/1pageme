@@ -7,7 +7,7 @@ const SYNC_DEBOUNCE_MS = 1200;
 export interface SyncSlice {
   initializeServerSync: (force?: boolean) => Promise<void>;
   syncResume: (id: string) => Promise<void>;
-  syncDelete: (id: string) => Promise<void>;
+  syncDelete: (id: string) => Promise<boolean>;
   scheduleServerSync: (id: string) => void;
   fetchFullResume: (id: string) => Promise<void>;
 }
@@ -305,10 +305,10 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
     }
   },
 
-  syncDelete: async (id: string) => {
+  syncDelete: async (id: string): Promise<boolean> => {
     const state = get();
     if (!state.isAuthenticated || !state.knownServerResumeIds.has(id)) {
-      return;
+      return true;
     }
 
     // Clear and remove specific timer for this resume
@@ -336,6 +336,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             syncedResumeVersions: nextSyncedVersions,
           };
         });
+        return true;
       } else if (deleteResponse.status === 401) {
         const errorData = await deleteResponse.json().catch(() => ({}));
         if (errorData.error === "Session expired") {
@@ -345,9 +346,16 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           });
           set({ isSessionExpired: true });
         }
+        return false;
       }
+      return false;
     } catch (error) {
       console.error(`[SYNC] Failed to delete resume ${id}:`, error);
+      const toast = (await import("react-hot-toast")).default;
+      toast.error("No internet connection. Could not delete resume.", {
+        id: "sync-error",
+      });
+      return false;
     }
   },
 
