@@ -99,6 +99,8 @@ const Dashboard = () => {
       credentials: "include",
     });
     markLoggedOut();
+    // Use persist API to ensure storage is cleared
+    useResumeStore.persist.clearStorage();
   };
 
   return (

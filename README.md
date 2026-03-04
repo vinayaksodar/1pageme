@@ -101,7 +101,7 @@ A multi-document, template-based resume builder with real-time editing, drag-and
 Authentication is optional. Guests can use the app fully with local `localStorage` persistence.  
 If a user logs in, the app merges local resumes with server resumes and then syncs changes to Neon in the background.
 
-Dashboard now exposes a login/register button (dropdown modal) and shows the signed-in email once authenticated; hitting logout clears the session but keeps local data available.
+Dashboard now exposes a login/register button (dropdown modal) and shows the signed-in email once authenticated; hitting logout clears the session and all local data.
 
 - `POST /api/auth/register` body: `{ "email": "...", "password": "..." }`
 - `POST /api/auth/login` body: `{ "email": "...", "password": "..." }`

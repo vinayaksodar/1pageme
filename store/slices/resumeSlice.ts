@@ -103,6 +103,9 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
     state.syncTimers.forEach((timer) => clearTimeout(timer));
 
     set({
+      resumes: [],
+      activeResumeId: null,
+      isTextSelected: false,
       isAuthenticated: false,
       currentUser: null,
       hasInitializedSync: true,
