@@ -10,6 +10,9 @@ import {
   getModernLayout,
 } from "@/lib/resume-config";
 
+export const generateId = () =>
+  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).substr(2, 9);
+
 export const mergeResumes = (
   localResumes: ResumeData[],
   serverResumes: ResumeData[],
