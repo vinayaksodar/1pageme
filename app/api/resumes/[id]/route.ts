@@ -43,6 +43,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const body = await request.json();
     const resume = body?.resume;
+    const lastSyncedVersion = body?.lastSyncedVersion;
 
     if (!isResumeData(resume)) {
       return NextResponse.json(
@@ -58,7 +59,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const updated = await updateResume(id, ownerId, resume);
+    const updated = await updateResume(id, ownerId, resume, lastSyncedVersion);
     if (!updated) {
       console.log(`[RESUMES:PUT] Resume ${id} not found for owner ${ownerId}`);
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
@@ -67,6 +68,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     console.log(`[RESUMES:PUT] Successfully updated resume ${id}`);
     return NextResponse.json({ resume: updated });
   } catch (error) {
+    if (error instanceof Error && error.message === "CONFLICT") {
+      return NextResponse.json(
+        { error: "Conflict: Resume has been updated elsewhere" },
+        { status: 409 },
+      );
+    }
     console.error("[RESUMES:PUT] Error updating resume:", error);
     return NextResponse.json(
       {

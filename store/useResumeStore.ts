@@ -285,6 +285,7 @@ export const useResumeStore = create<ResumeState>()(
           }
 
           const isKnown = state.knownServerResumeIds.has(id);
+          const lastSyncedVersion = state.syncedResumeVersions.get(id);
 
           try {
             if (isKnown) {
@@ -292,7 +293,7 @@ export const useResumeStore = create<ResumeState>()(
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ resume }),
+                body: JSON.stringify({ resume, lastSyncedVersion }),
               });
 
               if (putResponse.ok) {
@@ -303,6 +304,13 @@ export const useResumeStore = create<ResumeState>()(
                   nextSyncedVersions.set(resume.id, resume.updatedAt);
                   return { syncedResumeVersions: nextSyncedVersions };
                 });
+              } else if (putResponse.status === 409) {
+                // Conflict detected! The server has a newer version.
+                // Fetch the latest version from the server to resolve.
+                console.warn(
+                  `[SYNC] Conflict detected for resume ${id}. Re-fetching...`,
+                );
+                await get().fetchFullResume(id);
               } else if (putResponse.status === 404) {
                 // If it was supposed to be known but server says 404, fallback to POST
                 const createResponse = await fetch("/api/resumes", {
@@ -424,11 +432,14 @@ export const useResumeStore = create<ResumeState>()(
         },
 
         duplicateResume: (id) => {
+          const newId = generateId();
+          let duplicated = false;
+
           set((state) => {
             const resumeToDuplicate = state.resumes.find((r) => r.id === id);
             if (!resumeToDuplicate) return state;
 
-            const newId = generateId();
+            duplicated = true;
             const now = Date.now();
             const duplicatedResume: ResumeData = {
               ...structuredClone(resumeToDuplicate),
@@ -443,11 +454,10 @@ export const useResumeStore = create<ResumeState>()(
               activeResumeId: newId,
             };
           });
-          const newState = get();
-          const newResume = newState.resumes.find(
-            (r) => r.id !== id && r.title.includes("Copy"),
-          );
-          if (newResume) void get().syncResume(newResume.id);
+
+          if (duplicated) {
+            void get().syncResume(newId);
+          }
         },
 
         importResume: (

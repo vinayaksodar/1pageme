@@ -84,16 +84,26 @@ export const updateResume = async (
   id: string,
   ownerId: string,
   resume: ResumeData,
+  lastSyncedVersion?: number,
 ) => {
   const db = getDb();
 
   const [existing] = await db
-    .select({ id: resumes.id })
+    .select({ id: resumes.id, updatedAt: resumes.updatedAt })
     .from(resumes)
     .where(and(eq(resumes.id, id), eq(resumes.ownerId, ownerId)))
     .limit(1);
 
   if (!existing) return null;
+
+  // Optimistic locking check:
+  // If lastSyncedVersion is provided, it must match the server's current version.
+  if (
+    lastSyncedVersion !== undefined &&
+    existing.updatedAt !== lastSyncedVersion
+  ) {
+    throw new Error("CONFLICT");
+  }
 
   const [updatedMeta] = await db
     .update(resumes)
