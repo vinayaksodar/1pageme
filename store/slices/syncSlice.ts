@@ -110,11 +110,11 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
 
       const localState = get();
       const mergedResumes = mergeResumes(localState.resumes, serverResumes);
-      const activeResumeId = mergedResumes.some(
-        (r) => r.id === localState.activeResumeId,
-      )
-        ? localState.activeResumeId
-        : (mergedResumes[0]?.id ?? null);
+      const activeResumeId = localState.activeResumeId
+        ? mergedResumes.some((r) => r.id === localState.activeResumeId)
+          ? localState.activeResumeId
+          : null
+        : null;
 
       set({
         resumes: mergedResumes,

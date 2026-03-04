@@ -36,7 +36,6 @@ export const useResumeStore = create<ResumeState>()(
       version: 10,
       partialize: (state) => ({
         resumes: state.resumes,
-        activeResumeId: state.activeResumeId,
         isTextSelected: state.isTextSelected,
       }),
       migrate: (persistedState: unknown) => {
