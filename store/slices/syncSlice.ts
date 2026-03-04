@@ -25,6 +25,8 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       });
 
       if (!meResponse.ok) {
+        // Clear all pending timers on initialization failure/logout
+        state.syncTimers.forEach((timer) => clearTimeout(timer));
         set({
           isAuthenticated: false,
           currentUser: null,
@@ -32,6 +34,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           authAttempted: true,
           syncedResumeVersions: new Map<string, number>(),
           knownServerResumeIds: new Set<string>(),
+          syncTimers: new Map<string, ReturnType<typeof setTimeout>>(),
         });
         return;
       }
@@ -41,6 +44,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       };
 
       if (!mePayload.user) {
+        state.syncTimers.forEach((timer) => clearTimeout(timer));
         set({
           isAuthenticated: false,
           currentUser: null,
@@ -48,6 +52,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           authAttempted: true,
           syncedResumeVersions: new Map<string, number>(),
           knownServerResumeIds: new Set<string>(),
+          syncTimers: new Map<string, ReturnType<typeof setTimeout>>(),
         });
         return;
       }
@@ -57,6 +62,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       });
 
       if (!resumeResponse.ok) {
+        state.syncTimers.forEach((timer) => clearTimeout(timer));
         set({
           isAuthenticated: true,
           currentUser: mePayload.user,
@@ -64,6 +70,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           authAttempted: true,
           syncedResumeVersions: new Map<string, number>(),
           knownServerResumeIds: new Set<string>(),
+          syncTimers: new Map<string, ReturnType<typeof setTimeout>>(),
         });
         return;
       }
@@ -241,6 +248,14 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       return;
     }
 
+    // Clear and remove specific timer for this resume
+    const existingTimer = state.syncTimers.get(id);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      // We modify the map in-place here for efficiency before the set call
+      state.syncTimers.delete(id);
+    }
+
     try {
       const deleteResponse = await fetch(`/api/resumes/${id}`, {
         method: "DELETE",
@@ -265,11 +280,24 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
   },
 
   scheduleServerSync: (id: string) => {
-    const { syncTimer } = get();
-    if (syncTimer) clearTimeout(syncTimer);
+    const state = get();
+    const existingTimer = state.syncTimers.get(id);
+    if (existingTimer) clearTimeout(existingTimer);
+
     const newTimer = setTimeout(() => {
       void get().syncResume(id);
+      // Clean up timer map after execution
+      set((state) => {
+        const nextTimers = new Map(state.syncTimers);
+        nextTimers.delete(id);
+        return { syncTimers: nextTimers };
+      });
     }, SYNC_DEBOUNCE_MS);
-    set({ syncTimer: newTimer });
+
+    set((state) => {
+      const nextTimers = new Map(state.syncTimers);
+      nextTimers.set(id, newTimer);
+      return { syncTimers: nextTimers };
+    });
   },
 });

@@ -93,12 +93,15 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
         r.id === id ? { ...r, title, updatedAt: Date.now() } : r,
       ),
     }));
-    void get().syncResume(id);
+    get().scheduleServerSync(id);
   },
 
   setIsTextSelected: (isSelected) => set({ isTextSelected: isSelected }),
 
   markLoggedOut: () => {
+    const state = get();
+    state.syncTimers.forEach((timer) => clearTimeout(timer));
+
     set({
       isAuthenticated: false,
       currentUser: null,
@@ -106,6 +109,7 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
       authAttempted: true,
       syncedResumeVersions: new Map<string, number>(),
       knownServerResumeIds: new Set<string>(),
+      syncTimers: new Map<string, ReturnType<typeof setTimeout>>(),
     });
   },
 });

@@ -18,7 +18,7 @@ export const useResumeStore = create<ResumeState>()(
       hasInitializedSync: false,
       authAttempted: false,
       currentUser: null,
-      syncTimer: null,
+      syncTimers: new Map<string, ReturnType<typeof setTimeout>>(),
       syncedResumeVersions: new Map<string, number>(),
       knownServerResumeIds: new Set<string>(),
 

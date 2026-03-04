@@ -20,7 +20,7 @@ export interface ResumeState {
   currentUser: { id: string; email: string } | null;
 
   // Sync tracking (excluded from persistence)
-  syncTimer: ReturnType<typeof setTimeout> | null;
+  syncTimers: Map<string, ReturnType<typeof setTimeout>>;
   syncedResumeVersions: Map<string, number>;
   knownServerResumeIds: Set<string>;
 
