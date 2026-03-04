@@ -16,6 +16,7 @@ export interface ResumeState {
   isTextSelected: boolean;
   isAuthenticated: boolean;
   isSessionExpired: boolean;
+  lastSyncFailed: boolean;
   hasInitializedSync: boolean;
   authAttempted: boolean;
   currentUser: { id: string; email: string } | null;

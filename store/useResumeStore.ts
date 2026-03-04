@@ -16,6 +16,7 @@ export const useResumeStore = create<ResumeState>()(
       isTextSelected: false,
       isAuthenticated: false,
       isSessionExpired: false,
+      lastSyncFailed: false,
       hasInitializedSync: false,
       authAttempted: false,
       currentUser: null,

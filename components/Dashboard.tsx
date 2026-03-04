@@ -12,6 +12,9 @@ import {
   Check,
   User,
   LogOut,
+  CloudCheck,
+  CloudOff,
+  CloudUpload,
 } from "lucide-react";
 import TemplateLibraryModal from "./ui/TemplateLibraryModal";
 import ImportModal from "./ui/ImportModal";
@@ -37,6 +40,44 @@ const formatDate = (timestamp: number) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+const SyncStatus = () => {
+  const {
+    isAuthenticated,
+    lastSyncFailed,
+    syncTimers,
+    resumes,
+    syncedResumeVersions,
+  } = useResumeStore();
+
+  if (!isAuthenticated) return null;
+
+  const isSaving =
+    syncTimers.size > 0 ||
+    resumes.some((r) => r.updatedAt !== syncedResumeVersions.get(r.id));
+
+  if (lastSyncFailed) {
+    return (
+      <div className="text-red-500" title="Offline - Changes saved locally">
+        <CloudOff size={18} />
+      </div>
+    );
+  }
+
+  if (isSaving) {
+    return (
+      <div className="text-blue-600" title="Saving to cloud...">
+        <CloudUpload size={18} className="animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-blue-600/40" title="Saved to cloud">
+      <CloudCheck size={18} />
+    </div>
+  );
 };
 
 const Dashboard = () => {
@@ -141,7 +182,9 @@ const Dashboard = () => {
             <Plus size={14} />
             <span className="hidden sm:inline">Create New</span>
           </button>
-          <div className="mx-2 h-8 w-px bg-slate-200" />
+          <div className="mx-1 h-8 w-px bg-slate-200 sm:mx-2" />
+          <SyncStatus />
+          <div className="mx-1 h-8 w-px bg-slate-200 sm:mx-2" />
           <div className="flex items-center">
             {currentUser ? (
               <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 sm:gap-3 sm:p-2">

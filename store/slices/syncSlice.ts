@@ -120,6 +120,8 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
         resumes: mergedResumes,
         activeResumeId,
         isAuthenticated: true,
+        isSessionExpired: false,
+        lastSyncFailed: false,
         currentUser: mePayload.user,
         hasInitializedSync: true,
         authAttempted: true,
@@ -162,6 +164,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           resume: ResumeData;
         };
         set((state) => ({
+          lastSyncFailed: false,
           resumes: state.resumes.map((r) =>
             r.id === id ? { ...r, ...fullResume } : r,
           ),
@@ -215,7 +218,10 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           set((state) => {
             const nextSyncedVersions = new Map(state.syncedResumeVersions);
             nextSyncedVersions.set(resume.id, resume.updatedAt);
-            return { syncedResumeVersions: nextSyncedVersions };
+            return {
+              syncedResumeVersions: nextSyncedVersions,
+              lastSyncFailed: false,
+            };
           });
         } else if (putResponse.status === 401) {
           const errorData = await putResponse.json().catch(() => ({}));
@@ -251,6 +257,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
               return {
                 knownServerResumeIds: nextKnownIds,
                 syncedResumeVersions: nextSyncedVersions,
+                lastSyncFailed: false,
               };
             });
           } else if (createResponse.status === 401) {
@@ -284,6 +291,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             return {
               knownServerResumeIds: nextKnownIds,
               syncedResumeVersions: nextSyncedVersions,
+              lastSyncFailed: false,
             };
           });
         } else if (createResponse.status === 401) {
@@ -302,6 +310,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       }
     } catch (error) {
       console.error(`[SYNC] Failed to sync resume ${id}:`, error);
+      set({ lastSyncFailed: true });
     }
   },
 
@@ -334,6 +343,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           return {
             knownServerResumeIds: nextKnownIds,
             syncedResumeVersions: nextSyncedVersions,
+            lastSyncFailed: false,
           };
         });
         return true;
@@ -351,6 +361,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       return false;
     } catch (error) {
       console.error(`[SYNC] Failed to delete resume ${id}:`, error);
+      set({ lastSyncFailed: true });
       const toast = (await import("react-hot-toast")).default;
       toast.error("No internet connection. Could not delete resume.", {
         id: "sync-error",

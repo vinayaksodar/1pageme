@@ -13,6 +13,9 @@ import {
   Edit2,
   Check,
   Loader2,
+  CloudCheck,
+  CloudOff,
+  CloudUpload,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "../ui/TemplateLibraryModal";
@@ -22,6 +25,48 @@ import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";
 import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
 import { useResumeTitleEditor } from "@/hooks/useResumeTitleEditor";
+
+const SyncStatus = () => {
+  const {
+    isAuthenticated,
+    lastSyncFailed,
+    syncTimers,
+    resumes,
+    activeResumeId,
+    syncedResumeVersions,
+  } = useResumeStore();
+
+  if (!isAuthenticated) return null;
+
+  const activeResume = resumes.find((r) => r.id === activeResumeId);
+  if (!activeResume) return null;
+
+  const isSaving =
+    syncTimers.has(activeResumeId!) ||
+    activeResume.updatedAt !== syncedResumeVersions.get(activeResumeId!);
+
+  if (lastSyncFailed) {
+    return (
+      <div className="text-red-500" title="Offline - Changes saved locally">
+        <CloudOff size={18} />
+      </div>
+    );
+  }
+
+  if (isSaving) {
+    return (
+      <div className="text-blue-600" title="Saving to cloud...">
+        <CloudUpload size={18} className="animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-blue-600/40" title="Saved to cloud">
+      <CloudCheck size={18} />
+    </div>
+  );
+};
 
 const EditorLayout = () => {
   const {
@@ -279,17 +324,20 @@ const EditorLayout = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <SyncStatus />
           <button
             onClick={() => handlePrint()}
             disabled={isDownloading}
-            className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-7 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-blue-400"
+            className="flex items-center gap-2.5 rounded-xl bg-blue-600 px-4 py-2.5 text-[10px] font-black tracking-[0.1em] text-white uppercase shadow-xl transition-all hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-blue-400 sm:px-7"
           >
             {isDownloading ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
               <Download size={14} />
             )}
-            {isDownloading ? "Generating..." : "Download"}
+            <span className="hidden sm:inline">
+              {isDownloading ? "Generating..." : "Download"}
+            </span>
           </button>
         </div>
       </header>
