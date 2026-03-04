@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserIdFromRequest } from "@/lib/auth/session";
+import { getSessionStatusFromRequest } from "@/lib/auth/session";
 import { getUserById } from "@/lib/db/users";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getUserIdFromRequest(request);
+    const { status, userId } = await getSessionStatusFromRequest(request);
+
+    if (status === "expired") {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
     if (!userId) {
       return NextResponse.json({ user: null }, { status: 401 });
     }

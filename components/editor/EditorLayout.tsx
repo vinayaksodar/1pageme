@@ -17,6 +17,7 @@ import {
 import { useResumeStore } from "@/store/useResumeStore";
 import TemplateLibraryModal from "../ui/TemplateLibraryModal";
 import ImportModal from "../ui/ImportModal";
+import AuthModal from "../ui/AuthModal";
 import { Logo } from "../ui/Logo";
 import { cn } from "@/lib/utils";
 import { useResumeCreateImportFlow } from "@/hooks/useResumeCreateImportFlow";
@@ -29,11 +30,23 @@ const EditorLayout = () => {
     setActiveResume,
     setTemplate,
     duplicateResume,
+    isSessionExpired,
+    setSessionExpired,
   } = useResumeStore();
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewResumeModalOpen, setIsNewResumeModalOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  // Handle session expired
+  useEffect(() => {
+    if (isSessionExpired) {
+      setAuthMode("login");
+      setAuthOpen(true);
+    }
+  }, [isSessionExpired]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const {
@@ -350,6 +363,15 @@ const EditorLayout = () => {
           handleImport(resume);
           closeImportModal();
         }}
+      />
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setSessionExpired(false);
+        }}
+        initialMode={authMode}
       />
 
       <style

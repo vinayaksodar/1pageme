@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, Zap, Layers, Cpu, Globe, Star } from "lucide-react";
+import { ArrowRight, Zap, Layers, Cpu, Star } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

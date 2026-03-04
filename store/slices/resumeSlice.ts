@@ -12,6 +12,7 @@ export interface ResumeSlice {
   renameResume: (id: string, title: string) => void;
   setIsTextSelected: (isSelected: boolean) => void;
   markLoggedOut: () => void;
+  setSessionExpired: (isExpired: boolean) => void;
 }
 
 export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
@@ -96,7 +97,11 @@ export const createResumeSlice: StoreSlice<ResumeSlice> = (set, get) => ({
     get().scheduleServerSync(id);
   },
 
-  setIsTextSelected: (isSelected) => set({ isTextSelected: isSelected }),
+  setIsTextSelected: (isSelected: boolean) =>
+    set({ isTextSelected: isSelected }),
+
+  setSessionExpired: (isExpired: boolean) =>
+    set({ isSessionExpired: isExpired }),
 
   markLoggedOut: () => {
     const state = get();

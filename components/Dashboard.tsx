@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
@@ -47,9 +47,20 @@ const Dashboard = () => {
     duplicateResume,
     currentUser,
     markLoggedOut,
+    isSessionExpired,
+    setSessionExpired,
   } = useResumeStore();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  // Handle session expired
+  useEffect(() => {
+    if (isSessionExpired) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAuthMode("login");
+      setAuthOpen(true);
+    }
+  }, [isSessionExpired]);
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [resumeToDelete, setResumeToDelete] = useState<string | null>(null);
@@ -309,7 +320,10 @@ const Dashboard = () => {
 
       <AuthModal
         isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
+        onClose={() => {
+          setAuthOpen(false);
+          setSessionExpired(false);
+        }}
         initialMode={authMode}
       />
 

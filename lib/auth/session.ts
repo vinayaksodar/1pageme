@@ -38,5 +38,22 @@ export const getUserIdFromRequest = async (request: NextRequest) => {
   return verifySessionToken(token);
 };
 
+export const getSessionStatusFromRequest = async (
+  request: NextRequest,
+): Promise<{
+  status: "valid" | "expired" | "no-session";
+  userId: string | null;
+}> => {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!token) {
+    return { status: "no-session", userId: null };
+  }
+  const userId = await verifySessionToken(token);
+  if (!userId) {
+    return { status: "expired", userId: null };
+  }
+  return { status: "valid", userId };
+};
+
 export const sessionCookieName = SESSION_COOKIE_NAME;
 export const sessionMaxAge = ONE_WEEK_SECONDS;

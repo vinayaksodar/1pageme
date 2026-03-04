@@ -5,7 +5,7 @@ import {
   updateResume,
 } from "@/lib/db/resumes";
 import { isResumeData } from "@/lib/db/validation";
-import { getUserIdFromRequest } from "@/lib/auth/session";
+import { getSessionStatusFromRequest } from "@/lib/auth/session";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -13,7 +13,13 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const ownerId = await getUserIdFromRequest(request);
+    const { status, userId: ownerId } =
+      await getSessionStatusFromRequest(request);
+
+    if (status === "expired") {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
     if (!ownerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -35,7 +41,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const ownerId = await getUserIdFromRequest(request);
+    const { status, userId: ownerId } =
+      await getSessionStatusFromRequest(request);
+
+    if (status === "expired") {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
     if (!ownerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -87,7 +99,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const ownerId = await getUserIdFromRequest(request);
+    const { status, userId: ownerId } =
+      await getSessionStatusFromRequest(request);
+
+    if (status === "expired") {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
     if (!ownerId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

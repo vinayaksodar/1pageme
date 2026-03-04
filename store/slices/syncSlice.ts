@@ -25,10 +25,28 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
       });
 
       if (!meResponse.ok) {
+        const errorData = await meResponse.json().catch(() => ({}));
+        const isExpired = errorData.error === "Session expired";
+
+        if (isExpired) {
+          const toast = (await import("react-hot-toast")).default;
+          toast.error("Session expired. Please login again to sync.", {
+            id: "session-expired",
+          });
+          set({
+            isAuthenticated: true, // Keep it true to avoid UI flickering if they are already in app
+            isSessionExpired: true,
+            hasInitializedSync: true,
+            authAttempted: true,
+          });
+          return;
+        }
+
         // Clear all pending timers on initialization failure/logout
         state.syncTimers.forEach((timer) => clearTimeout(timer));
         set({
           isAuthenticated: false,
+          isSessionExpired: false,
           currentUser: null,
           hasInitializedSync: true,
           authAttempted: true,
@@ -148,6 +166,15 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             r.id === id ? { ...r, ...fullResume } : r,
           ),
         }));
+      } else if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === "Session expired") {
+          const toast = (await import("react-hot-toast")).default;
+          toast.error("Session expired. Please login again to sync.", {
+            id: "session-expired",
+          });
+          set({ isSessionExpired: true });
+        }
       }
     } catch (error) {
       console.error("Failed to fetch full resume", error);
@@ -190,6 +217,18 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             nextSyncedVersions.set(resume.id, resume.updatedAt);
             return { syncedResumeVersions: nextSyncedVersions };
           });
+        } else if (putResponse.status === 401) {
+          const errorData = await putResponse.json().catch(() => ({}));
+          if (errorData.error === "Session expired") {
+            const toast = (await import("react-hot-toast")).default;
+            toast.error(
+              "Session expired. Please login again to save changes.",
+              {
+                id: "session-expired",
+              },
+            );
+            set({ isSessionExpired: true });
+          }
         } else if (putResponse.status === 409) {
           console.warn(
             `[SYNC] Conflict detected for resume ${id}. Re-fetching...`,
@@ -214,6 +253,18 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
                 syncedResumeVersions: nextSyncedVersions,
               };
             });
+          } else if (createResponse.status === 401) {
+            const errorData = await createResponse.json().catch(() => ({}));
+            if (errorData.error === "Session expired") {
+              const toast = (await import("react-hot-toast")).default;
+              toast.error(
+                "Session expired. Please login again to save changes.",
+                {
+                  id: "session-expired",
+                },
+              );
+              set({ isSessionExpired: true });
+            }
           }
         }
       } else {
@@ -235,6 +286,18 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
               syncedResumeVersions: nextSyncedVersions,
             };
           });
+        } else if (createResponse.status === 401) {
+          const errorData = await createResponse.json().catch(() => ({}));
+          if (errorData.error === "Session expired") {
+            const toast = (await import("react-hot-toast")).default;
+            toast.error(
+              "Session expired. Please login again to save changes.",
+              {
+                id: "session-expired",
+              },
+            );
+            set({ isSessionExpired: true });
+          }
         }
       }
     } catch (error) {
@@ -273,6 +336,15 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             syncedResumeVersions: nextSyncedVersions,
           };
         });
+      } else if (deleteResponse.status === 401) {
+        const errorData = await deleteResponse.json().catch(() => ({}));
+        if (errorData.error === "Session expired") {
+          const toast = (await import("react-hot-toast")).default;
+          toast.error("Session expired. Please login again to delete.", {
+            id: "session-expired",
+          });
+          set({ isSessionExpired: true });
+        }
       }
     } catch (error) {
       console.error(`[SYNC] Failed to delete resume ${id}:`, error);

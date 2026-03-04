@@ -15,6 +15,7 @@ export interface ResumeState {
   activeResumeId: string | null;
   isTextSelected: boolean;
   isAuthenticated: boolean;
+  isSessionExpired: boolean;
   hasInitializedSync: boolean;
   authAttempted: boolean;
   currentUser: { id: string; email: string } | null;
@@ -72,6 +73,7 @@ export interface ResumeState {
   syncDelete: (id: string) => Promise<void>;
   scheduleServerSync: (id: string) => void;
   markLoggedOut: () => void;
+  setSessionExpired: (isExpired: boolean) => void;
   fetchFullResume: (id: string) => Promise<void>;
 }
 
