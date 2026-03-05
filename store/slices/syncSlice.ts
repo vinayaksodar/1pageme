@@ -367,6 +367,21 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
     } catch (error) {
       console.error(`[SYNC] Failed to sync resume ${id}:`, error);
       set({ lastSyncFailed: true });
+
+      // Automatic retry after a delay for transient failures
+      const retryDelay = 5000; // 5 seconds
+      const existingTimer = get().syncTimers.get(id);
+      if (existingTimer) clearTimeout(existingTimer);
+
+      const retryTimer = setTimeout(() => {
+        void get().syncResume(id);
+      }, retryDelay);
+
+      set((state) => {
+        const nextTimers = new Map(state.syncTimers);
+        nextTimers.set(id, retryTimer);
+        return { syncTimers: nextTimers };
+      });
     }
   },
 
