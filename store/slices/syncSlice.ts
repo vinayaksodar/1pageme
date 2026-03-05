@@ -205,13 +205,69 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
     const isKnown = state.knownServerResumeIds.has(id);
     const lastSyncedVersion = state.syncedResumeVersions.get(id);
 
+    // Migration: If profileImage is base64 and user is authenticated, upload to Vercel Blob first
+    let updatedResume = { ...resume };
+    const profileImage = resume.content?.personalInfo?.profileImage;
+    if (profileImage?.startsWith("data:")) {
+      try {
+        const response = await fetch(profileImage);
+        const blob = await response.blob();
+        const filename = `migrated-${id}-${Date.now()}.png`;
+
+        const uploadResponse = await fetch(
+          `/api/upload?filename=${encodeURIComponent(filename)}`,
+          {
+            method: "POST",
+            body: blob,
+          },
+        );
+
+        if (uploadResponse.ok) {
+          const blobData = await uploadResponse.json();
+          const cloudUrl = blobData.url;
+
+          // Update the resume object with the cloud URL
+          updatedResume = {
+            ...resume,
+            content: {
+              ...resume.content!,
+              personalInfo: {
+                ...resume.content!.personalInfo,
+                profileImage: cloudUrl,
+              },
+            },
+          };
+
+          // Cache the base64 against the new URL
+          try {
+            localStorage.setItem("1pm_img_cache_" + cloudUrl, profileImage);
+          } catch {
+            console.warn("Failed to cache migrated image");
+          }
+
+          // Update local state with the new URL as well to keep it in sync
+          set((state) => ({
+            resumes: state.resumes.map((r) =>
+              r.id === id ? updatedResume : r,
+            ),
+          }));
+        }
+      } catch (migrationError) {
+        console.error(
+          "Failed to migrate base64 image to Vercel Blob:",
+          migrationError,
+        );
+        // Continue with sync anyway, it will just store the base64 in Neon (fallback)
+      }
+    }
+
     try {
       if (isKnown) {
         const putResponse = await fetch(`/api/resumes/${resume.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ resume, lastSyncedVersion }),
+          body: JSON.stringify({ resume: updatedResume, lastSyncedVersion }),
         });
 
         if (putResponse.ok) {
@@ -245,7 +301,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ resume }),
+            body: JSON.stringify({ resume: updatedResume }),
           });
 
           if (createResponse.ok || createResponse.status === 409) {
@@ -279,7 +335,7 @@ export const createSyncSlice: StoreSlice<SyncSlice> = (set, get) => ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ resume }),
+          body: JSON.stringify({ resume: updatedResume }),
         });
 
         if (createResponse.ok || createResponse.status === 409) {
