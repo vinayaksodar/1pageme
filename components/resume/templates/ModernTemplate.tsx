@@ -149,22 +149,42 @@ export const ModernTemplate = ({
               className="flex items-center justify-between"
               style={{ marginTop: `${spacing.itemSubtleGap}rem` }}
             >
-              {itemVisibility.showSubtitle && (
-                <PlainTextEditor
-                  value={item.subtitle || ""}
-                  onChange={(val) =>
-                    actions.updateSectionItem(
-                      section.id,
-                      item.id,
-                      "subtitle",
-                      val,
-                    )
-                  }
-                  className="text-sm font-bold tracking-tight uppercase"
-                  style={{ color: accentColor }}
-                  placeholder="Company"
-                />
-              )}
+              <div className="flex items-center gap-2">
+                {itemVisibility.showSubtitle && (
+                  <PlainTextEditor
+                    value={item.subtitle || ""}
+                    onChange={(val) =>
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "subtitle",
+                        val,
+                      )
+                    }
+                    className="text-sm font-bold tracking-tight uppercase"
+                    style={{ color: accentColor }}
+                    placeholder="Company"
+                  />
+                )}
+                {itemVisibility.showLocation && item.location && (
+                  <span className="text-xs text-gray-300">|</span>
+                )}
+                {itemVisibility.showLocation && (
+                  <PlainTextEditor
+                    value={item.location || ""}
+                    onChange={(val) =>
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "location",
+                        val,
+                      )
+                    }
+                    className="text-xs font-bold text-gray-400 uppercase"
+                    placeholder="Location"
+                  />
+                )}
+              </div>
               {itemVisibility.showDatePeriod && (
                 <MonthYearPicker
                   initialDate={item.datePeriod}
