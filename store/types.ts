@@ -36,6 +36,10 @@ export interface ResumeState {
     visibility: Partial<PersonalInfoVisibility>,
   ) => void;
   updateSectionTitle: (sectionId: string, title: string) => void;
+  updateSectionVariant: (
+    sectionId: string,
+    variant: import("@/types/resume").Section["variant"],
+  ) => void;
   updateSectionItem: (
     sectionId: string,
     itemId: string,

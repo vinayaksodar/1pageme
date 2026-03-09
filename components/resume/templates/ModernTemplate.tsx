@@ -148,7 +148,21 @@ export const ModernTemplate = ({
               )
             }
             type="bullets"
-            className="list-disc text-xs text-gray-700 [&>li+li]:mt-[var(--bullet-gap)]"
+            layout={
+              section.type === "skills" || section.type === "interests"
+                ? section.variant === "compact"
+                  ? "compact"
+                  : "horizontal"
+                : "vertical"
+            }
+            className={cn(
+              "text-xs text-gray-700",
+              section.type === "skills" || section.type === "interests"
+                ? section.variant === "compact"
+                  ? "list-none"
+                  : "gap-x-[0.5em] gap-y-3 [&>li]:border-b [&>li]:border-gray-800 [&>li]:px-[0.4em] [&>li]:pb-[0.1em]"
+                : "list-disc [&>li+li]:mt-[var(--bullet-gap)]",
+            )}
             style={
               {
                 "--accent-color": accentColor,

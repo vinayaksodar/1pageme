@@ -79,6 +79,7 @@ export interface Section {
   type: SectionType;
   title: string;
   items: SectionItem[];
+  variant?: "bullets" | "compact";
 }
 
 export interface TemplateStyles {
@@ -126,6 +127,10 @@ export interface TemplateActions {
     visibility: Partial<PersonalInfoVisibility>,
   ) => void;
   updateSectionTitle: (sectionId: string, title: string) => void;
+  updateSectionVariant: (
+    sectionId: string,
+    variant: Section["variant"],
+  ) => void;
   updateSectionItem: (
     sectionId: string,
     itemId: string,

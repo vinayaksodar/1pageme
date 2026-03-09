@@ -88,6 +88,8 @@ export const TemplateItem = ({
             itemId={item.id}
             sectionType={section.type}
             settings={item.visibility}
+            variant={section.variant}
+            onVariantChange={(v) => actions.updateSectionVariant(section.id, v)}
             onAdd={() => actions.addSectionItem(section.id)}
             onDelete={() => actions.removeSectionItem(section.id, item.id)}
             isFirst={index === 0}

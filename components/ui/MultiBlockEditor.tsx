@@ -12,6 +12,7 @@ interface MultiBlockEditorProps {
   value: Block[];
   onChange: (value: Block[]) => void;
   type?: "paragraphs" | "bullets";
+  layout?: "vertical" | "horizontal" | "compact";
   className?: string;
   placeholder?: string;
   style?: React.CSSProperties;
@@ -22,6 +23,7 @@ const MultiBlockEditor = ({
   value,
   onChange,
   type = "paragraphs",
+  layout = "vertical",
   className,
   placeholder,
   style,
@@ -45,8 +47,9 @@ const MultiBlockEditor = ({
     position: { top: number; left: number };
   } | null>(null);
 
-  const blockTagName = type === "bullets" ? "li" : "p";
-  const ContainerTag = type === "bullets" ? "ul" : "div";
+  const blockTagName = type === "bullets" && layout !== "compact" ? "li" : "p";
+  const ContainerTag =
+    type === "bullets" && layout !== "compact" ? "ul" : "div";
 
   /* ---------------- Autofocus ---------------- */
 
@@ -62,11 +65,20 @@ const MultiBlockEditor = ({
     const el = contentEditableRef.current;
     if (!el) return;
 
-    const initialHtml = blocksToHtml(lastValue.current, blockTagName);
+    let initialHtml = "";
+    if (layout === "compact") {
+      const text = value
+        .map((b) => b.content.map((c) => c.text).join(""))
+        .join(", ");
+      initialHtml = `<p>${text}</p>`;
+    } else {
+      initialHtml = blocksToHtml(lastValue.current, blockTagName);
+    }
+
     if (el.innerHTML !== initialHtml) {
       el.innerHTML = initialHtml;
     }
-  }, [blockTagName]);
+  }, [blockTagName, layout]);
 
   /* ---------------- External sync ---------------- */
 
@@ -77,13 +89,22 @@ const MultiBlockEditor = ({
     const isFocused = document.activeElement === el;
 
     if (!isFocused && value !== lastValue.current) {
-      const newHtml = blocksToHtml(value, blockTagName);
+      let newHtml = "";
+      if (layout === "compact") {
+        const text = value
+          .map((b) => b.content.map((c) => c.text).join(""))
+          .join(", ");
+        newHtml = `<p>${text}</p>`;
+      } else {
+        newHtml = blocksToHtml(value, blockTagName);
+      }
+
       if (el.innerHTML !== newHtml) {
         el.innerHTML = newHtml;
       }
       lastValue.current = value;
     }
-  }, [value, blockTagName]);
+  }, [value, blockTagName, layout]);
 
   /* ---------------- Debounced commit ---------------- */
 
@@ -106,7 +127,22 @@ const MultiBlockEditor = ({
     if (!el) return;
 
     const html = el.innerHTML;
-    const newBlocks = htmlToBlocks(html, blockTagName);
+    let newBlocks: Block[] = [];
+
+    if (layout === "compact") {
+      // In compact mode, we split by comma to create separate blocks
+      const text = el.innerText || "";
+      const parts = text
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      newBlocks = parts.map((p) => ({
+        id: crypto.randomUUID(),
+        content: [{ type: "text", text: p }],
+      }));
+    } else {
+      newBlocks = htmlToBlocks(html, blockTagName);
+    }
 
     if (JSON.stringify(newBlocks) !== JSON.stringify(lastValue.current)) {
       lastValue.current = newBlocks;
@@ -301,7 +337,10 @@ const MultiBlockEditor = ({
         ref={contentEditableRef as React.RefObject<any>}
         className={cn(
           "min-w-[10px] cursor-text rounded border border-transparent transition-colors outline-none hover:bg-gray-100/50",
-          type === "bullets" && "list-outside pl-4",
+          type === "bullets" && layout === "vertical" && "list-outside pl-4",
+          type === "bullets" &&
+            layout === "horizontal" &&
+            "flex list-none flex-wrap items-center pl-0",
           className,
         )}
         contentEditable

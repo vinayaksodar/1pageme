@@ -158,7 +158,21 @@ export const AcademicTemplate = ({
               )
             }
             type="bullets"
-            className="list-disc text-sm text-gray-700 [&>li+li]:mt-[var(--bullet-gap)]"
+            layout={
+              section.type === "skills" || section.type === "interests"
+                ? section.variant === "compact"
+                  ? "compact"
+                  : "horizontal"
+                : "vertical"
+            }
+            className={cn(
+              "text-sm text-gray-700",
+              section.type === "skills" || section.type === "interests"
+                ? section.variant === "compact"
+                  ? "list-none"
+                  : "gap-y-1 [&>li:not(:last-child)]:after:mx-[0.4em] [&>li:not(:last-child)]:after:text-[0.7em] [&>li:not(:last-child)]:after:text-gray-800 [&>li:not(:last-child)]:after:content-['•']"
+                : "list-disc [&>li+li]:mt-[var(--bullet-gap)]",
+            )}
             style={
               {
                 "--bullet-gap": `${spacing.bulletRowGap}rem`,

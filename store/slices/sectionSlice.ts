@@ -14,6 +14,10 @@ import { StoreSlice } from "../types";
 
 export interface SectionSlice {
   updateSectionTitle: (sectionId: string, title: string) => void;
+  updateSectionVariant: (
+    sectionId: string,
+    variant: Section["variant"],
+  ) => void;
   updateSectionItem: (
     sectionId: string,
     itemId: string,
@@ -62,6 +66,35 @@ export const createSectionSlice: StoreSlice<SectionSlice> = (set, get) => ({
                 ...r.content!,
                 sections: r.content!.sections.map((s) =>
                   s.id === sectionId ? { ...s, title } : s,
+                ),
+              },
+            }
+          : r,
+      ),
+    }));
+    if (state.activeResumeId) get().scheduleServerSync(state.activeResumeId);
+  },
+
+  updateSectionVariant: (sectionId, variant) => {
+    const state = get();
+    const activeResume = state.resumes.find(
+      (r) => r.id === state.activeResumeId,
+    );
+    const section = activeResume?.content?.sections.find(
+      (s) => s.id === sectionId,
+    );
+    if (!section || section.variant === variant) return;
+
+    set((state) => ({
+      resumes: state.resumes.map((r) =>
+        r.id === state.activeResumeId
+          ? {
+              ...r,
+              updatedAt: Date.now(),
+              content: {
+                ...r.content!,
+                sections: r.content!.sections.map((s) =>
+                  s.id === sectionId ? { ...s, variant } : s,
                 ),
               },
             }

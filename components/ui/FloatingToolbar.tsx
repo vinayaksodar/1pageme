@@ -24,6 +24,8 @@ interface FloatingToolbarProps {
   itemId: string;
   sectionType: SectionType | "header";
   settings: ItemVisibility | PersonalInfoVisibility;
+  variant?: "bullets" | "compact";
+  onVariantChange?: (variant: "bullets" | "compact") => void;
   onAdd: () => void;
   onDelete: () => void;
   isFirst?: boolean;
@@ -37,6 +39,8 @@ const FloatingToolbar = ({
   itemId,
   sectionType,
   settings,
+  variant,
+  onVariantChange,
   onAdd,
   onDelete,
   isFirst,
@@ -214,6 +218,28 @@ const FloatingToolbar = ({
                 </div>
               </label>
             ))}
+
+            {(sectionType === "skills" || sectionType === "interests") &&
+              onVariantChange && (
+                <label className="group mt-2 flex cursor-pointer items-center justify-between border-t border-gray-100 pt-2">
+                  <span className="text-xs font-bold text-gray-600 transition-colors group-hover:text-gray-900">
+                    Compact Mode
+                  </span>
+                  <div className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={variant === "compact"}
+                      onChange={(e) =>
+                        onVariantChange(
+                          e.target.checked ? "compact" : "bullets",
+                        )
+                      }
+                    />
+                    <div className="peer h-4 w-8 rounded-full bg-gray-100 peer-checked:bg-blue-600 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-3 after:w-3 after:rounded-full after:border after:border-gray-200 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                  </div>
+                </label>
+              )}
           </div>
         )}
       </div>

@@ -63,6 +63,7 @@ const PrintRendererPage = () => {
       updatePersonalInfo: () => {},
       updatePersonalInfoVisibility: () => {},
       updateSectionTitle: () => {},
+      updateSectionVariant: () => {},
       updateSectionItem: () => {},
       addSectionItem: () => {},
       removeSectionItem: () => {},
