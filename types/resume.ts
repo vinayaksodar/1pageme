@@ -48,7 +48,6 @@ export interface ItemVisibility {
   showLocation: boolean;
   showDatePeriod: boolean;
   showLink: boolean;
-  showLogo: boolean;
   showSlider: boolean;
 }
 
@@ -71,7 +70,6 @@ export interface SectionItem {
   location?: string;
   datePeriod?: DatePeriod;
   link?: string;
-  logo?: string;
 
   // Proficiency Slider
   sliderValue?: number; // 0-100

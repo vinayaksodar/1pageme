@@ -31,7 +31,7 @@ export const LLM_PROMPT = `I want you to act as a resume parser. I will provide 
             "datePeriod": { startDate: { month: "Jan", year: 2024 }, endDate: "Present" },
             "description": [ { "id": "block-1", "content": [{ "type": "text", "text": "..." }] } ],
             "bullets": [ { "id": "bullet-1", "content": [{ "type": "text", "text": "..." }] } ],
-            "visibility": { "showTitle": true, "showSubtitle": true, "showDescription": true, "showBullets": true, "showLocation": true, "showDatePeriod": true, "showLink": false, "showLogo": false }
+            "visibility": { "showTitle": true, "showSubtitle": true, "showDescription": true, "showBullets": true, "showLocation": true, "showDatePeriod": true, "showLink": false }
           }
         ]
       }

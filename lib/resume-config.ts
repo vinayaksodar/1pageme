@@ -36,7 +36,6 @@ export const SECTION_SCHEMAS: Record<
       "showBullets",
       "showLocation",
       "showDatePeriod",
-      "showLogo",
     ],
     defaults: {
       title: "Job Title",
@@ -286,7 +285,6 @@ export const SECTION_SCHEMAS: Record<
       "showLocation",
       "showDatePeriod",
       "showLink",
-      "showLogo",
     ],
     defaults: { title: "New Entry" },
   },
@@ -302,7 +300,6 @@ export const getInitialVisibility = (type: SectionType): ItemVisibility => {
     showLocation: false,
     showDatePeriod: false,
     showLink: false,
-    showLogo: false,
     showSlider: false,
   };
 

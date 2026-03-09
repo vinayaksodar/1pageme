@@ -85,7 +85,6 @@ const FloatingToolbar = ({
     { id: "showLocation", label: "Location" },
     { id: "showDatePeriod", label: "Date Period" },
     { id: "showLink", label: "Link" },
-    { id: "showLogo", label: "Company Logo" },
     { id: "showSlider", label: "Proficiency Slider" },
   ];
 
