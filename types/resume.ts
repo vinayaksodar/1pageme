@@ -49,7 +49,10 @@ export interface ItemVisibility {
   showDatePeriod: boolean;
   showLink: boolean;
   showLogo: boolean;
+  showSlider: boolean;
 }
+
+export type SliderType = "dots" | "line" | "bars";
 
 export type DateValue = { year: number; month?: string } | "Present" | null;
 
@@ -69,6 +72,10 @@ export interface SectionItem {
   datePeriod?: DatePeriod;
   link?: string;
   logo?: string;
+
+  // Proficiency Slider
+  sliderValue?: number; // 0-100
+  sliderType?: SliderType;
 
   // Rendering settings for this specific item
   visibility: ItemVisibility;

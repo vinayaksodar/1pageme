@@ -245,3 +245,11 @@ export function formatDatePeriod(period?: DatePeriod | string | null): string {
 
   return result;
 }
+
+export function getProficiencyLabel(value: number): string {
+  if (value >= 90) return "Native";
+  if (value >= 75) return "Fluent";
+  if (value >= 50) return "Advanced";
+  if (value >= 25) return "Intermediate";
+  return "Beginner";
+}

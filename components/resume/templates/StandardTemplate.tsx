@@ -2,11 +2,12 @@
 
 import React from "react";
 import { Section, SectionItem, TemplateProps } from "@/types/resume";
-import { cn, formatDatePeriod } from "@/lib/utils";
+import { cn, formatDatePeriod, getProficiencyLabel } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { EditableImage } from "@/components/ui/EditableImage";
+import { ProficiencySlider } from "@/components/ui/ProficiencySlider";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
 import { getTemplateSpacing } from "./templateSpacing";
 
@@ -70,69 +71,167 @@ export const StandardTemplate = ({
         itemSpacing={spacing.itemGap}
         continuedHeader={continuedHeader}
       >
-        <div
-          className="flex items-baseline justify-between"
-          style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
-        >
-          {itemVisibility.showTitle && (
-            <PlainTextEditor
-              value={item.title}
-              onChange={(val) =>
-                actions.updateSectionItem(section.id, item.id, "title", val)
-              }
-              className="font-bold text-gray-800"
-              placeholder="Job Title / Project Name"
-            />
-          )}
-          {itemVisibility.showDatePeriod && (
-            <MonthYearPicker
-              initialDate={item.datePeriod}
-              onSelect={(val) =>
-                actions.updateSectionItem(
-                  section.id,
-                  item.id,
-                  "datePeriod",
-                  val,
-                )
-              }
+        {section.type === "languages" ? (
+          <div
+            className="flex items-center justify-between gap-4"
+            style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
+          >
+            <div className="flex-1 overflow-hidden">
+              {itemVisibility.showTitle && (
+                <PlainTextEditor
+                  value={item.title}
+                  onChange={(val) =>
+                    actions.updateSectionItem(section.id, item.id, "title", val)
+                  }
+                  className="font-bold text-gray-800"
+                  placeholder="Language"
+                />
+              )}
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-3">
+              {itemVisibility.showSubtitle && (
+                <PlainTextEditor
+                  value={item.subtitle || ""}
+                  onChange={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "subtitle",
+                      val,
+                    )
+                  }
+                  className="text-xs text-gray-500"
+                  placeholder="Proficiency"
+                />
+              )}
+              {itemVisibility.showSlider && (
+                <div className="w-[56px] flex-shrink-0">
+                  <ProficiencySlider
+                    value={item.sliderValue || 0}
+                    type={item.sliderType || "dots"}
+                    onChange={(val) => {
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "sliderValue",
+                        val,
+                      );
+                      if (section.type === "languages") {
+                        actions.updateSectionItem(
+                          section.id,
+                          item.id,
+                          "subtitle",
+                          getProficiencyLabel(val),
+                        );
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <React.Fragment>
+            <div
+              className="flex items-baseline justify-between"
+              style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
             >
-              <div className="ml-4 text-xs font-medium whitespace-nowrap text-gray-500 transition-colors hover:text-gray-800">
-                {formatDatePeriod(item.datePeriod) || (
-                  <span className="text-gray-300 italic">Select Date</span>
-                )}
-              </div>
-            </MonthYearPicker>
-          )}
-        </div>
+              {itemVisibility.showTitle && (
+                <PlainTextEditor
+                  value={item.title}
+                  onChange={(val) =>
+                    actions.updateSectionItem(section.id, item.id, "title", val)
+                  }
+                  className="font-bold text-gray-800"
+                  placeholder="Job Title / Project Name"
+                />
+              )}
+              {itemVisibility.showDatePeriod && (
+                <MonthYearPicker
+                  initialDate={item.datePeriod}
+                  onSelect={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "datePeriod",
+                      val,
+                    )
+                  }
+                >
+                  <div className="ml-4 text-xs font-medium whitespace-nowrap text-gray-500 transition-colors hover:text-gray-800">
+                    {formatDatePeriod(item.datePeriod) || (
+                      <span className="text-gray-300 italic">Select Date</span>
+                    )}
+                  </div>
+                </MonthYearPicker>
+              )}
+            </div>
 
-        <div
-          className="flex flex-wrap items-center gap-2"
-          style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
-        >
-          {itemVisibility.showSubtitle && (
-            <PlainTextEditor
-              value={item.subtitle || ""}
-              onChange={(val) =>
-                actions.updateSectionItem(section.id, item.id, "subtitle", val)
-              }
-              className="text-sm font-semibold text-gray-800"
-              placeholder="Company / Institution"
-            />
-          )}
-          {itemVisibility.showLocation && item.location && (
-            <span className="text-xs text-gray-300">|</span>
-          )}
-          {itemVisibility.showLocation && (
-            <PlainTextEditor
-              value={item.location || ""}
-              onChange={(val) =>
-                actions.updateSectionItem(section.id, item.id, "location", val)
-              }
-              className="text-xs text-gray-400"
-              placeholder="Location"
-            />
-          )}
-        </div>
+            <div
+              className="flex flex-wrap items-center gap-2"
+              style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
+            >
+              {itemVisibility.showSubtitle && (
+                <PlainTextEditor
+                  value={item.subtitle || ""}
+                  onChange={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "subtitle",
+                      val,
+                    )
+                  }
+                  className="text-sm font-semibold text-gray-800"
+                  placeholder="Company / Institution"
+                />
+              )}
+              {itemVisibility.showLocation && item.location && (
+                <span className="text-xs text-gray-300">|</span>
+              )}
+              {itemVisibility.showLocation && (
+                <PlainTextEditor
+                  value={item.location || ""}
+                  onChange={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "location",
+                      val,
+                    )
+                  }
+                  className="text-xs text-gray-400"
+                  placeholder="Location"
+                />
+              )}
+            </div>
+
+            {itemVisibility.showSlider && (
+              <div className="mb-2 max-w-[120px]">
+                <ProficiencySlider
+                  value={item.sliderValue || 0}
+                  type={item.sliderType || "dots"}
+                  onChange={(val) => {
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "sliderValue",
+                      val,
+                    );
+                    if (section.type === "languages") {
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "subtitle",
+                        getProficiencyLabel(val),
+                      );
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        )}
 
         {itemVisibility.showDescription && item.description && (
           <MultiBlockEditor

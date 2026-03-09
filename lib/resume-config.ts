@@ -108,8 +108,13 @@ export const SECTION_SCHEMAS: Record<
     },
   },
   languages: {
-    fields: ["showTitle", "showSubtitle"],
-    defaults: { title: "Language", subtitle: "Proficiency" },
+    fields: ["showTitle", "showSubtitle", "showSlider"],
+    defaults: {
+      title: "Language",
+      subtitle: "Proficiency",
+      sliderValue: 80,
+      sliderType: "dots",
+    },
   },
   volunteering: {
     fields: [
@@ -298,6 +303,7 @@ export const getInitialVisibility = (type: SectionType): ItemVisibility => {
     showDatePeriod: false,
     showLink: false,
     showLogo: false,
+    showSlider: false,
   };
 
   schema.fields.forEach((field) => {

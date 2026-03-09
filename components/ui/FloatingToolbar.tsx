@@ -15,6 +15,7 @@ import {
   ItemVisibility,
   SectionType,
   PersonalInfoVisibility,
+  SliderType,
 } from "@/types/resume";
 import { SECTION_SCHEMAS } from "@/lib/resume-config";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -66,15 +67,26 @@ const FloatingToolbar = ({
   const profileImageShape =
     activeResume?.content?.personalInfo.profileImageShape || "circle";
 
+  const isHeader = sectionType === "header";
+
+  const item = !isHeader
+    ? activeResume?.content?.sections
+        .find((s) => s.id === sectionId)
+        ?.items.find((i) => i.id === itemId)
+    : null;
+
+  const currentSliderType = item?.sliderType || "dots";
+
   const allOptions = [
     { id: "showTitle", label: "Title" },
-    { id: "showSubtitle", label: "Company/School" },
+    { id: "showSubtitle", label: "Proficiency / Subtitle" },
     { id: "showDescription", label: "Description" },
     { id: "showBullets", label: "Bullets" },
     { id: "showLocation", label: "Location" },
     { id: "showDatePeriod", label: "Date Period" },
     { id: "showLink", label: "Link" },
     { id: "showLogo", label: "Company Logo" },
+    { id: "showSlider", label: "Proficiency Slider" },
   ];
 
   const PERSONAL_INFO_OPTIONS = [
@@ -85,7 +97,6 @@ const FloatingToolbar = ({
     { id: "showPhoto", label: "Profile Photo" },
   ];
 
-  const isHeader = sectionType === "header";
   const schema = !isHeader ? SECTION_SCHEMAS[sectionType as SectionType] : null;
   const options = isHeader
     ? PERSONAL_INFO_OPTIONS
@@ -190,33 +201,66 @@ const FloatingToolbar = ({
             </div>
 
             {options.map((opt) => (
-              <label
-                key={opt.id}
-                className="group flex cursor-pointer items-center justify-between"
-              >
-                <span className="text-xs font-bold text-gray-600 transition-colors group-hover:text-gray-900">
-                  {opt.label}
-                </span>
-                <div className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    checked={settings[opt.id as keyof typeof settings]}
-                    onChange={(e) => {
-                      if (isHeader) {
-                        updatePersonalInfoVisibility({
-                          [opt.id]: e.target.checked,
-                        });
-                      } else {
-                        updateItemVisibility(sectionId, itemId, {
-                          [opt.id]: e.target.checked,
-                        });
-                      }
-                    }}
-                  />
-                  <div className="peer h-4 w-8 rounded-full bg-gray-100 peer-checked:bg-blue-600 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-3 after:w-3 after:rounded-full after:border after:border-gray-200 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                </div>
-              </label>
+              <div key={opt.id} className="space-y-3">
+                <label className="group flex cursor-pointer items-center justify-between">
+                  <span className="text-xs font-bold text-gray-600 transition-colors group-hover:text-gray-900">
+                    {opt.label}
+                  </span>
+                  <div className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={settings[opt.id as keyof typeof settings]}
+                      onChange={(e) => {
+                        if (isHeader) {
+                          updatePersonalInfoVisibility({
+                            [opt.id]: e.target.checked,
+                          });
+                        } else {
+                          updateItemVisibility(sectionId, itemId, {
+                            [opt.id]: e.target.checked,
+                          });
+                        }
+                      }}
+                    />
+                    <div className="peer h-4 w-8 rounded-full bg-gray-100 peer-checked:bg-blue-600 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-3 after:w-3 after:rounded-full after:border after:border-gray-200 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                  </div>
+                </label>
+
+                {opt.id === "showSlider" &&
+                  !isHeader &&
+                  (settings as ItemVisibility).showSlider && (
+                    <div className="ml-2 border-l-2 border-gray-100 pb-2 pl-3">
+                      <div className="mb-2 text-[9px] font-black tracking-widest text-gray-400 uppercase">
+                        Slider Style
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {["dots", "line", "bars"].map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => {
+                              const store = useResumeStore.getState();
+                              store.updateSectionItem(
+                                sectionId,
+                                itemId,
+                                "sliderType",
+                                type as SliderType,
+                              );
+                            }}
+                            className={cn(
+                              "rounded-md border px-2 py-1 text-[9px] font-black tracking-widest uppercase transition-all",
+                              currentSliderType === type
+                                ? "border-blue-200 bg-blue-50 text-blue-600"
+                                : "border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-600",
+                            )}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
             ))}
 
             {(sectionType === "skills" || sectionType === "interests") &&

@@ -2,11 +2,12 @@
 
 import React from "react";
 import { Section, SectionItem, TemplateProps } from "@/types/resume";
-import { cn, formatDatePeriod } from "@/lib/utils";
+import { cn, formatDatePeriod, getProficiencyLabel } from "@/lib/utils";
 import PlainTextEditor from "@/components/ui/PlainTextEditor";
 import MultiBlockEditor from "@/components/ui/MultiBlockEditor";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 import { EditableImage } from "@/components/ui/EditableImage";
+import { ProficiencySlider } from "@/components/ui/ProficiencySlider";
 import { TemplateItem, TemplateSection, TemplateHeader } from "./TemplateBase";
 import { getTemplateSpacing } from "./templateSpacing";
 
@@ -73,56 +74,141 @@ export const ModernTemplate = ({
         itemSpacing={spacing.itemGap}
         continuedHeader={continuedHeader}
       >
-        <div style={{ marginBottom: `${spacing.itemMinorGap}rem` }}>
-          {itemVisibility.showTitle && (
-            <PlainTextEditor
-              value={item.title}
-              onChange={(val) =>
-                actions.updateSectionItem(section.id, item.id, "title", val)
-              }
-              className="text-base font-bold text-gray-900"
-              placeholder="Title"
-            />
-          )}
+        {section.type === "languages" ? (
           <div
-            className="flex items-center justify-between"
-            style={{ marginTop: `${spacing.itemSubtleGap}rem` }}
+            className="flex items-center justify-between gap-4"
+            style={{ marginBottom: `${spacing.itemMinorGap}rem` }}
           >
-            {itemVisibility.showSubtitle && (
+            <div className="flex-1 overflow-hidden">
+              {itemVisibility.showTitle && (
+                <PlainTextEditor
+                  value={item.title}
+                  onChange={(val) =>
+                    actions.updateSectionItem(section.id, item.id, "title", val)
+                  }
+                  className="text-sm font-bold text-gray-900"
+                  placeholder="Language"
+                />
+              )}
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-3">
+              {itemVisibility.showSubtitle && (
+                <PlainTextEditor
+                  value={item.subtitle || ""}
+                  onChange={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "subtitle",
+                      val,
+                    )
+                  }
+                  className="text-[10px] font-bold tracking-tight text-gray-400 uppercase"
+                  placeholder="Proficiency"
+                />
+              )}
+              {itemVisibility.showSlider && (
+                <div className="w-[56px] flex-shrink-0">
+                  <ProficiencySlider
+                    value={item.sliderValue || 0}
+                    type={item.sliderType || "dots"}
+                    onChange={(val) => {
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "sliderValue",
+                        val,
+                      );
+                      if (section.type === "languages") {
+                        actions.updateSectionItem(
+                          section.id,
+                          item.id,
+                          "subtitle",
+                          getProficiencyLabel(val),
+                        );
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: `${spacing.itemMinorGap}rem` }}>
+            {itemVisibility.showTitle && (
               <PlainTextEditor
-                value={item.subtitle || ""}
+                value={item.title}
                 onChange={(val) =>
-                  actions.updateSectionItem(
-                    section.id,
-                    item.id,
-                    "subtitle",
-                    val,
-                  )
+                  actions.updateSectionItem(section.id, item.id, "title", val)
                 }
-                className="text-sm font-bold tracking-tight uppercase"
-                style={{ color: accentColor }}
-                placeholder="Company"
+                className="text-base font-bold text-gray-900"
+                placeholder="Title"
               />
             )}
-            {itemVisibility.showDatePeriod && (
-              <MonthYearPicker
-                initialDate={item.datePeriod}
-                onSelect={(val) =>
-                  actions.updateSectionItem(
-                    section.id,
-                    item.id,
-                    "datePeriod",
-                    val,
-                  )
-                }
-              >
-                <div className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-black text-gray-400 uppercase transition-colors hover:bg-gray-100 hover:text-gray-600">
-                  {formatDatePeriod(item.datePeriod) || "DATE"}
-                </div>
-              </MonthYearPicker>
+            <div
+              className="flex items-center justify-between"
+              style={{ marginTop: `${spacing.itemSubtleGap}rem` }}
+            >
+              {itemVisibility.showSubtitle && (
+                <PlainTextEditor
+                  value={item.subtitle || ""}
+                  onChange={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "subtitle",
+                      val,
+                    )
+                  }
+                  className="text-sm font-bold tracking-tight uppercase"
+                  style={{ color: accentColor }}
+                  placeholder="Company"
+                />
+              )}
+              {itemVisibility.showDatePeriod && (
+                <MonthYearPicker
+                  initialDate={item.datePeriod}
+                  onSelect={(val) =>
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "datePeriod",
+                      val,
+                    )
+                  }
+                >
+                  <div className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-black text-gray-400 uppercase transition-colors hover:bg-gray-100 hover:text-gray-600">
+                    {formatDatePeriod(item.datePeriod) || "DATE"}
+                  </div>
+                </MonthYearPicker>
+              )}
+            </div>
+            {itemVisibility.showSlider && (
+              <div className="mt-2 max-w-[120px]">
+                <ProficiencySlider
+                  value={item.sliderValue || 0}
+                  type={item.sliderType || "dots"}
+                  onChange={(val) => {
+                    actions.updateSectionItem(
+                      section.id,
+                      item.id,
+                      "sliderValue",
+                      val,
+                    );
+                    if (section.type === "languages") {
+                      actions.updateSectionItem(
+                        section.id,
+                        item.id,
+                        "subtitle",
+                        getProficiencyLabel(val),
+                      );
+                    }
+                  }}
+                />
+              </div>
             )}
           </div>
-        </div>
+        )}
 
         {itemVisibility.showDescription && item.description && (
           <MultiBlockEditor
